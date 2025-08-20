@@ -1,0 +1,21 @@
+# Ambiente Virtual
+venv/
+
+# Arquivos de Cache do Python
+__pycache__/
+*.pyc
+
+# Banco de Dados
+db.sqlite3
+*.sqlite3
+
+# Pasta de Mídia
+/media/
+
+# Credenciais e Segredos
+gcloud-auth.json
+gcp-credentials.json
+*.json 
+
+# Arquivos de Sistema
+.DS_Store

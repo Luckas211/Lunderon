@@ -1,0 +1,103 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}L.E DARK{% endblock %}</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<style>
+    /* Seu CSS continua aqui... */
+    .main-content::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url("{% static 'img/giphy5.gif' %}");
+        background-size: cover;
+        background-position: center;
+        opacity: 0.1;
+        z-index: -1;
+        border-radius: 50px;
+    }
+</style>
+
+<body>
+
+    <header class="header">
+        <div class="header-container">
+            <a href="{% url 'index' %}" class="logo">L.E DARK</a>
+            
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="{% url 'como_funciona' %}">Como Funciona</a></li>
+                    <li><a href="{% url 'planos' %}">PLANO</a></li>
+                    <li><a href="{% url 'suporte' %}">SUPORTE</a></li>
+                    <li><a href="#">|</a></li>
+                    <li><a href="{% url 'cadastre_se' %}">CADASTRA-SE</a></li>
+                    <li><a href="{% url 'login' %}">LOGIN</a></li>
+                    <li class="cart-icon"><a href="#"><i class="fas fa-user"></i></a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    {% block content %}
+    {% endblock %}
+    <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-content">
+                
+                <div class="footer-column">
+                    <a href="{% url 'index' %}" class="footer-logo">
+                        <a href="{% url 'index' %}" class="logo">L.E DARK</a>
+                    </a>
+                    <p class="footer-about">
+                        Uma plataforma inovadora para impulsionar sua presença digital com tecnologia de ponta.
+                    </p>
+                    <ul class="social-links">
+                        <li><a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a></li>
+                        <li><a href="#" aria-label="X (Twitter)"><i class="fab fa-twitter"></i></a></li>
+                        <li><a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
+                        <li><a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h4>Navegação</h4>
+                    <ul>
+                        <li><a href="{% url 'index' %}">Início</a></li>
+                        <li><a href="{% url 'como_funciona' %}">Como Funciona</a></li>
+                        <li><a href="{% url 'planos' %}">Planos</a></li>
+                        <li><a href="{% url 'suporte' %}">Suporte</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Termos de Serviço</a></li>
+                        <li><a href="#">Política de Privacidade</a></li>
+                        <li><a href="#">Política de Cookies</a></li>
+                    </ul>
+                </div>
+
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; {% now "Y" %} L.E DARK. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+    
+</body>
+</html>

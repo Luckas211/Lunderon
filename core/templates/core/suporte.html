@@ -1,0 +1,84 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Suporte e Central de Ajuda - L.E DARK{% endblock %}
+
+{% block content %}
+<main class="support-container">
+    <div class="support-header">
+        <h1>Central de Ajuda</h1>
+        <p>Encontre respostas rápidas para suas dúvidas mais comuns.</p>
+    </div>
+
+    <section class="faq-section">
+        <h2>Perguntas Frequentes</h2>
+
+        <details class="faq-item">
+            <summary class="faq-question">
+                Como funciona o processo de assinatura?
+                <i class="fas fa-chevron-down"></i>
+            </summary>
+            <div class="faq-answer">
+                <p>Nosso processo é simples! Primeiro, crie uma conta em nossa plataforma. Depois, navegue até a página de <a href="{% url 'planos' %}">Planos</a>, escolha a opção que melhor se adapta às suas necessidades e siga as instruções de pagamento. Seu acesso é liberado imediatamente após a confirmação.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary class="faq-question">
+                Quais métodos de pagamento são aceitos?
+                <i class="fas fa-chevron-down"></i>
+            </summary>
+            <div class="faq-answer">
+                <p>Aceitamos os principais cartões de crédito (Visa, MasterCard, American Express) e também pagamentos via Pix para facilitar sua compra. Toda a transação é feita em um ambiente seguro.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary class="faq-question">
+                Posso cancelar ou alterar meu plano a qualquer momento?
+                <i class="fas fa-chevron-down"></i>
+            </summary>
+            <div class="faq-answer">
+                <p>Sim! Você tem total flexibilidade para alterar ou cancelar seu plano. Basta acessar a área "Minha Conta" (que criaremos em breve), ir para a seção "Assinatura" e escolher a opção desejada. As alterações são aplicadas no próximo ciclo de faturamento.</p>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary class="faq-question">
+                Como posso redefinir minha senha?
+                <i class="fas fa-chevron-down"></i>
+            </summary>
+            <div class="faq-answer">
+                <p>Se você esqueceu sua senha, vá para a página de <a href="{% url 'login' %}">Login</a> e clique no link "Esqueceu a senha?". Você receberá um e-mail com as instruções para criar uma nova senha de forma segura.</p>
+            </div>
+        </details>
+    </section>
+
+    <section class="contact-section">
+        <h2>Ainda precisa de ajuda?</h2>
+        <p>Se não encontrou sua resposta acima, preencha o formulário abaixo e nossa equipe entrará em contato.</p>
+        
+        <form action="#" method="POST" class="contact-form">
+            {% csrf_token %}
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" name="name" placeholder="Seu Nome Completo" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" name="email" placeholder="Seu E-mail de Contato" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-tag"></i>
+                <input type="text" name="subject" placeholder="Assunto" required>
+            </div>
+            <div class="input-group">
+                <i class="fas fa-comment-dots"></i>
+                <textarea name="message" rows="6" placeholder="Descreva seu problema ou dúvida aqui..." required></textarea>
+            </div>
+            <button type="submit" class="btn-submit">Enviar Mensagem</button>
+        </form>
+    </section>
+
+</main>
+{% endblock %}

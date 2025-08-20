@@ -1,0 +1,23 @@
+*   [33m0b26b7e[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Merge pull request #3 from emanoel651/minha-feature-limpa
+[31m|[m[32m\[m  
+[31m|[m * [33m4d3e35d[m[33m ([m[1;31morigin/minha-feature-limpa[m[33m, [m[1;32mminha-feature-limpa[m[33m)[m Commit da atualização recente do gerador 19/08/2025 implementação das funcionalidades em base de teste
+[31m|[m[31m/[m  
+*   [33m18bcf8c[m Merge pull request #2 from emanoel651/minha-feature-limpa
+[33m|[m[34m\[m  
+[33m|[m * [33m7670ae5[m Projeto funcional e atualizado do gerador de legenda e karaoke
+* [34m|[m [33m59a8a66[m Merge pull request #1 from emanoel651/minha-feature-limpa
+[35m|[m[34m\[m[34m|[m 
+[35m|[m * [33m0f956a9[m Finaliza implementação da feature e remove segredos do histórico
+[35m|[m[35m/[m  
+[35m|[m *   [33mafe8606[m[33m ([m[1;32mminha-feature[m[33m)[m Merge branch 'main' into minha-feature
+[35m|[m [1;31m|[m[35m\[m  
+[35m|[m [1;31m|[m[35m/[m  
+[35m|[m[35m/[m[1;31m|[m   
+* [1;31m|[m [33m8aa5430[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m Delete gcloud-auth.json
+[1;32m|[m * [33m287eb17[m Minhas alterações
+[1;32m|[m * [33m605d5ad[m alteração
+[1;32m|[m * [33mf0e4027[m Alteração para o funcionamento das páginas principais
+[1;32m|[m[1;32m/[m  
+* [33mdaa5098[m[33m ([m[1;31morigin/minha-feature[m[33m)[m Agora foi
+* [33m35dfd95[m pronto
+* [33ma91e6b1[m coemço

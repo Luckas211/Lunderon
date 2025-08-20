@@ -3,35 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <title>Meus Vídeos Gerados</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; margin: 2em; }
-        .video-card { border: 1px solid #ccc; padding: 1em; margin-bottom: 1em; border-radius: 8px; }
-        .video-card h3 { margin-top: 0; }
-        .status-processando { color: orange; }
-        .status-concluido { color: green; }
-        .status-erro { color: red; }
-        a { color: #007bff; text-decoration: none; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(145deg, #2c2c2c 0%, #111111 50%, #000000 100%);
+            background-attachment: fixed;
+            color: #f0f0f0;
+            font-family: 'Montserrat', sans-serif;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 120px 20px 60px;
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .page-header h1 {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border: 2px solid #c99e63;
+            color: #c99e63;
+            background-color: transparent;
+            text-decoration: none;
+            text-transform: uppercase;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-radius: 50px;
+            cursor: pointer;
+            font-family: 'Montserrat', sans-serif;
+            font-size: 0.9em;
+        }
+        .btn:hover {
+            background-color: #c99e63;
+            color: #000;
+            box-shadow: 0 0 20px rgba(201, 158, 99, 0.4);
+        }
+        
+        .video-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .video-card {
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease-out;
+            overflow: hidden; /* Garante que o conteúdo não vaze */
+            display: flex;
+            flex-direction: column;
+        }
+        .video-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+        }
+
+        .video-preview {
+            width: 100%;
+            height: 400px; /* Altura fixa para o preview */
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .video-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Garante que o vídeo cubra a área */
+        }
+        .video-placeholder {
+            padding: 20px;
+            text-align: center;
+            color: #888;
+        }
+        
+        .card-content {
+            padding: 25px;
+            flex-grow: 1; /* Faz esta área crescer para empurrar o rodapé para baixo */
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .card-header h3 {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #fff;
+            margin: 0;
+        }
+
+        .status-badge {
+            font-size: 0.8em;
+            font-weight: 700;
+            padding: 4px 10px;
+            border-radius: 50px;
+            text-transform: uppercase;
+        }
+        .concluido { background-color: #28a745; color: #fff; }
+        .erro { background-color: #dc3545; color: #fff; }
+        .processando { background-color: #ffc107; color: #000; }
+
+        .card-info {
+            font-size: 0.9em;
+            color: #ccc;
+            word-wrap: break-word;
+            flex-grow: 1;
+        }
+
+        .card-footer {
+            padding: 25px;
+            border-top: 1px solid #333;
+            margin-top: auto; /* Empurra o rodapé para o final do card */
+        }
+
+        .empty-state {
+            grid-column: 1 / -1; /* Ocupa a grade inteira */
+            text-align: center;
+            padding: 80px 40px;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .empty-state p {
+            font-size: 1.2em;
+            color: #ccc;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <h1>Meus Vídeos Gerados</h1>
-    <a href="{% url 'pagina_gerador' %}">Gerar Novo Vídeo</a>
-    <hr>
+    <div class="container">
+        <div class="page-header">
+            <h1>Meus Vídeos</h1>
+            <a href="{% url 'pagina_gerador' %}" class="btn">Gerar Novo Vídeo</a>
+        </div>
 
-    {% if videos %}
-        {% for video in videos %}
-            <div class="video-card">
-                <h3>Vídeo criado em: {{ video.criado_em|date:"d/m/Y H:i" }}</h3>
-                <p>Texto: "{{ video.texto_overlay|default:'Nenhum' }}"</p>
-                <p>Status: <b class="status-{{ video.status|lower }}">{{ video.get_status_display }}</b></p>
+        {% if videos %}
+            <div class="video-grid">
+                {% for video in videos %}
+                    <div class="video-card">
+                        <div class="video-preview">
+                            {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
+                                <video src="{{ video.arquivo_final.url }}" controls muted loop></video>
+                            {% else %}
+                                <div class="video-placeholder">
+                                    <p>Vídeo com status: {{ video.get_status_display }}</p>
+                                    <p>Preview indisponível.</p>
+                                </div>
+                            {% endif %}
+                        </div>
 
-                {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
-                    <a href="{{ video.arquivo_final.url }}" download><strong>Baixar Vídeo (MP4)</strong></a>
-                {% endif %}
+                        <div class="card-content">
+                            <div class="card-header">
+                                <h3>{{ video.criado_em|date:"d/m/Y H:i" }}</h3>
+                                <span class="status-badge {{ video.status|lower }}">{{ video.get_status_display }}</span>
+                            </div>
+                            <div class="card-info">
+                                <p><strong>Texto:</strong> "{{ video.narrador_texto|default:video.texto_overlay|truncatechars:100|default:'N/A' }}"</p>
+                            </div>
+                        </div>
+                        
+                        {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
+                        <div class="card-footer">
+                            <a href="{{ video.arquivo_final.url }}" class="btn" download>Baixar Vídeo (MP4)</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
             </div>
-        {% endfor %}
-    {% else %}
-        <p>Você ainda não gerou nenhum vídeo.</p>
-    {% endif %}
-</body>
+        {% else %}
+            <div class="empty-state">
+                <p>Você ainda não gerou nenhum vídeo.</p>
+                <a href="{% url 'pagina_gerador' %}" class="btn">Comece a criar agora</a>
+            </div>
+        {% endif %}
+    </div>
+
+    </body>
 </html>

@@ -1,0 +1,20 @@
+[33m8aa5430[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{0}: checkout: moving from minha-feature-limpa to main
+[33m4d3e35d[m[33m ([m[1;31morigin/minha-feature-limpa[m[33m, [m[1;32mminha-feature-limpa[m[33m)[m HEAD@{1}: commit: Commit da atualização recente do gerador 19/08/2025 implementação das funcionalidades em base de teste
+[33m18bcf8c[m HEAD@{2}: reset: moving to origin/main
+[33m18bcf8c[m HEAD@{3}: reset: moving to origin/main
+[33m7670ae5[m HEAD@{4}: commit: Projeto funcional e atualizado do gerador de legenda e karaoke
+[33m0f956a9[m HEAD@{5}: commit: Finaliza implementação da feature e remove segredos do histórico
+[33m8aa5430[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{6}: reset: moving to 8aa543008ecdc21f322459481b29b4431f2926c4
+[33mafe8606[m[33m ([m[1;32mminha-feature[m[33m)[m HEAD@{7}: checkout: moving from main to minha-feature-limpa
+[33m8aa5430[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{8}: checkout: moving from minha-feature-limpa to main
+[33mafe8606[m[33m ([m[1;32mminha-feature[m[33m)[m HEAD@{9}: checkout: moving from minha-feature to minha-feature-limpa
+[33mafe8606[m[33m ([m[1;32mminha-feature[m[33m)[m HEAD@{10}: checkout: moving from minha-feature to minha-feature
+[33mafe8606[m[33m ([m[1;32mminha-feature[m[33m)[m HEAD@{11}: merge main: Merge made by the 'ort' strategy.
+[33m287eb17[m HEAD@{12}: checkout: moving from main to minha-feature
+[33m8aa5430[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m HEAD@{13}: pull origin main: Fast-forward
+[33mdaa5098[m[33m ([m[1;31morigin/minha-feature[m[33m)[m HEAD@{14}: checkout: moving from minha-feature to main
+[33m287eb17[m HEAD@{15}: commit: Minhas alterações
+[33m605d5ad[m HEAD@{16}: commit: alteração
+[33mf0e4027[m HEAD@{17}: commit: Alteração para o funcionamento das páginas principais
+[33mdaa5098[m[33m ([m[1;31morigin/minha-feature[m[33m)[m HEAD@{18}: checkout: moving from main to minha-feature
+[33mdaa5098[m[33m ([m[1;31morigin/minha-feature[m[33m)[m HEAD@{19}: clone: from https://github.com/emanoel651/site-dark.git

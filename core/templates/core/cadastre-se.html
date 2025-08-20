@@ -1,0 +1,43 @@
+
+{% extends 'core/base.html' %}
+
+{% load static %}
+
+{% block title %}Crie sua Conta - L.E DARK{% endblock %}
+
+{% block content %}
+<main class="signup-container">
+    <div class="signup-form-wrapper">
+        <form action="#" method="POST" class="signup-form">
+            <h2>Crie Sua Conta</h2>
+            <p class="form-subtitle">Comece sua jornada conosco hoje mesmo.</p>
+
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                <input type="text" id="fullname" name="fullname" placeholder="Nome Completo" required>
+            </div>
+
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" name="email" placeholder="Seu melhor e-mail" required>
+            </div>
+
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" name="password" placeholder="Crie uma senha" required>
+            </div>
+
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="confirm-password" name="confirm-password" placeholder="Confirme sua senha" required>
+            </div>
+
+            <button type="submit" class="btn-signup">Criar Conta</button>
+
+            <div class="login-link">
+                <p>Já tem uma conta? <a href="#">Faça Login</a></p>
+            </div>
+        </form>
+    </div>
+</main>
+{% endblock %}

@@ -1,0 +1,826 @@
+.logo img {
+    height: 50px;   /* <<< MUDE ESTE VALOR para aumentar ou diminuir a logo */
+    width: auto;    /* Deixe em "auto" para manter a proporção correta */
+    vertical-align: middle; /* Ajuda a alinhar a logo com os links do menu */
+}
+
+
+/* Reset Básico */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* NOVO: Fundo global com gradiente metálico e ajustes de fonte */
+body {
+    background: linear-gradient(145deg, #2c2c2c 0%, #111111 50%, #000000 100%);
+    background-attachment: fixed; /* Mantém o fundo fixo durante a rolagem */
+    color: #f0f0f0; /* Cor de texto principal (branco suave) */
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1.6;
+}
+
+/* Header
+--------------------------------------------- */
+/* MELHORADO: Header com efeito de vidro (Glassmorphism) */
+.header {
+    background-color: rgba(10, 10, 10, 0.5); /* Fundo escuro com transparência */
+    backdrop-filter: blur(10px); /* Desfoque do conteúdo que passa por trás */
+    -webkit-backdrop-filter: blur(10px); /* Suporte para navegador Safari */
+    padding: 20px 0;
+    position: sticky; /* Fica fixo no topo ao rolar a página */
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Borda sutil para separar */
+}
+
+.header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.logo {
+    color: #fff;
+    text-decoration: none;
+    font-size: 1.5em;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.main-nav ul {
+    list-style: none;
+    display: flex;
+    gap: 30px;
+    align-items: center;
+}
+
+.main-nav a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    font-weight: 500;
+    letter-spacing: 1px;
+    transition: color 0.3s ease;
+}
+
+.main-nav a:hover {
+    color: #c99e63;
+}
+
+/* Seção Principal (Hero)
+--------------------------------------------- */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    min-height: 100vh;
+    position: relative;
+    color: #fff;
+}
+
+.main-content::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url("{% static 'img/giphy.gif' %}");
+    background-size: cover;
+    background-position: center;
+    opacity: 0.2; /* MELHORADO: Opacidade reduzida para melhor integração */
+    z-index: -1;
+}
+
+.hero-section {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding-bottom: 25vh;
+}
+
+.hero-title {
+    font-size: clamp(2em, 5vw, 3em);
+    font-weight: 700;
+    margin-bottom: 10px;
+    text-shadow: 0 2px 15px rgba(0,0,0,0.7); /* NOVO: Sombra para destacar o texto */
+}
+
+.hero-subtitle {
+    font-size: clamp(0.8em, 2vw, 1.2em);
+    font-weight: 400;
+    color: #ccc;
+    margin-bottom: 40px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.7); /* NOVO: Sombra para destacar o texto */
+}
+
+.btn-booking {
+    display: inline-block;
+    padding: 15px 40px;
+    border: 2px solid #c99e63;
+    color: #c99e63;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: all 0.3s ease; /* MELHORADO: Transição mais abrangente */
+    border-radius: 50px;
+}
+
+.btn-booking:hover {
+    background-color: #c99e63;
+    color: #000;
+    box-shadow: 0 0 20px rgba(201, 158, 99, 0.4); /* NOVO: Efeito de brilho no hover */
+}
+
+/* Seção 'Como Funciona' (Cards)
+--------------------------------------------- */
+.features-cards {
+    padding: 80px 20px;
+    background-color: transparent; /* NOVO: Usa o gradiente do body */
+}
+
+.card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* MELHORADO: Estilo dos cards com mais profundidade */
+.card {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease-out;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7), 0 0 20px rgba(201, 158, 99, 0.2); /* Sombra dupla com brilho */
+}
+
+.card-icon {
+    font-size: 3em;
+    color: #c99e63;
+    margin-bottom: 20px;
+}
+
+.card h3 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+    color: #fff;
+    font-weight: 600;
+}
+
+.card p {
+    font-size: 1em;
+    color: #ccc;
+    line-height: 1.5;
+}
+
+/* Seção de Planos (Pricing)
+--------------------------------------------- */
+.pricing-section {
+    padding: 80px 20px;
+    background-color: transparent; /* NOVO: Usa o gradiente do body */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+}
+
+.pricing-container {
+    display: flex;
+    flex-wrap: wrap; /* Permite que os cards quebrem a linha em telas menores */
+    justify-content: center;
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.pricing-card {
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-radius: 12px;
+    padding: 40px 30px;
+    width: 100%;
+    max-width: 350px; /* Largura máxima ajustada */
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease-out;
+}
+
+.pricing-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
+}
+
+/* MELHORADO: Card premium com gradiente dourado */
+.pricing-card.premium {
+    background: linear-gradient(145deg, #d4af7a, #c99e63);
+    color: #000;
+    transform: scale(1.05);
+    border: none;
+    box-shadow: 0 10px 50px rgba(0,0,0,0.6);
+}
+
+.pricing-card.premium:hover {
+    transform: translateY(-10px) scale(1.08);
+    box-shadow: 0 15px 50px rgba(0,0,0,0.7), 0 0 30px rgba(201, 158, 99, 0.5);
+}
+
+.plan-name {
+    font-size: 1.8em;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.plan-price {
+    font-size: 2.5em;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.plan-price .plan-periodo {
+    font-size: 0.5em;
+    font-weight: 400;
+}
+
+.pricing-card.premium .plan-name,
+.pricing-card.premium .plan-price {
+    color: #000;
+}
+
+.plan-features {
+    list-style: none;
+    text-align: left;
+    margin-bottom: 30px;
+    padding-left: 10px; /* NOVO: Pequeno recuo para alinhar melhor */
+}
+
+.plan-features li {
+    font-size: 1em;
+    margin-bottom: 15px;
+    color: #ccc;
+}
+
+.pricing-card.premium .plan-features li {
+    color: #333;
+}
+
+.plan-features li i {
+    color: #c99e63;
+    margin-right: 10px;
+    width: 20px; /* Garante alinhamento dos ícones */
+}
+
+.pricing-card.premium .plan-features li i {
+    color: #000;
+}
+
+.btn-cta {
+    display: inline-block;
+    padding: 15px 40px;
+    border: 2px solid #c99e63;
+    color: #c99e63;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border-radius: 50px;
+}
+
+.btn-cta:hover {
+    background-color: #c99e63;
+    color: #000;
+    box-shadow: 0 0 20px rgba(201, 158, 99, 0.4);
+}
+
+.btn-cta.premium {
+    background-color: #000;
+    color: #c99e63;
+    border: 2px solid #000;
+}
+
+.btn-cta.premium:hover {
+    background-color: #fff;
+    color: #000;
+    border-color: #fff;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* Página de cadastra-se
+
+/* Página de Cadastro (Sign Up)
+--------------------------------------------- */
+.signup-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Garante que o container ocupe a tela inteira */
+    padding: 120px 20px 60px; /* Espaçamento (120px no topo para compensar o header) */
+}
+
+.signup-form-wrapper {
+    width: 100%;
+    max-width: 450px; /* Largura máxima do formulário */
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.5s ease-out; /* Animação de entrada */
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.signup-form h2 {
+    text-align: center;
+    font-size: 2em;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.signup-form .form-subtitle {
+    text-align: center;
+    color: #ccc;
+    margin-bottom: 30px;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #555; /* Cor do ícone */
+    transition: color 0.3s ease;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 15px 15px 15px 45px; /* Espaçamento interno para não sobrepor o ícone */
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+.input-group input::placeholder {
+    color: #777;
+}
+
+.input-group input:focus {
+    outline: none;
+    border-color: #c99e63;
+    box-shadow: 0 0 10px rgba(201, 158, 99, 0.3);
+}
+
+.input-group input:focus + i {
+    color: #c99e63; /* Muda a cor do ícone quando o input está focado */
+}
+
+.btn-signup {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #c99e63;
+    background-color: transparent;
+    color: #c99e63;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-signup:hover {
+    background-color: #c99e63;
+    color: #000;
+    box-shadow: 0 0 20px rgba(201, 158, 99, 0.4);
+}
+
+.login-link {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+.login-link a {
+    color: #c99e63;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.login-link a:hover {
+    color: #fff;
+}
+
+
+
+
+/* TELA DE LOGIN
+
+/* Páginas de Login e Cadastro
+--------------------------------------------- */
+
+/* Container principal para centralizar o formulário */
+.signup-container,
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 120px 20px 60px;
+}
+
+/* Wrapper do formulário (o "card") */
+.signup-form-wrapper,
+.login-form-wrapper {
+    width: 100%;
+    max-width: 450px;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Títulos e subtítulos */
+.signup-form h2,
+.login-form h2 {
+    text-align: center;
+    font-size: 2em;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.signup-form .form-subtitle,
+.login-form .form-subtitle {
+    text-align: center;
+    color: #ccc;
+    margin-bottom: 30px;
+}
+
+/* Botões principais */
+.btn-signup,
+.btn-login {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #c99e63;
+    background-color: transparent;
+    color: #c99e63;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px; /* Espaço acima do botão */
+}
+
+.btn-signup:hover,
+.btn-login:hover {
+    background-color: #c99e63;
+    color: #000;
+    box-shadow: 0 0 20px rgba(201, 158, 99, 0.4);
+}
+
+/* Links inferiores */
+.login-link,
+.register-link {
+    text-align: center;
+    margin-top: 25px;
+    font-size: 0.9em;
+    color: #ccc;
+}
+
+.login-link a,
+.register-link a {
+    color: #c99e63;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.login-link a:hover,
+.register-link a:hover {
+    color: #fff;
+}
+
+/* Link específico de "Esqueceu a senha?" */
+.options-link {
+    text-align: right;
+    margin-bottom: 20px;
+    font-size: 0.9em;
+}
+
+.options-link a {
+    color: #ccc;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.options-link a:hover {
+    color: #c99e63;
+}
+
+
+
+
+/* Págia de suporte
+
+
+
+/* Página de Suporte
+--------------------------------------------- */
+.support-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 120px 20px 60px;
+    animation: fadeIn 0.5s ease-out;
+}
+
+.support-header {
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.support-header h1 {
+    font-size: 2.8em;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #fff;
+}
+
+.support-header p {
+    font-size: 1.2em;
+    color: #ccc;
+}
+
+/* Seção FAQ */
+.faq-section,
+.contact-section {
+    margin-bottom: 60px;
+}
+
+.faq-section h2,
+.contact-section h2 {
+    font-size: 2em;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 10px;
+    border-left: 3px solid #c99e63;
+    padding-left: 15px;
+}
+
+.contact-section p {
+    color: #ccc;
+    margin-bottom: 30px;
+}
+
+.faq-item {
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.faq-item[open] {
+    background-color: #222;
+}
+
+.faq-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    font-size: 1.1em;
+    font-weight: 500;
+    cursor: pointer;
+    list-style: none; /* Remove a seta padrão do <summary> */
+}
+
+.faq-question::-webkit-details-marker {
+    display: none; /* Remove a seta padrão no Chrome/Safari */
+}
+
+.faq-question i {
+    color: #c99e63;
+    transition: transform 0.3s ease;
+}
+
+.faq-item[open] .faq-question i {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    padding: 0 20px 20px 20px;
+    color: #ccc;
+    line-height: 1.7;
+}
+
+.faq-answer a {
+    color: #c99e63;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.faq-answer a:hover {
+    text-decoration: underline;
+}
+
+/* Formulário de Contato */
+.contact-form textarea {
+    width: 100%;
+    padding: 15px 15px 15px 45px;
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1em;
+    resize: vertical; /* Permite redimensionar apenas verticalmente */
+}
+
+.contact-form .input-group i {
+    top: 22px; /* Ajusta posição do ícone para o textarea */
+}
+
+.contact-form textarea:focus {
+    outline: none;
+    border-color: #c99e63;
+    box-shadow: 0 0 10px rgba(201, 158, 99, 0.3);
+}
+
+.btn-submit { /* Reutilizando e adaptando o estilo dos botões */
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #c99e63;
+    background-color: transparent;
+    color: #c99e63;
+    border-radius: 8px;
+    font-size: 1.1em;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+}
+
+.btn-submit:hover {
+    background-color: #c99e63;
+    color: #000;
+    box-shadow: 0 0 20px rgba(201, 158, 99, 0.4);
+}
+
+
+/* ============================================= */
+/* FOOTER                                        */
+/* ============================================= */
+
+.footer {
+    background-color: #0a0a0a; /* Um preto um pouco mais suave que o fundo */
+    color: #a0a0a0; /* Cor de texto padrão para o rodapé */
+    padding: 60px 0 20px 0;
+    border-top: 1px solid #222;
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap; /* Faz as colunas se ajustarem em telas menores */
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.footer-column {
+    flex: 1; /* Permite que as colunas cresçam igualmente */
+    min-width: 220px; /* Largura mínima antes de quebrar a linha */
+}
+
+.footer-logo img {
+    height: 40px; /* Tamanho da logo no rodapé */
+    width: auto;
+    margin-bottom: 20px;
+}
+
+.footer-about {
+    font-size: 0.9em;
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.social-links {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    gap: 15px;
+}
+
+.social-links a {
+    color: #a0a0a0;
+    background-color: #1a1a1a;
+    border: 1px solid #333;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.social-links a:hover {
+    color: #fff;
+    background-color: #c99e63;
+    border-color: #c99e63;
+}
+
+.footer-column h4 {
+    color: #fff;
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-bottom: 20px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-column ul li {
+    margin-bottom: 10px;
+}
+
+.footer-column ul a {
+    color: #a0a0a0;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.footer-column ul a:hover {
+    color: #c99e63;
+}
+
+.footer-bottom {
+    text-align: center;
+    padding-top: 20px;
+    border-top: 1px solid #222;
+    font-size: 0.9em;
+}
