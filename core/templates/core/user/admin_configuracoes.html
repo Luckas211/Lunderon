@@ -1,0 +1,55 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Painel de Configurações - L.E DARK{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">L.E DARK</h2>
+        <nav>
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
+                <li class="active"><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}">💳 Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}">📊 Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Gerenciamento de Configurações</h1>
+            <a href="{% url 'adicionar_configuracao' %}" class="btn-add">+ Nova Configuração</a>
+        </header>
+
+        <section class="dashboard-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome da Chave</th>
+                        <th>Valor</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for config in configuracoes %}
+                    <tr>
+                        <td>{{ config.nome }}</td>
+                        <td>{{ config.valor }}</td>
+                        <td>
+                            <a href="{% url 'editar_configuracao' config.id %}" class="btn-action edit">Editar</a>
+                            <a href="{% url 'deletar_configuracao' config.id %}" class="btn-action delete">Deletar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" style="text-align: center; padding: 20px;">Nenhuma configuração encontrada.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+{% endblock %}

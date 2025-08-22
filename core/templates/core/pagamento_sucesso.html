@@ -1,0 +1,20 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Pagamento Aprovado - L.E DARK{% endblock %}
+
+{% block content %}
+<div style="text-align: center; padding: 100px 20px; color: #fff; min-height: 70vh; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+    <i class="fas fa-check-circle" style="color: #28a745; font-size: 5em; margin-bottom: 20px;"></i>
+    <h1 style="font-size: 2.5em;">Pagamento Aprovado!</h1>
+    <p style="font-size: 1.2em; color: #ccc; max-width: 500px;">Sua assinatura foi ativada com sucesso! Você já pode começar a criar. Obrigado por se juntar a nós!</p>
+    <p style="font-size: 1em; color: #888;">Você será redirecionado em 5 segundos...</p>
+    <a href="{% url 'pagina_gerador' %}" class="btn-cta" style="margin-top: 30px; background-color: #c99e63; color: #000;">Começar a Criar Vídeos</a>
+</div>
+
+<script>
+    setTimeout(function() {
+        window.location.href = "{% url 'pagina_gerador' %}";
+    }, 5000); // 5000 milissegundos = 5 segundos
+</script>
+{% endblock %}

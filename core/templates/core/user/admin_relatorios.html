@@ -1,0 +1,82 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">L.E DARK</h2>
+        <nav>
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}">💳 Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}" class="active">📊 Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Relatórios do Sistema</h1>
+        </header>
+
+        <section class="dashboard-table">
+            <h2>Assinaturas</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Plano</th>
+                        <th>Status</th>
+                        <th>Início</th>
+                        <th>Expiração</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ass in assinaturas %}
+                    <tr>
+                        <td>{{ ass.usuario.username }}</td>
+                        <td>{{ ass.plano.nome }}</td>
+                        <td>{{ ass.status }}</td>
+                        <td>{{ ass.data_inicio|date:"d/m/Y" }}</td>
+                        <td>{% if ass.data_expiracao %}{{ ass.data_expiracao|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5">Nenhuma assinatura encontrada.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <h2>Pagamentos</h2>
+            <h2 style="margin-top: 40px;">Pagamentos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Plano Pago</th> <th>Valor</th>
+                        <th>Status</th>
+                        <th>Data do Pagamento</th> </tr>
+                </thead>
+                <tbody>
+                    {% for pagamento in pagamentos %}
+                    <tr>
+                        <td>{{ pagamento.usuario.username }}</td>
+                        <td>{{ pagamento.plano.nome }}</td>
+                        
+                        <td>R$ {{ pagamento.valor|floatformat:2 }}</td>
+                        
+                        <td><span class="status {{ pagamento.status }}">{{ pagamento.get_status_display }}</span></td>
+                        
+                        <td>{{ pagamento.data_pagamento|date:"d/m/Y às H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" style="text-align: center; padding: 20px;">Nenhum pagamento encontrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+</div>
+{% endblock %}

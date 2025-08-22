@@ -1,6 +1,114 @@
 from django import forms
 from django.forms import formset_factory
-from .models import CategoriaVideo, CategoriaMusica
+from django.contrib.auth.forms import UserCreationForm
+from .models import Usuario, CategoriaVideo, CategoriaMusica, Plano, Assinatura, Configuracao
+
+
+# ================================================================
+# FORMULÁRIOS DE USUÁRIO E ADMIN
+# ================================================================
+class EditarConfiguracaoForm(forms.ModelForm):
+    class Meta:
+        model = Configuracao
+        fields = ['nome', 'valor']
+        labels = {
+            'nome': 'Nome da Configuração (Chave)',
+            'valor': 'Valor da Configuração',
+        }
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'valor': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+class ConfiguracaoForm(forms.ModelForm):
+    class Meta:
+        model = Configuracao
+        fields = ['nome', 'valor']
+        labels = {
+            'nome': 'Nome da Chave (ex: DURACAO_ASSINATURA_DIAS)',
+            'valor': 'Valor',
+        }
+        widgets = {
+            'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'valor': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+
+class CadastroUsuarioForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    class Meta(UserCreationForm.Meta):
+        model = Usuario
+        fields = ("username", "email")
+
+class AdminUsuarioForm(forms.Form):
+    """
+    Um formulário customizado para o admin editar dados do usuário e sua assinatura.
+    """
+    # Campos do modelo Usuario
+    username = forms.CharField(
+        label="Nome de Usuário", 
+        max_length=150,
+        widget=forms.TextInput(attrs={'class': 'form-control'}) # Classe adicionada
+    )
+    email = forms.EmailField(
+        label="Email de Cadastro",
+        widget=forms.EmailInput(attrs={'class': 'form-control'}) # Classe adicionada
+    )
+    is_staff = forms.BooleanField(
+        label="É um administrador? (Pode acessar o painel)", 
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}) # Classe adicionada
+    )
+
+    # Campos do modelo Assinatura
+    plano = forms.ModelChoiceField(
+        queryset=Plano.objects.all(),
+        label="Plano da Assinatura",
+        required=False,
+        empty_label="-- Sem Plano --",
+        widget=forms.Select(attrs={'class': 'form-control'}) # Classe adicionada
+    )
+    status = forms.ChoiceField(
+        choices=Assinatura.STATUS_CHOICES,
+        label="Status da Assinatura",
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-control'}) # Classe adicionada
+    )
+
+class EditarPerfilForm(forms.ModelForm):
+    """
+    Formulário para o usuário editar suas próprias informações.
+    """
+    class Meta:
+        model = Usuario
+        fields = ['first_name', 'last_name', 'email']
+        labels = {
+            'first_name': 'Nome',
+            'last_name': 'Sobrenome',
+            'email': 'Email de Cadastro',
+        }
+        widgets = {
+            'first_name': forms.TextInput(attrs={'placeholder': 'Seu primeiro nome'}),
+            'last_name': forms.TextInput(attrs={'placeholder': 'Seu sobrenome'}),
+            'email': forms.EmailInput(attrs={'placeholder': 'seu.email@exemplo.com'}),
+        }
+
+class EditarAssinaturaForm(forms.ModelForm):
+    class Meta:
+        model = Assinatura
+        fields = ['plano', 'status']
+        labels = {
+            'plano': 'Mudar para o Plano',
+            'status': 'Mudar Status da Assinatura',
+        }
+        # ADICIONADO: Define a classe CSS para os campos
+        widgets = {
+            'plano': forms.Select(attrs={'class': 'form-control'}),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+        }
+
+
+# ================================================================
+# FORMULÁRIO DO GERADOR DE VÍDEO
+# ================================================================
 
 # --- Listas de Opções (Choices) ---
 
@@ -26,8 +134,8 @@ TONS_VOZ = [(2.0, 'Agudo'), (0.0, 'Normal'), (-2.0, 'Grave')]
 PLANO_DE_FUNDO_CHOICES = [('normal', 'Normal / Escuro'), ('claro', 'Claro')]
 
 FONTES_TEXTO = [
+    ('cunia', 'Cunia (Decorativa)'),
     ('arial', 'Arial'),
-    ('arialbd', 'arialbd'),
     ('times', 'Times New Roman'),
     ('courier', 'Courier New'),
     ('impact', 'Impact'),
@@ -47,7 +155,7 @@ POSICAO_TEXTO_CHOICES = [
 ]
 
 
-# --- Classe do Formulário Final ---
+# --- Classe do Formulário do Gerador ---
 class GeradorForm(forms.Form):
     # 1. TIPO DE CONTEÚDO
     tipo_conteudo = forms.ChoiceField(

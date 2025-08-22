@@ -1,0 +1,74 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Crie sua Conta - L.E DARK{% endblock %}
+
+{% block content %}
+<main class="signup-container">
+    <div class="signup-form-wrapper">
+
+        <form action="{% url 'cadastre_se' %}" method="POST" class="signup-form">
+            {% csrf_token %}
+            <h2>Crie Sua Conta</h2>
+            <p class="form-subtitle">Comece sua jornada conosco hoje mesmo.</p>
+
+            {% if form.non_field_errors %}
+                <div style="color: #ff6b6b; margin-bottom: 15px; text-align: center;">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="input-group">
+                <i class="fas fa-user"></i>
+                {{ form.username }}
+            </div>
+            {% for error in form.username.errors %}
+                <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px; text-align: left; width: 100%; padding-left: 15px;">{{ error }}</p>
+            {% endfor %}
+
+            <div class="input-group">
+                <i class="fas fa-envelope"></i>
+                {{ form.email }}
+            </div>
+            {% for error in form.email.errors %}
+                <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px; text-align: left; width: 100%; padding-left: 15px;">{{ error }}</p>
+            {% endfor %}
+
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                {{ form.password1 }}
+            </div>
+            {% for error in form.password1.errors %}
+                 <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px; text-align: left; width: 100%; padding-left: 15px;">{{ error }}</p>
+            {% endfor %}
+
+            <div class="input-group">
+                <i class="fas fa-lock"></i>
+                {{ form.password2 }}
+            </div>
+             {% for error in form.password2.errors %}
+                 <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px; text-align: left; width: 100%; padding-left: 15px;">{{ error }}</p>
+            {% endfor %}
+
+            <button type="submit" class="btn-signup">Criar Conta</button>
+
+            <div class="login-link">
+                <p>Já tem uma conta? <a href="{% url 'login' %}">Faça Login</a></p>
+            </div>
+        </form>
+    </div>
+</main>
+
+<script>
+    // Script para adicionar os placeholders de volta, já que o Django não faz isso por padrão
+    document.addEventListener("DOMContentLoaded", function() {
+        document.querySelector("#id_username").placeholder = "Nome de Usuário";
+        document.querySelector("#id_email").placeholder = "Seu melhor e-mail";
+        document.querySelector("#id_password1").placeholder = "Crie uma senha";
+        document.querySelector("#id_password2").placeholder = "Confirme sua senha";
+    });
+</script>
+
+{% endblock %}

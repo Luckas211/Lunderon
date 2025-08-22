@@ -44,9 +44,16 @@
                     <li><a href="{% url 'planos' %}">PLANO</a></li>
                     <li><a href="{% url 'suporte' %}">SUPORTE</a></li>
                     <li><a href="#">|</a></li>
-                    <li><a href="{% url 'cadastre_se' %}">CADASTRA-SE</a></li>
-                    <li><a href="{% url 'login' %}">LOGIN</a></li>
-                    <li class="cart-icon"><a href="#"><i class="fas fa-user"></i></a></li>
+                    
+                    {% if user.is_authenticated %}
+                        <li><a href="{% url 'meu_perfil' %}">MEU PAINEL</a></li>
+                        <li><a href="{% url 'logout' %}">SAIR</a></li>
+                        <li class="cart-icon"><a href="{% url 'meu_perfil' %}" title="Ver meu perfil"><i class="fas fa-user-circle"></i></a></li>
+                    {% else %}
+                        <li><a href="{% url 'cadastre_se' %}">CADASTRA-SE</a></li>
+                        <li><a href="{% url 'login' %}">LOGIN</a></li>
+                        <li class="cart-icon"><a href="{% url 'login' %}" title="Fazer login"><i class="fas fa-user"></i></a></li>
+                    {% endif %}
                 </ul>
             </nav>
         </div>
@@ -54,14 +61,13 @@
 
     {% block content %}
     {% endblock %}
+
     <footer class="footer">
         <div class="footer-container">
             <div class="footer-content">
                 
                 <div class="footer-column">
-                    <a href="{% url 'index' %}" class="footer-logo">
-                        <a href="{% url 'index' %}" class="logo">L.E DARK</a>
-                    </a>
+                    <a href="{% url 'index' %}" class="logo">L.E DARK</a>
                     <p class="footer-about">
                         Uma plataforma inovadora para impulsionar sua presença digital com tecnologia de ponta.
                     </p>

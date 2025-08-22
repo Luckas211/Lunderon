@@ -1,0 +1,48 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Adicionar Configuração - L.E DARK{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">L.E DARK</h2>
+        <nav>
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
+                <li class="active"><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}">💳 Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}">📊 Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Adicionar Nova Configuração</h1>
+        </header>
+
+        <section class="form-container" style="background-color: #2a2a2a; padding: 25px; border-radius: 8px;">
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="{{ form.nome.id_for_label }}" style="display: block; margin-bottom: 8px; color: #ccc;">{{ form.nome.label }}</label>
+                    {{ form.nome }}
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="{{ form.valor.id_for_label }}" style="display: block; margin-bottom: 8px; color: #ccc;">{{ form.valor.label }}</label>
+                    {{ form.valor }}
+                </div>
+                
+                <div style="margin-top: 25px;">
+                    <button type="submit" class="btn-action edit">Salvar Configuração</button>
+                    <a href="{% url 'admin_configuracoes' %}" class="btn-action cancel">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+{% endblock %}

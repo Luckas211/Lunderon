@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Exclusão - L.E DARK{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <aside class="sidebar">
+        </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Confirmar Exclusão</h1>
+        </header>
+
+        <section class="form-container" style="background-color: #2a2a2a; padding: 25px; border-radius: 8px;">
+            <p style="font-size: 1.2em;">Você tem certeza que deseja excluir a configuração "{{ item.nome }}"?</p>
+            <p style="color: #ccc;">Esta ação não pode ser desfeita.</p>
+            
+            <form method="POST" style="margin-top: 25px;">
+                {% csrf_token %}
+                <button type="submit" class="btn-action delete">Sim, Excluir</button>
+                <a href="{{ request.META.HTTP_REFERER|default:'admin_configuracoes' }}" class="btn-action cancel">Cancelar</a>
+            </form>
+        </section>
+    </main>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+
+{% block title %}Painel de Assinaturas - L.E DARK{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    
+    <!-- MENU LATERAL -->
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">L.E DARK</h2>
+        <nav>
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}" class="active">📋 Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}">💳 Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}">📊 Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Gerenciamento de Assinaturas</h1>
+            <a href="#" class="btn-add">+ Nova Assinatura</a>
+        </header>
+
+        <section class="dashboard-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Email</th>
+                        <th>Plano</th>
+                        <th>Status</th>
+                        <th>Início</th>
+                        <th>Expira em</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ass in assinaturas %}
+                    <tr>
+                        <td>{{ ass.usuario.username }}</td>
+                        <td>{{ ass.usuario.email }}</td>
+                        <td>{{ ass.plano.nome }}</td>
+                        <td>
+                            {% if ass.status == "ativo" %}
+                                <span class="status ativo">Ativo</span>
+                            {% elif ass.status == "pendente" %}
+                                <span class="status pendente">Pendente</span>
+                            {% else %}
+                                <span class="status cancelado">Cancelado</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ ass.data_inicio|date:"d/m/Y" }}</td>
+                        <td>{% if ass.data_expiracao %}{{ ass.data_expiracao|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                        <td>
+                            <a href="{% url 'ativar_assinatura' ass.id %}" class="btn-action">Ativar</a>
+                            <a href="{% url 'cancelar_assinatura' ass.id %}" class="btn-action cancel">Cancelar</a>
+                            <a href="{% url 'editar_assinatura' ass.id %}" class="btn-action edit">Editar</a>
+                            <a href="{% url 'excluir_assinatura' ass.id %}" class="btn-action delete">Excluir</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7">Nenhuma assinatura encontrada.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">L.E DARK</h2>
+        <nav>
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}" class="active">💳 Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}">📊 Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Gerenciamento de Pagamentos</h1>
+        </header>
+
+        <section class="dashboard-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>Valor</th>
+                        <th>Método</th>
+                        <th>Status</th>
+                        <th>Data</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pagamento in pagamentos %}
+                    <tr>
+                        <td>{{ pagamento.usuario.username }}</td>
+                        <td>{{ pagamento.valor }}</td>
+                        <td>{{ pagamento.metodo }}</td>
+                        <td>{{ pagamento.status }}</td>
+                        <td>{{ pagamento.criado_em|date:"d/m/Y H:i" }}</td>
+                        <td>
+                            <a href="{% url 'aprovar_pagamento' pagamento.id %}" class="btn-action">Aprovar</a>
+                            <a href="{% url 'recusar_pagamento' pagamento.id %}" class="btn-action cancel">Recusar</a>
+                            <a href="{% url 'deletar_pagamento' pagamento.id %}" class="btn-action delete">Excluir</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6">Nenhum pagamento encontrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+</div>
+{% endblock %}

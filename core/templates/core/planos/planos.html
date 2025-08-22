@@ -1,0 +1,37 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Plano Único | L.E. DARK{% endblock %}
+
+{% block content %}
+<main class="main-content">
+    <div class="hero-section">
+        <h1 class="hero-title">O Plano Perfeito para o seu Canal</h1>
+        <p class="hero-subtitle">Um único plano com todas as ferramentas que você precisa para dominar as redes sociais.</p>
+    </div>
+</main>
+
+<section class="pricing-section">
+    <div class="pricing-container-single">
+
+        <div class="pricing-card complete">
+            <h2 class="plan-name">Plano Completo</h2>
+            <p class="plan-price">R$ 49,90<span class="plan-periodo">/mês</span></p>
+            
+            <ul class="plan-features">
+                <li><i class="fas fa-check-circle"></i> <strong>Geração em Lote:</strong> Crie até 3 vídeos de uma só vez.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Narração com IA:</strong> Vozes realistas para seus roteiros.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Duração Automática:</strong> Vídeos com narração terminam no tempo exato da fala.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Controle Total do Texto:</strong> Personalize cor, fonte, tamanho e posição.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Legendas Karaokê:</strong> Aumente a retenção com legendas dinâmicas.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Telas Finais Personalizadas:</strong> Adicione seu "call to action" no final.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Vasta Biblioteca de Mídia:</strong> Milhares de vídeos e músicas livres de copyright.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Suporte Prioritário</strong></li>
+            </ul>
+
+            <a href="{% url 'criar_checkout' %}" class="btn-cta complete-btn">Assinar agora</a>
+        </div>
+
+    </div>
+</section>
+{% endblock %}

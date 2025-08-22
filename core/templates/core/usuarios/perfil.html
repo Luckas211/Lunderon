@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Meu Painel - L.E DARK{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">{% firstof user.first_name user.username %}</h2>
+        <nav>
+            <ul>
+                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic"></i> Gerador</a></li>
+                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video"></i> Meus Vídeos</a></li>
+                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle"></i> Meu Perfil</a></li>
+
+                <li style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #444;">
+                    <p style="padding: 0 15px; color: #888; font-size: 0.9em; text-transform: uppercase;">Siga-nos</p>
+                    <a href="https://www.tiktok.com/" target="_blank" style="display: block; padding: 10px 15px; color: #ddd; text-decoration: none;"><i class="fab fa-tiktok"></i> TikTok</a>
+                    <a href="https://www.instagram.com/reels/" target="_blank" style="display: block; padding: 10px 15px; color: #ddd; text-decoration: none;"><i class="fab fa-instagram"></i> Instagram Reels</a>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Painel do Usuário</h1>
+        </header>
+
+        <div class="pricing-card" style="width: 100%; max-width: none; margin-bottom: 30px; text-align: left;">
+            <h2 class="plan-name"><i class="fas fa-star"></i> Minha Assinatura</h2>
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+            
+            {% if assinatura %}
+                <p><strong>Plano Contratado:</strong> {{ assinatura.plano.nome }}</p>
+                <p><strong>Status da Assinatura:</strong> <span class="status {{ assinatura.status }}">{{ assinatura.get_status_display }}</span></p>
+                {% if assinatura.data_expiracao %}
+                    <p><strong>Direito de Uso até:</strong> {{ assinatura.data_expiracao|date:"d/m/Y" }}</p>
+                {% endif %}
+                <a href="{% url 'gerenciar_assinatura' %}" class="btn-cta" style="margin-top: 20px;">Gerenciar Assinatura</a>
+            {% else %}
+                <p>Você ainda não possui uma assinatura ativa.</p>
+                <a href="{% url 'planos' %}" class="btn-cta complete-btn">Ver Planos</a>
+            {% endif %}
+        </div>
+
+        <div class="pricing-card" style="width: 100%; max-width: none; text-align: left;">
+             <div style="display: flex; justify-content: space-between; align-items: center;">
+                 <h2 class="plan-name"><i class="fas fa-id-card"></i> Minhas Informações</h2>
+                 <a href="{% url 'editar_perfil' %}" class="btn-action edit">Editar Informações</a>
+             </div>
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+
+            <p><strong>Nome Completo:</strong> {% if user.get_full_name %}{{ user.get_full_name }}{% else %}Não informado{% endif %}</p>
+            <p><strong>Nome de Usuário:</strong> {{ user.username }}</p>
+            <p><strong>Email de Cadastro:</strong> {{ user.email }}</p>
+            <p><strong>Membro desde:</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+        </div>
+    </main>
+</div>
+{% endblock %}

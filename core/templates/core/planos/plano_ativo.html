@@ -1,0 +1,24 @@
+{% extends "core/base.html" %}
+
+{% block content %}
+<div class="container mt-5" style="color: white; padding: 50px;">
+    <div class="alert alert-success" role="alert" style="background-color: #202020; border: 1px solid #444;">
+      <h4 class="alert-heading" style="color: #c99e63;">Você já tem um plano ativo!</h4>
+      
+      {% if assinatura %}
+          <p>Seu <strong>{{ assinatura.plano.nome }}</strong> está ativo.</p>
+          {% if assinatura.data_expiracao %}
+              <p>Seu direito de uso vai até <strong>{{ assinatura.data_expiracao|date:"d/m/Y" }}</strong>.</p>
+          {% endif %}
+      {% else %}
+          <p>Você já possui um plano ativo em sua conta.</p>
+      {% endif %}
+
+      <hr style="border-color: #444;">
+      
+      <p class="mb-0">
+        Para alterar seu método de pagamento ou cancelar, acesse o <a href="{% url 'gerenciar_assinatura' %}" style="color: #c99e63; font-weight: bold;">portal de gerenciamento</a>.
+      </p>
+    </div>
+</div>
+{% endblock %}

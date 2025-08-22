@@ -1,0 +1,49 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Editar Assinatura - L.E DARK{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">L.E DARK</h2>
+        <nav>
+            <ul>
+                <li class="active"><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}">💳 Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}">📊 Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Editar Assinatura de: {{ assinatura.usuario.username }}</h1>
+        </header>
+
+        <section class="pricing-card" style="width: 100%; max-width: none; text-align: left;">
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: #ccc;">{{ form.plano.label }}</label>
+                    {{ form.plano }}
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 8px; color: #ccc;">{{ form.status.label }}</label>
+                    {{ form.status }}
+                </div>
+
+                <div style="margin-top: 25px;">
+                    <button type="submit" class="btn-action edit">Salvar Alterações</button>
+                    <a href="{% url 'admin_assinaturas' %}" class="btn-action cancel">Cancelar</a>
+                </div>
+            </form>
+        </section>
+    </main>
+</div>
+{% endblock %}

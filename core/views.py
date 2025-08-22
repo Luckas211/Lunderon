@@ -1,28 +1,50 @@
+# ==============================================================================
+# IMPORTS ORGANIZADOS
+# ==============================================================================
+from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
 import subprocess
+import stripe
+stripe.api_key = settings.STRIPE_SECRET_KEY
+from django.urls import reverse
 import random
 import os
+from datetime import timedelta
+from django.utils import timezone # <-- ADICIONE ESTA LINHA
+from django.db.models import Count, Q
 import platform
 import textwrap
-import re
-
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse
-from django.contrib.auth.decorators import login_required
 from django.conf import settings
-
+from django.contrib import messages
 from google.cloud import texttospeech_v1beta1 as texttospeech
 from PIL import Image, ImageDraw, ImageFont
+from .forms import GeradorFormSet, CadastroUsuarioForm, AdminUsuarioForm, EditarPerfilForm, ConfiguracaoForm,EditarAssinaturaForm
+from .models import (
+    Assinatura, Pagamento, Configuracao, VideoBase, 
+    MusicaBase, VideoGerado, CategoriaVideo, CategoriaMusica, Plano,Usuario
+)
 
-from .forms import GeradorFormSet
-from .models import VideoBase, MusicaBase, VideoGerado, CategoriaVideo, CategoriaMusica
+
+
+# Pega o modelo de usuário customizado que definimos
+User = get_user_model()
 
 # Se estiver usando `gcloud auth application-default login`, esta linha deve ficar comentada.
 # os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(settings.BASE_DIR, 'gcloud-auth.json')
 
-# --- CONSTANTES ---
-# --- CONSTANTES ---
+
+# ==============================================================================
+# CONSTANTES E FUNÇÕES HELPER (LÓGICA DO GERADOR DE VÍDEO)
+# ==============================================================================
+
 FONT_PATHS = {
     'Windows': {
+        'cunia': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'Cunia.ttf'),
         'arial': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'arial.ttf'),
         'arialbd': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'arialbd.ttf'),
         'times': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'times.ttf'),
@@ -33,7 +55,7 @@ FONT_PATHS = {
         'alfa_slab_one': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'AlfaSlabOne-Regular.ttf'),
     },
     'Linux': {
-        # Como agora todas as fontes estão no projeto, podemos simplesmente copiar a mesma lógica.
+        'cunia': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'Cunia.ttf'),
         'arial': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'arial.ttf'),
         'arialbd': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'arialbd.ttf'),
         'times': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'times.ttf'),
@@ -44,10 +66,6 @@ FONT_PATHS = {
         'alfa_slab_one': os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'AlfaSlabOne-Regular.ttf'),
     },
 }
-
-# ==============================================================================
-# FUNÇÕES HELPER (COM LÓGICA DE COR E POSIÇÃO ATUALIZADAS)
-# ==============================================================================
 
 def create_text_image(texto, cor_da_fonte_hex, data, posicao='centro'):
     target_size = (1080, 1920)
@@ -210,205 +228,754 @@ def preview_voz(request, nome_da_voz):
         print(f"--- ERRO AO GERAR PREVIEW DA VOZ: {e} ---")
         return HttpResponse(status=500)
 
+
 # ==============================================================================
-# VIEW PRINCIPAL DO GERADOR
+# FUNÇÃO DE VERIFICAÇÃO DE ADMIN
 # ==============================================================================
-@login_required
-def pagina_gerador(request):
-    if request.method == 'POST':
-        formset = GeradorFormSet(request.POST, request.FILES)
+def is_admin(user):
+    """Verifica se o usuário é parte da equipe (staff)."""
+    return user.is_staff
+
+
+# ==============================================================================
+# VIEWS PÚBLICAS E DE AUTENTICAÇÃO
+# ==============================================================================
+
+def index(request): return render(request, 'core/home.html')
+def como_funciona(request): return render(request, 'core/como_funciona.html')
+def planos(request): return render(request, 'core/planos.html')
+def suporte(request): return render(request, 'core/suporte.html')
+
+def cadastre_se(request):
+    if request.method == "POST":
+        form = CadastroUsuarioForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, "Cadastro realizado com sucesso!")
+            return redirect("pagina_gerador")
     else:
-        formset = GeradorFormSet()
-    
-    if request.method == 'POST' and formset.is_valid():
-        for form in formset:
-            if not form.has_changed():
-                continue
-            
-            data = form.cleaned_data
-            caminho_narrador_input, timepoints, caminho_legenda_ass, caminho_imagem_texto, caminho_tela_final = None, None, None, None, None
-            
-            usar_narrador = data.get('tipo_conteudo') == 'narrador'
-            cor_selecionada_hex = data.get('cor_da_fonte', '#FFFFFF')
-            posicao_selecionada = data.get('posicao_texto', 'centro')
-            texto_tela_final = data.get('texto_tela_final')
-            
-            if usar_narrador and data.get('narrador_texto'):
-                obter_tempos = data.get('legenda_sincronizada', False)
-                caminho_narrador_input, timepoints = gerar_audio_e_tempos(
-                    data['narrador_texto'], data['narrador_voz'],
-                    data['narrador_velocidade'], data['narrador_tom'],
-                    obter_tempos=obter_tempos
-                )
-            
-            if usar_narrador and data.get('legenda_sincronizada') and timepoints:
-                caminho_legenda_ass = gerar_ficheiro_legenda_ass(timepoints, data['narrador_texto'], data, cor_selecionada_hex, posicao_selecionada)
-                print(f"--- Caminho do arquivo de legenda gerado: {caminho_legenda_ass} ---") # DEBUG
-            
-            if not usar_narrador and data.get('texto_overlay'):
-                caminho_imagem_texto = create_text_image(data['texto_overlay'], cor_selecionada_hex, data, posicao_selecionada)
-            
-            if texto_tela_final:
-                opcoes_tela_final = {'texto_fonte': 'arial', 'texto_tamanho': 80}
-                caminho_tela_final = create_text_image(texto_tela_final, '#FFFFFF', opcoes_tela_final, 'centro')
+        form = CadastroUsuarioForm()
+    return render(request, "core/user/cadastre-se.html", {"form": form})
 
-            video_base = VideoBase.objects.filter(categoria=data['categoria_video']).order_by('?').first()
-            musica_base = MusicaBase.objects.filter(categoria=data['categoria_musica']).order_by('?').first()
+def login_view(request):
+    if request.method == "POST":
+        email_digitado = request.POST.get("email")
+        password_digitado = request.POST.get("password")
+        if not email_digitado or not password_digitado:
+            messages.error(request, "Por favor, preencha o email e a senha.")
+            return render(request, "core/login.html")
+        try:
+            user_encontrado = User.objects.get(email=email_digitado)
+            user = authenticate(request, username=user_encontrado.username, password=password_digitado)
+            if user is not None:
+                login(request, user)
+                return redirect("meu_perfil")
+            else:
+                messages.error(request, "Email ou senha inválidos.")
+        except User.DoesNotExist:
+            messages.error(request, "Email ou senha inválidos.")
+    return render(request, "core/login.html")
 
-            if not video_base or not musica_base:
-                print("AVISO: Mídia de fundo não encontrada. Pulando.")
-                continue
+def logout_view(request):
+    logout(request)
+    return redirect("login")
 
-            caminho_video_input = video_base.arquivo_video.path
-            caminho_musica_input = musica_base.arquivo_musica.path
-            
-            nome_base = f"video_{request.user.id}_{random.randint(10000, 99999)}"
-            caminho_video_final = os.path.join(settings.MEDIA_ROOT, 'videos_gerados', f"{nome_base}.mp4")
-            caminho_video_temp = os.path.join(settings.MEDIA_ROOT, 'videos_gerados', f"{nome_base}_temp.mp4")
-            caminho_tela_final_video = os.path.join(settings.MEDIA_ROOT, 'videos_gerados', f"{nome_base}_endscreen.mp4")
-            lista_concat_path = os.path.join(settings.MEDIA_ROOT, 'videos_gerados', f"{nome_base}_concat.txt")
+# ==============================================================================
+# VIEWS DA APLICAÇÃO (requerem login)
+# ==============================================================================
+@csrf_exempt
+def stripe_webhook(request):
+    """
+    Escuta os eventos do Stripe para gerenciar assinaturas e pagamentos automaticamente.
+    """
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+    endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
 
-            try:
-                # ETAPA 1: Gerar vídeo principal
-                cmd_etapa1 = ['ffmpeg', '-y']
-                if usar_narrador or data.get('loop_video', False):
-                    cmd_etapa1.extend(['-stream_loop', '-1', '-i', caminho_video_input])
-                else:
-                    cmd_etapa1.extend(['-i', caminho_video_input])
-                
-                inputs_adicionais_etapa1 = []
-                if caminho_imagem_texto: inputs_adicionais_etapa1.append(caminho_imagem_texto)
-                inputs_adicionais_etapa1.append(caminho_musica_input)
-                if caminho_narrador_input: inputs_adicionais_etapa1.append(caminho_narrador_input)
-                
-                for f in inputs_adicionais_etapa1: cmd_etapa1.extend(['-i', f])
-                    
-                video_chain = "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1"
-                if caminho_legenda_ass:
-                    caminho_legenda_ffmpeg = caminho_legenda_ass.replace('\\', '/').replace(':', '\\:')
-                    video_chain += f",ass='{caminho_legenda_ffmpeg}'"
-                
-                final_video_stream = "[v]"
-                if caminho_imagem_texto:
-                    video_chain += f"[base];[base][1:v]overlay=(W-w)/2:(H-h)/2[v]"
-                else:
-                    video_chain += "[v]"
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, endpoint_secret
+        )
+    except (ValueError, stripe.error.SignatureVerificationError) as e:
+        # Payload ou assinatura inválida
+        return HttpResponse(status=400)
 
-                volume_musica_decimal = data.get('volume_musica', 50) / 100.0
-                music_input_index = 1 + (1 if caminho_imagem_texto else 0)
-                
-                if caminho_narrador_input:
-                    narrator_input_index = music_input_index + 1
-                    audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[a1];[{narrator_input_index}:a]volume=1.0[a2];[a1][a2]amix=inputs=2:duration=longest[aout]"
-                else:
-                    audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]"
-
-                filter_complex_str = f"{video_chain};{audio_chain}"
-                cmd_etapa1.extend(['-filter_complex', filter_complex_str])
-                cmd_etapa1.extend(["-map", final_video_stream, "-map", "[aout]"])
-
-                duracao_desejada = data.get('duracao_segundos', 30)
-                if usar_narrador and timepoints:
-                    duracao_video = timepoints[-1].time_seconds + 1 # Adiciona 1 segundo de segurança
-                    cmd_etapa1.extend(['-to', str(duracao_video)])
-                elif not usar_narrador:
-                    cmd_etapa1.extend(['-to', str(duracao_desejada)])
-                else:
-                    # Se não houver narração ou timepoints, usa a duração padrão
-                    cmd_etapa1.extend(['-to', str(duracao_desejada)])
-
-
-                cmd_etapa1.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k']) # Removido -shortest
-                cmd_etapa1.append(caminho_video_temp)
-                
-                print("--- EXECUTANDO FFMPEG (ETAPA 1) ---"); print(f"Comando: {' '.join(cmd_etapa1)}")
-                subprocess.run(cmd_etapa1, check=True, text=True, capture_output=True, encoding='utf-8')
-
-                if caminho_tela_final:
-                    # ETAPA 2: Criar vídeo da tela final
-                    duracao_tela_final = 3 # Duração fixa de 3 segundos
-                    cmd_etapa2 = [
-                        'ffmpeg', '-y', '-loop', '1', '-t', str(duracao_tela_final),
-                        '-i', caminho_tela_final,
-                        '-f', 'lavfi', '-t', str(duracao_tela_final), '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100',
-                        '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
-                        '-c:a', 'aac', '-b:a', '192k', '-shortest',
-                        caminho_tela_final_video
-                    ]
-                    print("--- EXECUTANDO FFMPEG (ETAPA 2) ---"); print(f"Comando: {' '.join(cmd_etapa2)}")
-                    subprocess.run(cmd_etapa2, check=True, text=True, capture_output=True, encoding='utf-8')
-
-                    # ETAPA 3: Concatenar vídeos
-                    with open(lista_concat_path, 'w') as f:
-                        f.write(f"file '{caminho_video_temp.replace(os.sep, '/')}'\n")
-                        f.write(f"file '{caminho_tela_final_video.replace(os.sep, '/')}'\n")
-
-                    cmd_etapa3 = [
-                        'ffmpeg', '-y', '-f', 'concat', '-safe', '0',
-                        '-i', lista_concat_path,
-                        '-c', 'copy',
-                        caminho_video_final
-                    ]
-                    print("--- EXECUTANDO FFMPEG (ETAPA 3) ---"); print(f"Comando: {' '.join(cmd_etapa3)}")
-                    subprocess.run(cmd_etapa3, check=True, text=True, capture_output=True, encoding='utf-8')
-                
-                else: 
-                    os.rename(caminho_video_temp, caminho_video_final)
-
-                VideoGerado.objects.create(
-                    usuario=request.user,
-                    status='CONCLUIDO',
-                    arquivo_final=os.path.join('videos_gerados', f"{nome_base}.mp4"),
-                    
-                    # Mapeando cada campo do formulário para o modelo
-                    plano_de_fundo=data.get('plano_de_fundo','normal'),
-                    cor_da_fonte=data.get('cor_da_fonte'),
-                    posicao_texto=data.get('posicao_texto'),
-                    texto_overlay=data.get('texto_overlay', ''),
-                    texto_fonte=data.get('texto_fonte'),
-                    texto_tamanho=data.get('texto_tamanho'),
-                    texto_negrito=data.get('texto_negrito', False),
-                    texto_sublinhado=data.get('texto_sublinhado', False),
-                    narrador_texto=data.get('narrador_texto', ''),
-                    legenda_sincronizada=data.get('legenda_sincronizada', False),
-                    narrador_voz=data.get('narrador_voz'),
-                    narrador_velocidade=data.get('narrador_velocidade'),
-                    narrador_tom=data.get('narrador_tom'),
-                    duracao_segundos=data.get('duracao_segundos'),
-                    volume_musica=data.get('volume_musica'),
-                    loop=data.get('loop_video'), # Mapeamento correto de loop_video -> loop
-                    texto_tela_final=data.get('texto_tela_final', '')
-                    # O campo 'tipo_conteudo' foi intencionalmente removido, pois ele não é salvo.
-                )
-                print(f"--- SUCESSO! Vídeo salvo: {nome_base}.mp4 ---")
-                
-            except (subprocess.CalledProcessError, FileNotFoundError) as e:
-                print(f"--- ERRO NO FFMPEG OU FFPROBE ---")
-                if isinstance(e, subprocess.CalledProcessError):
-                    print(f"Comando que falhou: {' '.join(e.cmd)}")
-                    print(f"Saída de Erro (stderr):\n{e.stderr}")
-                else:
-                    print("Erro: ffprobe não encontrado. Verifique se o FFmpeg está no PATH do sistema.")
-                VideoGerado.objects.create(usuario=request.user, status='ERRO', texto_overlay=data.get('texto_overlay', ''))
-            
-            finally:
-                for path in [caminho_narrador_input, caminho_legenda_ass, caminho_imagem_texto, caminho_tela_final, caminho_video_temp, caminho_tela_final_video, lista_concat_path]:
-                    if path and os.path.exists(path):
-                        os.remove(path)
+    # --- LÓGICA DE PAGAMENTO BEM-SUCEDIDO ---
+    if event['type'] == 'checkout.session.completed':
+        session = event['data']['object']
         
-        return redirect('meus_videos')
-    
-    return render(request, 'core/gerador.html', {'formset': formset})
+        stripe_customer_id = session.get('customer')
+        stripe_subscription_id = session.get('subscription')
+        plano_id = session.get('metadata', {}).get('plano_id')
+        valor_pago = session.get('amount_total', 0) # Pega o valor total pago
 
-# --- VIEWS DAS PÁGINAS ESTÁTICAS ---
+        try:
+            usuario = Usuario.objects.get(stripe_customer_id=stripe_customer_id)
+            plano = Plano.objects.get(id=plano_id)
+
+            # 1. Atualiza o status do usuário
+            usuario.plano_ativo = True
+            usuario.stripe_subscription_id = stripe_subscription_id
+            usuario.save()
+
+            # 2. Cria o registro da Assinatura
+            Assinatura.objects.create(
+                usuario=usuario,
+                plano=plano,
+                status='ativo',
+                data_inicio=timezone.now(),
+                data_expiracao=timezone.now() + timedelta(days=30)
+            )
+            
+            # 3. CRIA O REGISTRO DO PAGAMENTO
+            Pagamento.objects.create(
+                usuario=usuario,
+                plano=plano,
+                valor=plano.preco, # Usa o preço do plano
+                status='aprovado'
+                # data_pagamento é preenchido automaticamente
+            )
+            
+            print(f"✅ Assinatura e Pagamento registrados com sucesso para: {usuario.email}")
+
+        except (Usuario.DoesNotExist, Plano.DoesNotExist) as e:
+            print(f"🚨 ERRO no webhook: Usuário ou Plano não encontrado. Detalhes: {e}")
+            return HttpResponse(status=404)
+
+    # --- LÓGICA DE CANCELAMENTO ---
+    if event['type'] == 'customer.subscription.deleted':
+        # ... (a lógica de cancelamento que já tínhamos continua aqui) ...
+
+        return HttpResponse(status=200)
+
+    # --- LÓGICA DE CANCELAMENTO DA ASSINATURA ---
+    # Este evento é chamado quando uma assinatura é cancelada pelo usuário ou por falta de pagamento.
+    if event['type'] == 'customer.subscription.deleted':
+        subscription = event['data']['object']
+        stripe_subscription_id = subscription.get('id')
+
+        try:
+            # Encontra o usuário pela ID da assinatura
+            usuario = Usuario.objects.get(stripe_subscription_id=stripe_subscription_id)
+
+            # 1. Desativa o plano no modelo do usuário
+            usuario.plano_ativo = False
+            usuario.save()
+            
+            # 2. Atualiza o status da assinatura mais recente para 'cancelado'
+            assinatura_recente = Assinatura.objects.filter(usuario=usuario, status='ativo').last()
+            if assinatura_recente:
+                assinatura_recente.status = 'cancelado'
+                assinatura_recente.save()
+
+            print(f"✅ Assinatura cancelada com sucesso para o usuário: {usuario.email}")
+
+        except Usuario.DoesNotExist:
+            print(f"🚨 ERRO no webhook (customer.subscription.deleted): Usuário não encontrado para a assinatura {stripe_subscription_id}")
+            return HttpResponse(status=404)
+
+    return HttpResponse(status=200)
+
+
+
+
+
+
+
+
+@login_required
+def editar_perfil(request):
+    if request.method == 'POST':
+        form = EditarPerfilForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Seu perfil foi atualizado com sucesso!')
+            return redirect('meu_perfil')
+    else:
+        form = EditarPerfilForm(instance=request.user)
+        
+    return render(request, 'core/usuarios/editar_perfil.html', {'form': form})
+
+@login_required
+def meu_perfil(request):
+    usuario = request.user
+    
+    # CORREÇÃO: Usando '__iexact' para uma busca que não diferencia maiúsculas de minúsculas
+    assinatura_ativa = Assinatura.objects.filter(
+        usuario=usuario, 
+        status__iexact='ativo'  # <-- A MUDANÇA ESTÁ AQUI
+    ).order_by('-data_inicio').first()
+    
+    contexto = {
+        'usuario': usuario, 
+        'assinatura': assinatura_ativa
+    }
+    
+    # Garanta que o caminho para o seu template está correto
+    return render(request, 'core/usuarios/perfil.html', contexto)
+
+@login_required
+def gerenciar_assinatura_redirect(request):
+    """
+    Cria uma sessão no portal de clientes do Stripe e redireciona o usuário para lá.
+    """
+    # Busca o ID do cliente no Stripe que guardamos no nosso modelo Usuario
+    stripe_customer_id = request.user.stripe_customer_id
+
+    # Se o usuário não for um cliente no Stripe ainda, não há o que gerenciar
+    if not stripe_customer_id:
+        messages.error(request, "Não encontramos uma assinatura para gerenciar.")
+        return redirect('meu_perfil')
+
+    try:
+        # Constrói a URL de retorno completa para o seu site
+        return_url = request.build_absolute_uri(reverse('meu_perfil'))
+
+        # Cria a sessão do portal de clientes na API do Stripe
+        session = stripe.billing_portal.Session.create(
+            customer=stripe_customer_id,
+            return_url=return_url,
+        )
+        # Redireciona o usuário para a URL do portal gerada pelo Stripe
+        return redirect(session.url)
+
+    except Exception as e:
+        messages.error(request, "Ocorreu um erro ao acessar o portal de assinaturas.")
+        print(f"Erro do Stripe: {e}") # Para você ver o erro no terminal
+        return redirect('meu_perfil')
+
 @login_required
 def meus_videos(request):
     videos = VideoGerado.objects.filter(usuario=request.user).order_by('-criado_em')
     return render(request, 'core/meus_videos.html', {'videos': videos})
 
-def index(request): return render(request, 'core/home.html')
-def como_funciona(request): return render(request, 'core/como_funciona.html')
-def planos(request): return render(request, 'core/planos.html')
-def cadastre_se(request): return render(request, 'core/cadastre-se.html')
-def login_view(request): return render(request, 'core/login.html')
-def suporte(request): return render(request, 'core/suporte.html')
+@login_required
+def pagina_gerador(request):
+    # Verificação 1: O usuário tem um plano ativo?
+    tem_assinatura_ativa = Assinatura.objects.filter(usuario=request.user, status='ativo').exists()
+    if not tem_assinatura_ativa:
+        messages.warning(request, 'Você precisa de um plano ativo para acessar o gerador.')
+        return redirect('planos')
+
+    # --- INÍCIO DA NOVA VERIFICAÇÃO DE LIMITE ---
+
+    # Busca o limite no banco de dados
+    try:
+        config_limite = Configuracao.objects.get(nome='LIMITE_VIDEOS_MES')
+        limite_videos = int(config_limite.valor)
+    except (Configuracao.DoesNotExist, ValueError):
+        limite_videos = 100 # Usa 100 como padrão se a configuração não existir
+
+    # Conta quantos vídeos o usuário fez nos últimos 30 dias
+    trinta_dias_atras = timezone.now() - timedelta(days=30)
+    videos_criados = VideoGerado.objects.filter(usuario=request.user, criado_em__gte=trinta_dias_atras).count()
+
+    # Verificação 2: O usuário atingiu o limite?
+    if videos_criados >= limite_videos:
+        messages.error(request, f'Você atingiu seu limite de {limite_videos} vídeos por mês. Seu limite será renovado na sua próxima data de cobrança.')
+        return redirect('meu_perfil') # Redireciona para o perfil
+
+    # --- FIM DA VERIFICAÇÃO DE ASSINATURA ---
+
+    # Se o código chegou até aqui, o usuário tem permissão. A lógica do gerador continua.
+    if request.method == 'POST':
+        formset = GeradorFormSet(request.POST, request.FILES)
+        if formset.is_valid():
+            for form in formset:
+                if not form.has_changed():
+                    continue
+                
+                data = form.cleaned_data
+                caminho_narrador_input, timepoints, caminho_legenda_ass, caminho_imagem_texto, caminho_tela_final = None, None, None, None, None
+                
+                usar_narrador = data.get('tipo_conteudo') == 'narrador'
+                cor_selecionada_hex = data.get('cor_da_fonte', '#FFFFFF')
+                posicao_selecionada = data.get('posicao_texto', 'centro')
+                texto_tela_final = data.get('texto_tela_final')
+                
+                if usar_narrador and data.get('narrador_texto'):
+                    obter_tempos = data.get('legenda_sincronizada', False)
+                    caminho_narrador_input, timepoints = gerar_audio_e_tempos(
+                        data['narrador_texto'], data['narrador_voz'],
+                        data['narrador_velocidade'], data['narrador_tom'],
+                        obter_tempos=obter_tempos
+                    )
+                
+                if usar_narrador and data.get('legenda_sincronizada') and timepoints:
+                    caminho_legenda_ass = gerar_ficheiro_legenda_ass(timepoints, data['narrador_texto'], data, cor_selecionada_hex, posicao_selecionada)
+                
+                if not usar_narrador and data.get('texto_overlay'):
+                    caminho_imagem_texto = create_text_image(data['texto_overlay'], cor_selecionada_hex, data, posicao_selecionada)
+                
+                if texto_tela_final:
+                    opcoes_tela_final = {'texto_fonte': 'arial', 'texto_tamanho': 80}
+                    caminho_tela_final = create_text_image(texto_tela_final, '#FFFFFF', opcoes_tela_final, 'centro')
+
+                video_base = VideoBase.objects.filter(categoria=data['categoria_video']).order_by('?').first()
+                musica_base = MusicaBase.objects.filter(categoria=data['categoria_musica']).order_by('?').first()
+
+                if not video_base or not musica_base:
+                    messages.error(request, "Mídia de fundo (vídeo ou música) não encontrada para as categorias selecionadas.")
+                    continue
+
+                caminho_video_input = video_base.arquivo_video.path
+                caminho_musica_input = musica_base.arquivo_musica.path
+                
+                nome_base = f"video_{request.user.id}_{random.randint(10000, 99999)}"
+                caminho_video_final = os.path.join(settings.MEDIA_ROOT, 'videos_gerados', f"{nome_base}.mp4")
+                caminho_video_temp = os.path.join(settings.MEDIA_ROOT, 'videos_gerados', f"{nome_base}_temp.mp4")
+                caminho_tela_final_video = os.path.join(settings.MEDIA_ROOT, 'videos_gerados', f"{nome_base}_endscreen.mp4")
+                lista_concat_path = os.path.join(settings.MEDIA_ROOT, 'videos_gerados', f"{nome_base}_concat.txt")
+
+                try:
+                    cmd_etapa1 = ['ffmpeg', '-y']
+                    if usar_narrador or data.get('loop_video', False):
+                        cmd_etapa1.extend(['-stream_loop', '-1', '-i', caminho_video_input])
+                    else:
+                        cmd_etapa1.extend(['-i', caminho_video_input])
+                    
+                    inputs_adicionais_etapa1 = [caminho_musica_input]
+                    if caminho_imagem_texto: inputs_adicionais_etapa1.insert(0, caminho_imagem_texto)
+                    if caminho_narrador_input: inputs_adicionais_etapa1.append(caminho_narrador_input)
+
+                    for f in inputs_adicionais_etapa1: cmd_etapa1.extend(['-i', f])
+                        
+                    video_chain = "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1"
+                    if caminho_legenda_ass:
+                        caminho_legenda_ffmpeg = caminho_legenda_ass.replace('\\', '/').replace(':', '\\:')
+                        video_chain += f",ass='{caminho_legenda_ffmpeg}'"
+                    
+                    final_video_stream = "[v]"
+                    if caminho_imagem_texto:
+                        video_chain += f"[base];[base][1:v]overlay=(W-w)/2:(H-h)/2[v]"
+                    else:
+                        video_chain += "[v]"
+
+                    volume_musica_decimal = data.get('volume_musica', 50) / 100.0
+                    music_input_index = 1 + (1 if caminho_imagem_texto else 0)
+                    
+                    if caminho_narrador_input:
+                        narrator_input_index = music_input_index + 1
+                        audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[a1];[{narrator_input_index}:a]volume=1.0[a2];[a1][a2]amix=inputs=2:duration=longest[aout]"
+                    else:
+                        audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]"
+
+                    filter_complex_str = f"{video_chain};{audio_chain}"
+                    cmd_etapa1.extend(['-filter_complex', filter_complex_str, "-map", final_video_stream, "-map", "[aout]"])
+
+                    duracao_desejada = data.get('duracao_segundos', 30)
+                    if usar_narrador and timepoints:
+                        duracao_video = timepoints[-1].time_seconds + 1
+                        cmd_etapa1.extend(['-t', str(duracao_video)])
+                    else:
+                        cmd_etapa1.extend(['-t', str(duracao_desejada)])
+
+                    cmd_etapa1.extend(['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k'])
+                    cmd_etapa1.append(caminho_video_temp)
+                    
+                    subprocess.run(cmd_etapa1, check=True, text=True, capture_output=True, encoding='utf-8')
+
+                    if caminho_tela_final:
+                        duracao_tela_final = 3
+                        cmd_etapa2 = ['ffmpeg', '-y', '-loop', '1', '-t', str(duracao_tela_final), '-i', caminho_tela_final, '-f', 'lavfi', '-t', str(duracao_tela_final), '-i', 'anullsrc=channel_layout=stereo:sample_rate=44100', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-c:a', 'aac', '-b:a', '192k', '-shortest', caminho_tela_final_video]
+                        subprocess.run(cmd_etapa2, check=True, text=True, capture_output=True, encoding='utf-8')
+
+                        with open(lista_concat_path, 'w') as f:
+                            f.write(f"file '{caminho_video_temp.replace(os.sep, '/')}'\n")
+                            f.write(f"file '{caminho_tela_final_video.replace(os.sep, '/')}'\n")
+
+                        cmd_etapa3 = ['ffmpeg', '-y', '-f', 'concat', '-safe', '0', '-i', lista_concat_path, '-c', 'copy', caminho_video_final]
+                        subprocess.run(cmd_etapa3, check=True, text=True, capture_output=True, encoding='utf-8')
+                    else: 
+                        os.rename(caminho_video_temp, caminho_video_final)
+
+                    # Bloco de criação do VideoGerado corrigido
+                    dados_para_salvar = data.copy()
+                    if 'loop_video' in dados_para_salvar:
+                        dados_para_salvar['loop'] = dados_para_salvar.pop('loop_video')
+                    chaves_para_remover = ['tipo_conteudo', 'categoria_video', 'categoria_musica']
+                    for chave in chaves_para_remover:
+                        dados_para_salvar.pop(chave, None)
+
+                    VideoGerado.objects.create(
+                        usuario=request.user, status='CONCLUIDO',
+                        arquivo_final=os.path.join('videos_gerados', f"{nome_base}.mp4"),
+                        **dados_para_salvar
+                    )
+                    messages.success(request, f"Vídeo '{nome_base}.mp4' gerado com sucesso!")
+                    
+                except (subprocess.CalledProcessError, FileNotFoundError) as e:
+                    messages.error(request, "Ocorreu um erro ao gerar seu vídeo.")
+                    if isinstance(e, subprocess.CalledProcessError):
+                        print(f"Comando que falhou: {' '.join(e.cmd)}")
+                        print(f"Saída de Erro (stderr):\n{e.stderr}")
+                    
+                    dados_para_salvar = data.copy()
+                    if 'loop_video' in dados_para_salvar:
+                        dados_para_salvar['loop'] = dados_para_salvar.pop('loop_video')
+                    chaves_para_remover = ['tipo_conteudo', 'categoria_video', 'categoria_musica']
+                    for chave in chaves_para_remover:
+                        dados_para_salvar.pop(chave, None)
+                    VideoGerado.objects.create(usuario=request.user, status='ERRO', **dados_para_salvar)
+                
+                finally:
+                    for path in [caminho_narrador_input, caminho_legenda_ass, caminho_imagem_texto, caminho_tela_final, caminho_video_temp, caminho_tela_final_video, lista_concat_path]:
+                        if path and os.path.exists(path):
+                            os.remove(path)
+            
+            return redirect('meus_videos')
+    else:
+        formset = GeradorFormSet()
+    
+    return render(request, 'core/gerador.html', {'formset': formset})
+
+
+# ==============================================================================
+# PAINEL DE ADMINISTRAÇÃO CUSTOMIZADO (PROTEGIDO)
+# ==============================================================================
+
+@login_required
+@user_passes_test(is_admin)
+def admin_assinaturas(request):
+    assinaturas = Assinatura.objects.select_related('usuario', 'plano').all()
+    return render(request, 'core/user/admin_assinaturas.html', {'assinaturas': assinaturas})
+
+
+
+# Em seu arquivo core/views.py
+
+# Certifique-se de que 'os' está importado no topo do seu arquivo
+
+
+# ... (resto dos seus imports e views)
+
+@login_required
+def planos(request):
+    # Verifica se o usuário tem um plano ativo
+    if request.user.plano_ativo:
+        # Busca a assinatura ativa mais recente do usuário no banco de dados
+        assinatura_ativa = Assinatura.objects.filter(usuario=request.user, status='ativo').order_by('-data_inicio').first()
+        
+        context = {
+            'assinatura': assinatura_ativa
+        }
+        # ATENÇÃO: Verifique o caminho correto do seu template.
+        # Pode ser 'core/planos/plano_ativo.html' ou apenas 'plano_ativo.html' dependendo da sua estrutura
+        return render(request, 'core/planos/plano_ativo.html', context)
+    
+    # Se não tiver plano ativo, mostra a página normal para assinar
+    context = {
+        'stripe_publishable_key': os.getenv("STRIPE_PUBLISHABLE_KEY")
+    }
+    return render(request, 'core/planos/planos.html', context)
+@login_required
+@user_passes_test(is_admin)
+def ativar_assinatura(request, id):
+    assinatura = get_object_or_404(Assinatura, id=id)
+    assinatura.status = 'ativo'
+    assinatura.save()
+    messages.success(request, f"Assinatura de {assinatura.usuario.username} ativada.")
+    return redirect('admin_assinaturas')
+
+@login_required
+@user_passes_test(is_admin)
+def cancelar_assinatura(request, id):
+    assinatura = get_object_or_404(Assinatura, id=id)
+    assinatura.status = 'cancelado'
+    assinatura.save()
+    messages.warning(request, f"Assinatura de {assinatura.usuario.username} cancelada.")
+    return redirect('admin_assinaturas')
+
+@login_required
+@user_passes_test(is_admin)
+def editar_assinatura(request, id):
+    assinatura = get_object_or_404(Assinatura, id=id)
+    if request.method == "POST":
+        form = EditarAssinaturaForm(request.POST, instance=assinatura)
+        if form.is_valid():
+            form.save()
+            messages.info(request, "Assinatura atualizada com sucesso.")
+            return redirect('admin_assinaturas')
+    else:
+        form = EditarAssinaturaForm(instance=assinatura)
+        
+    contexto = {
+        'form': form,
+        'assinatura': assinatura
+    }
+    return render(request, 'core/user/editar_assinatura.html', contexto)
+
+@login_required
+@user_passes_test(is_admin)
+def excluir_assinatura(request, id):
+    assinatura = get_object_or_404(Assinatura, id=id)
+    assinatura.delete()
+    messages.error(request, "Assinatura excluída.")
+    return redirect('admin_assinaturas')
+
+# Em core/views.py
+
+@login_required
+@user_passes_test(is_admin)
+def admin_usuarios(request):
+    # Calcula a data de 30 dias atrás a partir de hoje
+    trinta_dias_atras = timezone.now() - timedelta(days=30)
+
+    # A mágica acontece aqui: .annotate() adiciona um novo campo temporário
+    # 'videos_no_mes' a cada usuário, contando apenas os vídeos criados
+    # nos últimos 30 dias.
+    usuarios = User.objects.prefetch_related('assinatura_set').annotate(
+        videos_no_mes=Count('videogerado', filter=Q(videogerado__criado_em__gte=trinta_dias_atras))
+    ).order_by('-date_joined')
+
+    contexto = {
+        'usuarios': usuarios
+    }
+    return render(request, 'core/user/admin_usuarios.html', contexto)
+
+@login_required
+@user_passes_test(is_admin)
+def editar_usuario(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    assinatura = Assinatura.objects.filter(usuario=user).order_by('-data_inicio').first()
+
+    if request.method == 'POST':
+        form = AdminUsuarioForm(request.POST)
+        if form.is_valid():
+            # Atualiza os dados do Usuário
+            user.username = form.cleaned_data['username']
+            user.email = form.cleaned_data['email']
+            user.is_staff = form.cleaned_data['is_staff']
+            user.save()
+
+            # Lógica para gerenciar a Assinatura
+            plano_selecionado = form.cleaned_data['plano']
+            status_selecionado = form.cleaned_data['status']
+
+            if plano_selecionado:
+                # --- INÍCIO DA ATUALIZAÇÃO ---
+                # Busca a duração da assinatura no banco de dados
+                try:
+                    config_duracao = Configuracao.objects.get(nome='DURACAO_ASSINATURA_DIAS')
+                    # Converte o valor (que é texto) para um número inteiro
+                    duracao_dias = int(config_duracao.valor)
+                except (Configuracao.DoesNotExist, ValueError):
+                    # Se não encontrar ou o valor não for um número, usa 30 como padrão
+                    duracao_dias = 30
+                # --- FIM DA ATUALIZAÇÃO ---
+
+                if assinatura:
+                    # Se já existe uma assinatura, atualiza
+                    assinatura.plano = plano_selecionado
+                    assinatura.status = status_selecionado
+                    if status_selecionado == 'ativo':
+                        # Usa a duração vinda do banco de dados
+                        assinatura.data_expiracao = timezone.now() + timedelta(days=duracao_dias)
+                    assinatura.save()
+                else:
+                    # Se não existe e um plano foi selecionado, cria uma nova
+                    Assinatura.objects.create(
+                        usuario=user,
+                        plano=plano_selecionado,
+                        status=status_selecionado,
+                        data_inicio=timezone.now(),
+                        # Usa a duração vinda do banco de dados
+                        data_expiracao=timezone.now() + timedelta(days=duracao_dias)
+                    )
+                messages.success(request, f'Assinatura de {user.username} atualizada.')
+            
+            elif assinatura:
+                assinatura.status = 'cancelado'
+                assinatura.save()
+                messages.warning(request, f'Assinatura de {user.username} cancelada.')
+
+            messages.success(request, f'Usuário "{user.username}" atualizado com sucesso!')
+            return redirect('admin_usuarios')
+    else:
+        initial_data = {
+            'username': user.username,
+            'email': user.email,
+            'is_staff': user.is_staff
+        }
+        if assinatura:
+            initial_data['plano'] = assinatura.plano
+            initial_data['status'] = assinatura.status
+        
+        form = AdminUsuarioForm(initial=initial_data)
+        
+    contexto = {
+        'form': form,
+        'usuario_editando': user,
+        'assinatura': assinatura
+    }
+    return render(request, 'core/user/editar_usuario.html', contexto)
+
+@login_required
+@user_passes_test(is_admin)
+def deletar_usuario(request, user_id):
+    user = get_object_or_404(User, id=user_id)
+    user.delete()
+    messages.error(request, "Usuário excluído.")
+    return redirect('admin_usuarios')
+
+@login_required
+@user_passes_test(is_admin)
+def admin_configuracoes(request):
+    configuracoes = Configuracao.objects.all()
+    return render(request, 'core/user/admin_configuracoes.html', {'configuracoes': configuracoes})
+
+@login_required
+@user_passes_test(is_admin)
+def adicionar_configuracao(request):
+    if request.method == "POST":
+        form = ConfiguracaoForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Nova configuração salva com sucesso.")
+            return redirect('admin_configuracoes')
+    else:
+        form = ConfiguracaoForm()
+    contexto = {'form': form}
+    return render(request, 'core/user/adicionar_configuracao.html', contexto)
+
+@login_required
+@user_passes_test(is_admin)
+def editar_configuracao(request, id):
+    config = get_object_or_404(Configuracao, id=id)
+    if request.method == "POST":
+        form = ConfiguracaoForm(request.POST, instance=config)
+        if form.is_valid():
+            form.save()
+            messages.info(request, "Configuração atualizada com sucesso.")
+            return redirect('admin_configuracoes')
+    else:
+        form = ConfiguracaoForm(instance=config)
+        
+    contexto = {
+        'form': form,
+        'config': config
+    }
+    return render(request, 'core/user/editar_configuracao.html', contexto)
+
+@login_required
+@user_passes_test(is_admin)
+def deletar_configuracao(request, id):
+    config = get_object_or_404(Configuracao, id=id)
+    if request.method == "POST":
+        config.delete()
+        messages.error(request, f"A configuração '{config.nome}' foi excluída.")
+        return redirect('admin_configuracoes')
+    
+    # Se a requisição for GET, mostra uma página de confirmação
+    contexto = {'item': config}
+    return render(request, 'core/user/confirmar_exclusao.html', contexto)
+
+@login_required
+@user_passes_test(is_admin)
+def admin_pagamentos(request):
+    pagamentos = Pagamento.objects.select_related('usuario', 'plano').all()
+    return render(request, 'core/user/admin_pagamentos.html', {'pagamentos': pagamentos})
+
+@login_required
+@user_passes_test(is_admin)
+def aprovar_pagamento(request, id):
+    pagamento = get_object_or_404(Pagamento, id=id)
+    pagamento.status = 'aprovado'
+    pagamento.save()
+    messages.success(request, "Pagamento aprovado.")
+    return redirect('admin_pagamentos')
+
+@login_required
+@user_passes_test(is_admin)
+def recusar_pagamento(request, id):
+    pagamento = get_object_or_404(Pagamento, id=id)
+    pagamento.status = 'recusado'
+    pagamento.save()
+    messages.warning(request, "Pagamento recusado.")
+    return redirect('admin_pagamentos')
+
+@login_required
+@user_passes_test(is_admin)
+def deletar_pagamento(request, id):
+    pagamento = get_object_or_404(Pagamento, id=id)
+    pagamento.delete()
+    messages.error(request, "Pagamento excluído.")
+    return redirect('admin_pagamentos')
+
+@login_required
+@user_passes_test(is_admin)
+def admin_relatorios(request):
+    # Usando select_related para otimizar a busca no banco de dados
+    assinaturas = Assinatura.objects.select_related('usuario', 'plano').order_by('-data_inicio')
+    pagamentos = Pagamento.objects.select_related('usuario', 'plano').order_by('-data_pagamento')
+    
+    context = {
+        'assinaturas': assinaturas,
+        'pagamentos': pagamentos,
+    }
+    return render(request, 'core/user/admin_relatorios.html', context)
+@login_required
+def pagamento_sucesso(request):
+    """
+    Apenas exibe uma mensagem de sucesso. A ativação real do plano é feita pelo webhook.
+    """
+    messages.success(request, "Pagamento recebido com sucesso! Seu plano será ativado em instantes.")
+    return render(request, 'core/pagamento_sucesso.html')
+@login_required
+def criar_checkout_session(request):
+    """
+    Cria uma sessão de checkout no Stripe para o usuário logado assinar o plano.
+    """
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    try:
+        # Pega o primeiro plano disponível. Ideal para quando se tem apenas um plano.
+        # Se tiver múltiplos planos, você precisará de uma lógica para identificar qual plano o usuário escolheu.
+        plano = Plano.objects.first()
+        if not plano:
+            messages.error(request, "Nenhum plano de assinatura foi configurado no sistema.")
+            return redirect('planos')
+
+        # 1. Busca o ID do cliente no Stripe (se não tiver, cria um novo)
+        stripe_customer_id = request.user.stripe_customer_id
+        if not stripe_customer_id:
+            customer = stripe.Customer.create(
+                email=request.user.email,
+                name=request.user.username
+            )
+            request.user.stripe_customer_id = customer.id
+            request.user.save()
+            stripe_customer_id = customer.id
+
+        # 2. Define as URLs de sucesso e cancelamento
+        success_url = request.build_absolute_uri(reverse('pagamento_sucesso'))
+        cancel_url = request.build_absolute_uri(reverse('planos'))
+
+        # 3. Cria a sessão de Checkout no Stripe
+        checkout_session = stripe.checkout.Session.create(
+            customer=stripe_customer_id,
+            payment_method_types=['card'],
+            line_items=[{
+                'price': settings.STRIPE_PRICE_ID, # O ID do preço do seu plano no Stripe
+                'quantity': 1,
+            }],
+            mode='subscription',
+            success_url=success_url,
+            cancel_url=cancel_url,
+            # ADICIONADO: Envia o ID do nosso plano para o webhook
+            metadata={
+                'plano_id': plano.id
+            }
+        )
+        
+        return redirect(checkout_session.url, code=303)
+
+    except Exception as e:
+        messages.error(request, "Não foi possível iniciar o processo de pagamento. Tente novamente mais tarde.")
+        print(f"Erro do Stripe ao criar checkout: {e}")
+        return redirect(reverse('planos'))
+
+    
+
+    return render(request, 'core/user/admin_relatorios.html', context)

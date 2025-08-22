@@ -824,3 +824,917 @@ body {
     border-top: 1px solid #222;
     font-size: 0.9em;
 }
+
+
+/*painel administrativo ------------------------------------------------------------
+
+/* ====== Layout geral ====== */
+.admin-dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* ====== Sidebar ====== */
+.sidebar {
+    width: 240px;
+    background: linear-gradient(145deg, #1a1a1a, #0d0d0d);
+    color: #fff;
+    padding: 25px 15px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+}
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+.sidebar-logo {
+    font-size: 1.4em;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #c99e63;
+}
+.sidebar nav ul {
+    list-style: none;
+    padding: 0;
+}
+.sidebar nav ul li {
+    margin: 15px 0;
+}
+.sidebar nav ul li a {
+    color: #ccc;
+    text-decoration: none;
+    display: block;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+.sidebar nav ul li a:hover,
+.sidebar nav ul li a.active {
+    background: #c99e63;
+    color: #000;
+    font-weight: 600;
+}
+
+/* ====== Conteúdo ====== */
+.dashboard-content {
+    flex: 1;
+    padding: 40px;
+    color: #f0f0f0;
+}
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+.dashboard-header h1 {
+    font-size: 1.8em;
+    font-weight: 700;
+    color: #fff;
+}
+.btn-cta {
+    background: transparent;
+    border: 2px solid #c99e63;
+    color: #c99e63;
+    padding: 10px 20px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+.btn-cta:hover {
+    background: #c99e63;
+    color: #000;
+    box-shadow: 0 0 15px rgba(201, 158, 99, 0.4);
+}
+
+/* ====== Tabela ====== */
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 10px;
+    overflow: hidden;
+    background: rgba(20, 20, 20, 0.9);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.6);
+}
+.admin-table th, .admin-table td {
+    padding: 14px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.admin-table th {
+    background: #111;
+    color: #c99e63;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85em;
+}
+.admin-table tr:hover {
+    background: rgba(255,255,255,0.05);
+    transition: 0.3s;
+}
+
+/* ====== Status ====== */
+.status {
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    font-size: 0.8em;
+}
+.status.ativo { background: #28a745; color: #fff; }
+.status.pendente { background: #ffc107; color: #000; }
+.status.cancelado { background: #dc3545; color: #fff; }
+
+/* ====== Botões ====== */
+.actions {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.btn-action {
+    padding: 6px 12px;
+    border-radius: 6px;
+    background: #007bff;
+    color: #fff;
+    text-decoration: none;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+}
+.btn-action:hover { opacity: 0.8; }
+.btn-action.cancel { background: #dc3545; }
+.btn-action.edit { background: #ffc107; color: #000; }
+.btn-action.delete { background: #6c757d; }
+
+
+
+/* ----------------------------
+   Estilo geral do Painel
+---------------------------- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #121212;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+/* ----------------------------
+   Dashboard e Layout
+---------------------------- */
+.admin-dashboard {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #1f1f1f;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-logo {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 30px;
+    text-align: center;
+    color: #ff3c3c;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin-bottom: 15px;
+}
+
+.sidebar ul li a {
+    display: block;
+    padding: 10px 15px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.sidebar ul li a.active,
+.sidebar ul li a:hover {
+    background-color: #ff3c3c;
+    color: #fff;
+}
+
+/* ----------------------------
+   Conteúdo Principal
+---------------------------- */
+.dashboard-content {
+    flex: 1;
+    padding: 30px;
+    background-color: #181818;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.dashboard-header h1 {
+    font-size: 28px;
+}
+
+.btn-add {
+    background-color: #ff3c3c;
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+
+.btn-add:hover {
+    background-color: #e03535;
+}
+
+/* ----------------------------
+   Tabela
+---------------------------- */
+.dashboard-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #222;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    padding: 12px 15px;
+    text-align: left;
+}
+
+.dashboard-table th {
+    background-color: #1f1f1f;
+    font-weight: bold;
+}
+
+.dashboard-table tr:nth-child(even) {
+    background-color: #1a1a1a;
+}
+
+.status {
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.status.ativo {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.status.pendente {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.status.cancelado {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+/* ----------------------------
+   Botões de ação na tabela
+---------------------------- */
+.btn-action {
+    display: inline-block;
+    padding: 5px 10px;
+    margin-right: 5px;
+    border-radius: 5px;
+    font-size: 12px;
+    color: #fff;
+    background-color: #007bff;
+    transition: background 0.2s;
+}
+
+.btn-action.edit {
+    background-color: #17a2b8;
+}
+
+.btn-action.cancel {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.btn-action.delete {
+    background-color: #dc3545;
+}
+
+.btn-action:hover {
+    opacity: 0.85;
+}
+
+/* ----------------------------
+   Responsividade
+---------------------------- */
+@media screen and (max-width: 900px) {
+    .admin-dashboard {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .sidebar ul {
+        display: flex;
+        flex-direction: row;
+    }
+
+    .sidebar ul li {
+        margin-right: 10px;
+    }
+
+    .dashboard-content {
+        padding: 20px;
+    }
+
+    .dashboard-table table,
+    .dashboard-table th,
+    .dashboard-table td {
+        font-size: 12px;
+    }
+}
+
+
+/* ===========================
+   Painel Administrativo
+   =========================== */
+
+   .admin-dashboard {
+    display: flex;
+    min-height: 100vh;
+    font-family: 'Arial', sans-serif;
+    background-color: #121212;
+    color: #fff;
+}
+
+/* ---------------------------
+   Sidebar
+--------------------------- */
+.sidebar {
+    width: 220px;
+    background-color: #1f1f1f;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-logo {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.sidebar nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar nav ul li {
+    margin-bottom: 15px;
+}
+
+.sidebar nav ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-size: 16px;
+    display: block;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.sidebar nav ul li a.active,
+.sidebar nav ul li a:hover {
+    background-color: #e50914;
+    color: #fff;
+}
+
+/* ---------------------------
+   Dashboard Content
+--------------------------- */
+.dashboard-content {
+    flex: 1;
+    padding: 30px;
+    background-color: #181818;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.dashboard-header h1 {
+    font-size: 28px;
+    margin: 0;
+}
+
+.btn-add {
+    background-color: #e50914;
+    color: #fff;
+    padding: 10px 18px;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: opacity 0.2s;
+}
+
+.btn-add:hover {
+    opacity: 0.85;
+}
+
+/* ---------------------------
+   Tables
+--------------------------- */
+.dashboard-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.dashboard-table th,
+.dashboard-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #333;
+    text-align: left;
+}
+
+.dashboard-table th {
+    background-color: #1f1f1f;
+}
+
+.dashboard-table tr:hover {
+    background-color: #252525;
+}
+
+/* Status */
+.status {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.status.ativo {
+    background-color: #28a745;
+    color: #fff;
+}
+
+.status.pendente {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.status.cancelado {
+    background-color: #dc3545;
+    color: #fff;
+}
+
+/* Action Buttons */
+.btn-action {
+    padding: 5px 10px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 14px;
+    margin-right: 5px;
+    transition: opacity 0.2s;
+    background-color: #444;
+    color: #fff;
+}
+
+.btn-action.edit {
+    background-color: #007bff;
+}
+
+.btn-action.cancel {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.btn-action.delete {
+    background-color: #dc3545;
+}
+
+.btn-action:hover {
+    opacity: 0.85;
+}
+
+
+/* Painel de relatorios
+
+/* ===============================
+   ESTILO GERAL DO DASHBOARD
+   =============================== */
+   .admin-dashboard {
+    display: flex;
+    font-family: 'Arial', sans-serif;
+    background-color: #1c1c1c;
+    min-height: 100vh;
+    color: #fff;
+}
+
+/* -------------------------------
+   SIDEBAR
+   ------------------------------- */
+.sidebar {
+    width: 220px;
+    background-color: #111;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.sidebar-logo {
+    font-size: 24px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+    color: #e74c3c;
+}
+
+.sidebar nav ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar nav ul li {
+    margin-bottom: 15px;
+}
+
+.sidebar nav ul li a {
+    text-decoration: none;
+    color: #fff;
+    font-size: 16px;
+    display: block;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.3s;
+}
+
+.sidebar nav ul li a.active,
+.sidebar nav ul li a:hover {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+/* -------------------------------
+   CONTEÚDO PRINCIPAL
+   ------------------------------- */
+.dashboard-content {
+    flex: 1;
+    padding: 30px;
+    background-color: #2c2c2c;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.dashboard-header h1 {
+    font-size: 28px;
+    color: #e74c3c;
+}
+
+.dashboard-header .btn-add {
+    text-decoration: none;
+    padding: 8px 15px;
+    background-color: #e74c3c;
+    color: #fff;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.dashboard-header .btn-add:hover {
+    background-color: #c0392b;
+}
+
+/* -------------------------------
+   TABELAS
+   ------------------------------- */
+.dashboard-table h2 {
+    color: #fff;
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+.dashboard-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+    background-color: #1f1f1f;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.dashboard-table table thead {
+    background-color: #e74c3c;
+}
+
+.dashboard-table table thead th {
+    color: #fff;
+    padding: 12px;
+    text-align: left;
+}
+
+.dashboard-table table tbody td {
+    padding: 12px;
+    border-bottom: 1px solid #333;
+}
+
+.dashboard-table table tbody tr:hover {
+    background-color: #3a3a3a;
+}
+
+.dashboard-table table tbody td a {
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    color: #fff;
+    font-size: 14px;
+    margin-right: 5px;
+}
+
+.dashboard-table table tbody td a.edit {
+    background-color: #3498db;
+}
+
+.dashboard-table table tbody td a.delete {
+    background-color: #e74c3c;
+}
+
+.dashboard-table table tbody td a.approve {
+    background-color: #2ecc71;
+}
+
+.dashboard-table table tbody td a.reject {
+    background-color: #f39c12;
+}
+
+/* -------------------------------
+   STATUS
+   ------------------------------- */
+.status {
+    padding: 4px 10px;
+    border-radius: 5px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.status.ativo {
+    background-color: #2ecc71;
+}
+
+.status.pendente {
+    background-color: #f39c12;
+}
+
+.status.cancelado {
+    background-color: #e74c3c;
+}
+
+/* -------------------------------
+   RESPONSIVO
+   ------------------------------- */
+@media (max-width: 1024px) {
+    .admin-dashboard {
+        flex-direction: column;
+    }
+
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        overflow-x: auto;
+    }
+
+    .dashboard-content {
+        padding: 20px;
+    }
+
+    .dashboard-table table,
+    .dashboard-table table thead,
+    .dashboard-table table tbody,
+    .dashboard-table table th,
+    .dashboard-table table td,
+    .dashboard-table table tr {
+        display: block;
+    }
+
+    .dashboard-table table thead {
+        display: none;
+    }
+
+    .dashboard-table table tbody tr {
+        margin-bottom: 15px;
+        background-color: #2c2c2c;
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    .dashboard-table table tbody td {
+        text-align: right;
+        padding-left: 50%;
+        position: relative;
+    }
+
+    .dashboard-table table tbody td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        font-weight: bold;
+        color: #e74c3c;
+        text-align: left;
+    }
+}
+
+/* =================================================================== */
+/* ===== ESTILOS UNIFICADOS PARA PAINEL DE ADMIN E DE USUÁRIO ===== */
+/* =================================================================== */
+
+/* --- Layout Geral do Painel --- */
+.admin-dashboard {
+    display: flex;
+    min-height: 100vh;
+    background: linear-gradient(145deg, #1e1e1e 0%, #111111 100%); /* Fundo mais suave */
+}
+
+/* --- Barra Lateral (Sidebar) --- */
+.sidebar {
+    width: 240px;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a); /* Fundo de card */
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 25px 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-logo {
+    font-size: 1.5em;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 30px;
+    color: #c99e63; /* << COR CORRIGIDA */
+    letter-spacing: 2px;
+}
+
+.sidebar nav ul li a {
+    color: #ccc;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    padding: 12px 15px;
+    display: flex; /* Para alinhar ícone e texto */
+    align-items: center;
+    gap: 10px; /* Espaço entre ícone e texto */
+}
+
+.sidebar nav ul li a:hover,
+.sidebar nav ul li a.active {
+    background: #c99e63; /* << COR CORRIGIDA */
+    color: #000;
+    font-weight: 600;
+}
+
+/* --- Conteúdo Principal do Painel --- */
+.dashboard-content {
+    flex: 1;
+    padding: 40px;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 20px;
+}
+
+.dashboard-header h1 {
+    font-size: 2em;
+    font-weight: 700;
+    color: #ffffff; /* << COR CORRIGIDA */
+}
+
+.btn-add {
+    background: transparent;
+    border: 2px solid #c99e63; /* << COR CORRIGIDA */
+    color: #c99e63; /* << COR CORRIGIDA */
+    padding: 10px 20px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-size: 0.9em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-add:hover {
+    background: #c99e63; /* << COR CORRIGIDA */
+    color: #000;
+    box-shadow: 0 0 15px rgba(201, 158, 99, 0.4);
+}
+
+/* --- Tabelas do Painel --- */
+.dashboard-table table {
+    width: 100%;
+    border-collapse: collapse;
+    background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-table th {
+    padding: 15px;
+    text-align: left;
+    background-color: rgba(0,0,0,0.2);
+    color: #c99e63; /* << COR CORRIGIDA */
+    text-transform: uppercase;
+    font-size: 0.8em;
+    letter-spacing: 1px;
+}
+
+.dashboard-table td {
+    padding: 15px;
+    text-align: left;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dashboard-table tr:hover {
+    background-color: rgba(201, 158, 99, 0.05);
+}
+
+
+/* --- Botões de Ação na Tabela --- */
+.btn-action.edit {
+    background-color: #c99e63; /* << COR CORRIGIDA */
+    color: #000;
+}
+
+.btn-action.delete {
+    background-color: #dc3545; /* Mantemos o vermelho para "Deletar" por ser intuitivo */
+    color: #fff;
+}
+
+/* =================================================================== */
+/* ===== ESTILOS PARA FORMULÁRIOS NOS PAINÉIS (VERSÃO FINAL) ===== */
+/* =================================================================== */
+
+/* Define o estilo para os campos de formulário que usam a classe 'form-control'
+   (Nós definimos essa classe nos widgets do forms.py) */
+   .form-control {
+    width: 100%;
+    padding: 15px;
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1em;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #c99e63;
+    box-shadow: 0 0 10px rgba(201, 158, 99, 0.3);
+}
+
+/* Estilo para o grupo do checkbox 'É administrador?' */
+.form-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 10px;
+}
+
+
+

@@ -1,0 +1,44 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Editar Perfil - L.E DARK{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">{{ user.username }}</h2>
+        <nav>
+            <ul>
+                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic"></i> Gerador</a></li>
+                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video"></i> Meus Vídeos</a></li>
+                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle"></i> Meu Perfil</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Editar Meu Perfil</h1>
+        </header>
+
+        <section class="signup-form-wrapper" style="max-width: 100%; animation: none;">
+            <form method="POST" class="signup-form">
+                {% csrf_token %}
+                
+                {% for field in form %}
+                <div class="input-group">
+                    {{ field }}
+                </div>
+                {% for error in field.errors %}
+                    <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px;">{{ error }}</p>
+                {% endfor %}
+                {% endfor %}
+
+                <button type="submit" class="btn-signup">Salvar Alterações</button>
+                <a href="{% url 'meu_perfil' %}" class="btn-action cancel" style="display: block; text-align: center; margin-top: 15px; background-color: #6c757d;">Cancelar</a>
+            </form>
+        </section>
+    </main>
+</div>
+{% endblock %}

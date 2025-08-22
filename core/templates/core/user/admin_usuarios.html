@@ -1,0 +1,70 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Painel de Usuários - L.E DARK{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+
+    <aside class="sidebar">
+        <h2 class="sidebar-logo">L.E DARK</h2>
+        <nav>
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
+                <li class="active"><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}">💳 Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}">📊 Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Gerenciamento de Usuários</h1>
+            <a href="{% url 'admin:core_usuario_add' %}" class="btn-add" target="_blank">+ Novo Usuário</a>
+        </header>
+
+        <section class="dashboard-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Email</th>
+                        <th>Plano</th>
+                        <th>Status Assinatura</th>
+                        <th>Vídeos Criados (30d)</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in usuarios %}
+                    <tr>
+                        <td>{{ user.username }}</td>
+                        <td>{{ user.email }}</td>
+
+                        {% with assinatura=user.assinatura_set.first %}
+                            {% if assinatura %}
+                                <td>{{ assinatura.plano.nome }}</td>
+                                <td><span class="status {{ assinatura.status }}">{{ assinatura.get_status_display }}</span></td>
+                            {% else %}
+                                <td colspan="2" style="text-align: center; color: #888;">Sem Assinatura</td>
+                            {% endif %}
+                        {% endwith %}
+
+                        <td>{{ user.videos_no_mes }} / 100</td>
+
+                        <td>
+                            <a href="{% url 'editar_usuario' user.id %}" class="btn-action edit">Editar</a>
+                            <a href="{% url 'deletar_usuario' user.id %}" class="btn-action delete">Deletar</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6">Nenhum usuário encontrado.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+    </main>
+</div>
+{% endblock %}
