@@ -15,8 +15,7 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('suporte/', views.suporte, name='suporte'),
     path('admin/', admin.site.urls),
-    
-
+    path('stripe-webhook/', views.stripe_webhook, name='stripe-webhook'), 
     # ----------------------------
     # Painel administrativo
     # ----------------------------
@@ -63,6 +62,10 @@ urlpatterns = [
       # URL DE AUTENTICAÇÃO E PERFIL
     path('logout/', views.logout_view, name='logout'),
     path('perfil/', views.meu_perfil, name='meu_perfil'), # <--- CORRIGIDO
+
+
+
+    
 
     # URL para o preview da voz
     path('preview-voz/<str:nome_da_voz>/', views.preview_voz, name='preview_voz'),

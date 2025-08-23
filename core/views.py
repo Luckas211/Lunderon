@@ -297,18 +297,19 @@ def stripe_webhook(request):
         event = stripe.Webhook.construct_event(
             payload, sig_header, endpoint_secret
         )
+        print(f"✅ Webhook recebido: Evento {event['type']}")
     except (ValueError, stripe.error.SignatureVerificationError) as e:
-        # Payload ou assinatura inválida
+        print(f"🚨 ERRO no webhook: Payload ou assinatura inválida. Detalhes: {e}")
         return HttpResponse(status=400)
 
-    # --- LÓGICA DE PAGAMENTO BEM-SUCEDIDO ---
+    # --- LÓGICA DE PAGAMENTO BEM-SUCEDIDO (CRIAÇÃO INICIAL) ---
     if event['type'] == 'checkout.session.completed':
         session = event['data']['object']
         
         stripe_customer_id = session.get('customer')
         stripe_subscription_id = session.get('subscription')
         plano_id = session.get('metadata', {}).get('plano_id')
-        valor_pago = session.get('amount_total', 0) # Pega o valor total pago
+        valor_pago = session.get('amount_total', 0) / 100  # Divide por 100 para converter centavos em reais
 
         try:
             usuario = Usuario.objects.get(stripe_customer_id=stripe_customer_id)
@@ -319,22 +320,23 @@ def stripe_webhook(request):
             usuario.stripe_subscription_id = stripe_subscription_id
             usuario.save()
 
-            # 2. Cria o registro da Assinatura
-            Assinatura.objects.create(
+            # 2. Cria o registro da Assinatura (evita duplicatas checando se já existe)
+            Assinatura.objects.get_or_create(
                 usuario=usuario,
                 plano=plano,
-                status='ativo',
-                data_inicio=timezone.now(),
-                data_expiracao=timezone.now() + timedelta(days=30)
+                defaults={
+                    'status': 'ativo',
+                    'data_inicio': timezone.now(),
+                    'data_expiracao': timezone.now() + timedelta(days=30)
+                }
             )
             
             # 3. CRIA O REGISTRO DO PAGAMENTO
             Pagamento.objects.create(
                 usuario=usuario,
                 plano=plano,
-                valor=plano.preco, # Usa o preço do plano
+                valor=valor_pago,  # Usa valor real
                 status='aprovado'
-                # data_pagamento é preenchido automaticamente
             )
             
             print(f"✅ Assinatura e Pagamento registrados com sucesso para: {usuario.email}")
@@ -343,36 +345,63 @@ def stripe_webhook(request):
             print(f"🚨 ERRO no webhook: Usuário ou Plano não encontrado. Detalhes: {e}")
             return HttpResponse(status=404)
 
+    # --- LÓGICA DE RENOVAÇÃO (PAGAMENTOS RECORRENTES) ---
+    elif event['type'] == 'invoice.paid':
+        invoice = event['data']['object']
+        stripe_subscription_id = invoice.get('subscription')
+        valor_pago = invoice.get('amount_paid', 0) / 100
+
+        if stripe_subscription_id:
+            try:
+                usuario = Usuario.objects.get(stripe_subscription_id=stripe_subscription_id)
+                assinatura_ativa = Assinatura.objects.filter(usuario=usuario, status='ativo').last()
+                if not assinatura_ativa:
+                    raise Assinatura.DoesNotExist("Nenhuma assinatura ativa encontrada.")
+
+                # 1. Estende a data de expiração
+                assinatura_ativa.data_expiracao = (assinatura_ativa.data_expiracao or timezone.now()) + timedelta(days=30)
+                assinatura_ativa.save()
+
+                # 2. Garante que o plano continua ativo
+                usuario.plano_ativo = True
+                usuario.save()
+
+                # 3. Cria um novo registro de Pagamento
+                Pagamento.objects.create(
+                    usuario=usuario,
+                    plano=assinatura_ativa.plano,
+                    valor=valor_pago,
+                    status='aprovado'
+                )
+
+                print(f"✅ Renovação processada para: {usuario.email}. Nova expiração: {assinatura_ativa.data_expiracao}")
+
+            except (Usuario.DoesNotExist, Assinatura.DoesNotExist) as e:
+                print(f"🚨 ERRO no webhook (invoice.paid): {e}")
+                return HttpResponse(status=404)
+
     # --- LÓGICA DE CANCELAMENTO ---
-    if event['type'] == 'customer.subscription.deleted':
-        # ... (a lógica de cancelamento que já tínhamos continua aqui) ...
-
-        return HttpResponse(status=200)
-
-    # --- LÓGICA DE CANCELAMENTO DA ASSINATURA ---
-    # Este evento é chamado quando uma assinatura é cancelada pelo usuário ou por falta de pagamento.
-    if event['type'] == 'customer.subscription.deleted':
+    elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
         stripe_subscription_id = subscription.get('id')
 
         try:
-            # Encontra o usuário pela ID da assinatura
             usuario = Usuario.objects.get(stripe_subscription_id=stripe_subscription_id)
 
-            # 1. Desativa o plano no modelo do usuário
+            # 1. Desativa o plano no usuário
             usuario.plano_ativo = False
             usuario.save()
             
-            # 2. Atualiza o status da assinatura mais recente para 'cancelado'
+            # 2. Atualiza assinatura para 'cancelado'
             assinatura_recente = Assinatura.objects.filter(usuario=usuario, status='ativo').last()
             if assinatura_recente:
                 assinatura_recente.status = 'cancelado'
                 assinatura_recente.save()
 
-            print(f"✅ Assinatura cancelada com sucesso para o usuário: {usuario.email}")
+            print(f"✅ Assinatura cancelada para: {usuario.email}")
 
-        except Usuario.DoesNotExist:
-            print(f"🚨 ERRO no webhook (customer.subscription.deleted): Usuário não encontrado para a assinatura {stripe_subscription_id}")
+        except Usuario.DoesNotExist as e:
+            print(f"🚨 ERRO no webhook (subscription.deleted): {e}")
             return HttpResponse(status=404)
 
     return HttpResponse(status=200)
@@ -924,6 +953,10 @@ def pagamento_sucesso(request):
     return render(request, 'core/pagamento_sucesso.html')
 @login_required
 def criar_checkout_session(request):
+
+    if request.user.plano_ativo:
+        messages.warning(request, "Você já possui um plano ativo.")
+        return redirect('plano_ativo')  # Assuma que você tem uma view/template para isso, ou crie
     """
     Cria uma sessão de checkout no Stripe para o usuário logado assinar o plano.
     """
@@ -978,4 +1011,4 @@ def criar_checkout_session(request):
 
     
 
-    return render(request, 'core/user/admin_relatorios.html', context)
+    

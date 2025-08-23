@@ -1738,3 +1738,79 @@ a {
 
 
 
+
+
+
+
+/* Estilo para o container principal (mantendo o fundo escuro) */
+.container.mt-5 {
+    background-color: #181818;
+    color: #e0e0e0;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 300px;
+}
+
+/* Estilo para o card animado */
+.card-animated {
+    background-color: #222;
+    border: 1px solid #333;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+    overflow: hidden;
+    width: 100%;
+    max-width: 600px;
+    transition: transform 0.3s ease-in-out;
+}
+
+.card-animated:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+}
+
+/* Estilos para o conteúdo dentro do card (mantendo os estilos anteriores com ajustes) */
+.card-animated .alert-success {
+    background-color: transparent;
+    border: none;
+    color: #f1f1f1;
+    padding: 30px;
+    margin-bottom: 0;
+    border-radius: 0;
+}
+
+.card-animated .alert-heading {
+    color: #c99e63;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.card-animated .alert-success p {
+    margin-bottom: 15px;
+    line-height: 1.7;
+}
+
+.card-animated .alert-success strong {
+    color: #c99e63;
+    font-weight: bold;
+}
+
+.card-animated .alert-success a {
+    color: #c99e63;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.card-animated .alert-success a:hover {
+    text-decoration: underline;
+}
+
+.card-animated .alert-success hr {
+    border-color: #444;
+    margin-top: 25px;
+    margin-bottom: 25px;
+}
+
+
+
