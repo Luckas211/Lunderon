@@ -107,8 +107,8 @@ class Plano(models.Model):
 
 class Assinatura(models.Model):
     STATUS_CHOICES = [
-        ('pendente', 'Pendente'),
         ('ativo', 'Ativo'),
+        ('pendente', 'Pendente'),
         ('cancelado', 'Cancelado'),
     ]
 
@@ -117,6 +117,27 @@ class Assinatura(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pendente')
     data_inicio = models.DateTimeField(auto_now_add=True)
     data_expiracao = models.DateTimeField(blank=True, null=True)
+
+    def __str__(self):
+        # Melhoria: Usar get_status_display() para mostrar o rótulo amigável (ex: "Ativo" em vez de "ativo")
+        return f"{self.usuario.username} - {self.plano.nome} ({self.get_status_display()})"
+
+    def save(self, *args, **kwargs):
+        """
+        Sobrescreve o método save para sincronizar o status do usuário com a assinatura.
+        """
+        # Primeiro, salva a própria assinatura
+        super().save(*args, **kwargs)
+
+        # Agora, atualiza o status do usuário com base no status da assinatura
+        if self.status == 'ativo':
+            self.usuario.plano_ativo = True
+        else:
+            # Para qualquer outro status (pendente, cancelado), o plano não está ativo.
+            self.usuario.plano_ativo = False
+        
+        # Salva o usuário, atualizando apenas o campo necessário para maior eficiência.
+        self.usuario.save(update_fields=['plano_ativo'])
 
     def __str__(self):
         return f"{self.usuario.username} - {self.plano.nome} ({self.status})"

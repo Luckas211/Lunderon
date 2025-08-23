@@ -284,20 +284,25 @@ def logout_view(request):
 # ==============================================================================
 # VIEWS DA APLICAÇÃO (requerem login)
 # ==============================================================================
+def pagamento_falho(request):
+    """
+    Renderiza a página de pagamento falho.
+    """
+    return render(request, 'planos/pagamento_falho.html')
+
 @csrf_exempt
 def stripe_webhook(request):
     """
-    Escuta os eventos do Stripe para gerenciar assinaturas e pagamentos automaticamente.
+    CORRIGIDO E OTIMIZADO: Escuta os eventos do Stripe para gerenciar o ciclo de vida 
+    completo das assinaturas de forma automática e robusta.
     """
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET
+    event = None
 
     try:
-        event = stripe.Webhook.construct_event(
-            payload, sig_header, endpoint_secret
-        )
-        print(f"✅ Webhook recebido: Evento {event['type']}")
+        event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except (ValueError, stripe.error.SignatureVerificationError) as e:
         print(f"🚨 ERRO no webhook: Payload ou assinatura inválida. Detalhes: {e}")
         return HttpResponse(status=400)
@@ -309,40 +314,41 @@ def stripe_webhook(request):
         stripe_customer_id = session.get('customer')
         stripe_subscription_id = session.get('subscription')
         plano_id = session.get('metadata', {}).get('plano_id')
-        valor_pago = session.get('amount_total', 0) / 100  # Divide por 100 para converter centavos em reais
+        valor_pago = session.get('amount_total', 0) / 100
 
         try:
             usuario = Usuario.objects.get(stripe_customer_id=stripe_customer_id)
             plano = Plano.objects.get(id=plano_id)
 
-            # 1. Atualiza o status do usuário
-            usuario.plano_ativo = True
+            # 1. ATUALIZA o ID da assinatura no usuário
             usuario.stripe_subscription_id = stripe_subscription_id
             usuario.save()
 
-            # 2. Cria o registro da Assinatura (evita duplicatas checando se já existe)
-            Assinatura.objects.get_or_create(
+            # 2. USA 'update_or_create' para criar ou ATUALIZAR a assinatura
+            # Isso é mais seguro que 'get_or_create' pois lida com casos onde já existe uma assinatura antiga.
+            assinatura, created = Assinatura.objects.update_or_create(
                 usuario=usuario,
-                plano=plano,
                 defaults={
-                    'status': 'ativo',
+                    'plano': plano,
+                    'status': 'ativo',  # Define o status como 'ativo'
                     'data_inicio': timezone.now(),
                     'data_expiracao': timezone.now() + timedelta(days=30)
                 }
             )
-            
+            # O método .save() da Assinatura já vai garantir que 'usuario.plano_ativo' seja True.
+
             # 3. CRIA O REGISTRO DO PAGAMENTO
             Pagamento.objects.create(
                 usuario=usuario,
                 plano=plano,
-                valor=valor_pago,  # Usa valor real
+                valor=valor_pago,
                 status='aprovado'
             )
             
             print(f"✅ Assinatura e Pagamento registrados com sucesso para: {usuario.email}")
 
         except (Usuario.DoesNotExist, Plano.DoesNotExist) as e:
-            print(f"🚨 ERRO no webhook: Usuário ou Plano não encontrado. Detalhes: {e}")
+            print(f"🚨 ERRO no webhook (checkout.session.completed): Usuário ou Plano não encontrado. Detalhes: {e}")
             return HttpResponse(status=404)
 
     # --- LÓGICA DE RENOVAÇÃO (PAGAMENTOS RECORRENTES) ---
@@ -351,60 +357,71 @@ def stripe_webhook(request):
         stripe_subscription_id = invoice.get('subscription')
         valor_pago = invoice.get('amount_paid', 0) / 100
 
+        # Ignora invoices sem subscription_id (pagamentos únicos)
         if stripe_subscription_id:
             try:
-                usuario = Usuario.objects.get(stripe_subscription_id=stripe_subscription_id)
-                assinatura_ativa = Assinatura.objects.filter(usuario=usuario, status='ativo').last()
-                if not assinatura_ativa:
-                    raise Assinatura.DoesNotExist("Nenhuma assinatura ativa encontrada.")
+                # Encontra a assinatura pela ID de inscrição do Stripe
+                assinatura = Assinatura.objects.get(usuario__stripe_subscription_id=stripe_subscription_id)
 
-                # 1. Estende a data de expiração
-                assinatura_ativa.data_expiracao = (assinatura_ativa.data_expiracao or timezone.now()) + timedelta(days=30)
-                assinatura_ativa.save()
+                # 1. Garante que o status está ativo e estende a data de expiração
+                assinatura.status = 'ativo'
+                assinatura.data_expiracao = (assinatura.data_expiracao or timezone.now()) + timedelta(days=30)
+                assinatura.save() # O .save() já atualiza o 'plano_ativo' do usuário para True
 
-                # 2. Garante que o plano continua ativo
-                usuario.plano_ativo = True
-                usuario.save()
-
-                # 3. Cria um novo registro de Pagamento
+                # 2. Cria um novo registro de Pagamento para a renovação
                 Pagamento.objects.create(
-                    usuario=usuario,
-                    plano=assinatura_ativa.plano,
+                    usuario=assinatura.usuario,
+                    plano=assinatura.plano,
                     valor=valor_pago,
                     status='aprovado'
                 )
 
-                print(f"✅ Renovação processada para: {usuario.email}. Nova expiração: {assinatura_ativa.data_expiracao}")
+                print(f"✅ Renovação processada para: {assinatura.usuario.email}. Nova expiração: {assinatura.data_expiracao.strftime('%d/%m/%Y')}")
 
-            except (Usuario.DoesNotExist, Assinatura.DoesNotExist) as e:
-                print(f"🚨 ERRO no webhook (invoice.paid): {e}")
+            except Assinatura.DoesNotExist as e:
+                print(f"🚨 ERRO no webhook (invoice.paid): Assinatura não encontrada para o subscription_id {stripe_subscription_id}. Detalhes: {e}")
                 return HttpResponse(status=404)
+            
+    # --- LÓGICA DE PAGAMENTO FALHO (RENOVAÇÃO RECUSADA) ---
+    elif event['type'] == 'invoice.payment_failed':
+        invoice = event['data']['object']
+        stripe_subscription_id = invoice.get('subscription')
 
-    # --- LÓGICA DE CANCELAMENTO ---
+        if stripe_subscription_id:
+            try:
+                assinatura = Assinatura.objects.get(usuario__stripe_subscription_id=stripe_subscription_id)
+                
+                # 1. Altera o status da assinatura para 'pendente'
+                assinatura.status = 'pendente'
+                assinatura.save() # O .save() já vai atualizar o 'plano_ativo' do usuário para False
+                
+                print(f"⚠️ Pagamento falhou para: {assinatura.usuario.email}. Assinatura marcada como 'pendente'.")
+                # Aqui você pode adicionar lógica para notificar o usuário por e-mail.
+
+            except Assinatura.DoesNotExist as e:
+                print(f"🚨 ERRO no webhook (invoice.payment_failed): Assinatura não encontrada para {stripe_subscription_id}. Detalhes: {e}")
+
+    # --- LÓGICA DE CANCELAMENTO (pelo cliente ou por falhas de pagamento) ---
     elif event['type'] == 'customer.subscription.deleted':
         subscription = event['data']['object']
         stripe_subscription_id = subscription.get('id')
 
         try:
-            usuario = Usuario.objects.get(stripe_subscription_id=stripe_subscription_id)
-
-            # 1. Desativa o plano no usuário
-            usuario.plano_ativo = False
-            usuario.save()
+            assinatura = Assinatura.objects.get(usuario__stripe_subscription_id=stripe_subscription_id)
             
-            # 2. Atualiza assinatura para 'cancelado'
-            assinatura_recente = Assinatura.objects.filter(usuario=usuario, status='ativo').last()
-            if assinatura_recente:
-                assinatura_recente.status = 'cancelado'
-                assinatura_recente.save()
+            # 1. Altera o status da assinatura para 'cancelado'
+            assinatura.status = 'cancelado'
+            # Opcional: Define a data de expiração para agora se desejar
+            # assinatura.data_expiracao = timezone.now() 
+            assinatura.save() # O .save() já vai atualizar o 'plano_ativo' do usuário para False
 
-            print(f"✅ Assinatura cancelada para: {usuario.email}")
+            print(f"✅ Assinatura cancelada no sistema para: {assinatura.usuario.email}")
 
-        except Usuario.DoesNotExist as e:
-            print(f"🚨 ERRO no webhook (subscription.deleted): {e}")
-            return HttpResponse(status=404)
+        except Assinatura.DoesNotExist as e:
+            print(f"🚨 ERRO no webhook (subscription.deleted): Assinatura não encontrada para {stripe_subscription_id}. Detalhes: {e}")
 
     return HttpResponse(status=200)
+        
 
 
 
@@ -428,21 +445,26 @@ def editar_perfil(request):
 
 @login_required
 def meu_perfil(request):
-    usuario = request.user
-    
-    # CORREÇÃO: Usando '__iexact' para uma busca que não diferencia maiúsculas de minúsculas
-    assinatura_ativa = Assinatura.objects.filter(
-        usuario=usuario, 
-        status__iexact='ativo'  # <-- A MUDANÇA ESTÁ AQUI
-    ).order_by('-data_inicio').first()
-    
-    contexto = {
-        'usuario': usuario, 
-        'assinatura': assinatura_ativa
+    """
+    CORRIGIDO: Esta view agora busca a assinatura do usuário e a passa para o template.
+    Isso garante que os banners de status ('pendente', 'cancelado') funcionem corretamente.
+    """
+    assinatura = None  # Começamos com a assinatura como None
+    try:
+        # Busca a primeira (e idealmente única) assinatura associada ao usuário logado.
+        assinatura = Assinatura.objects.get(usuario=request.user)
+    except Assinatura.DoesNotExist:
+        # Se o usuário não tiver nenhuma assinatura, não há problema.
+        # A variável 'assinatura' permanecerá como None.
+        pass
+
+    # O contexto agora envia o objeto 'assinatura' para o template.
+    # Se não houver assinatura, o template receberá None e tratará isso corretamente.
+    context = {
+        'user': request.user,
+        'assinatura': assinatura,
     }
-    
-    # Garanta que o caminho para o seu template está correto
-    return render(request, 'core/usuarios/perfil.html', contexto)
+    return render(request, 'core/usuarios/perfil.html', context)
 
 @login_required
 def gerenciar_assinatura_redirect(request):
@@ -1009,6 +1031,34 @@ def criar_checkout_session(request):
         print(f"Erro do Stripe ao criar checkout: {e}")
         return redirect(reverse('planos'))
 
+
+
+# ==============================================================================
+# VIEWS ADICIONADAS PARA GERENCIAMENTO DE STATUS PELO ADMIN
+# ==============================================================================
+
+@user_passes_test(lambda u: u.is_staff) # Garante que apenas admins acessem
+def deixar_assinatura_pendente(request, assinatura_id):
+    """
+    View para o admin marcar uma assinatura como 'pendente'.
+    """
+    assinatura = get_object_or_404(Assinatura, id=assinatura_id)
+    assinatura.status = 'pendente'
+    assinatura.save() # O método save que modificamos cuidará de atualizar o usuário
+    messages.warning(request, f"A assinatura de {assinatura.usuario.username} foi marcada como pendente.")
+    return redirect('admin_usuarios') # Redireciona de volta para a lista de usuários
+
+
+@user_passes_test(lambda u: u.is_staff) # Garante que apenas admins acessem
+def cancelar_assinatura_admin(request, assinatura_id):
+    """
+    View para o admin cancelar uma assinatura.
+    """
+    assinatura = get_object_or_404(Assinatura, id=assinatura_id)
+    assinatura.status = 'cancelado'
+    assinatura.save() # O método save que modificamos cuidará de atualizar o usuário
+    messages.error(request, f"A assinatura de {assinatura.usuario.username} foi cancelada.")
+    return redirect('admin_usuarios') # Redireciona de volta para a lista de usuários
     
 
     

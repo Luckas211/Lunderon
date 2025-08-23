@@ -1814,3 +1814,29 @@ a {
 
 
 
+
+/*--------------------------------------------------------------------
+/* PAINEL DE PAGAMENTO FALHO
+/*--------------------------------------------------------------------
+/* Estilo para o alerta de erro (vermelho) */
+.alert-danger {
+    background-color: #311818; /* Fundo mais escuro */
+    border: 1px solid #7c3a3a; /* Borda vermelha escura */
+    color: #f8d7da; /* Texto claro */
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.alert-danger .alert-heading {
+    color: #f5c6cb; /* Cor do título */
+}
+
+.alert-danger hr {
+    border-color: #7c3a3a; /* Cor da linha divisória */
+}
+
+.alert-danger a {
+    color: #f5c6cb; /* Cor do link */
+    font-weight: bold;
+    text-decoration: none;
+}

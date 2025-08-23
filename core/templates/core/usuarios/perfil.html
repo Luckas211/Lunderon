@@ -28,35 +28,81 @@
             <h1>Painel do Usuário</h1>
         </header>
 
-        <div class="pricing-card" style="width: 100%; max-width: none; margin-bottom: 30px; text-align: left;">
-            <h2 class="plan-name"><i class="fas fa-star"></i> Minha Assinatura</h2>
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
-            
-            {% if assinatura %}
-                <p><strong>Plano Contratado:</strong> {{ assinatura.plano.nome }}</p>
-                <p><strong>Status da Assinatura:</strong> <span class="status {{ assinatura.status }}">{{ assinatura.get_status_display }}</span></p>
-                {% if assinatura.data_expiracao %}
-                    <p><strong>Direito de Uso até:</strong> {{ assinatura.data_expiracao|date:"d/m/Y" }}</p>
-                {% endif %}
-                <a href="{% url 'gerenciar_assinatura' %}" class="btn-cta" style="margin-top: 20px;">Gerenciar Assinatura</a>
-            {% else %}
-                <p>Você ainda não possui uma assinatura ativa.</p>
-                <a href="{% url 'planos' %}" class="btn-cta complete-btn">Ver Planos</a>
+        {% if assinatura %}
+            {% if assinatura.status == 'pendente' %}
+                <div id="status-banner" style="padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.25rem; text-align: center; font-weight: bold; background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba;">
+                    <strong>Sua conta está pendente.</strong> Por favor, resolva as pendências para reativar seu acesso completo.
+                </div>
+            {% elif assinatura.status == 'cancelado' %}
+                <div id="status-banner" style="padding: 1rem; margin-bottom: 1.5rem; border-radius: 0.25rem; text-align: center; font-weight: bold; background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb;">
+                    <strong>Sua assinatura foi cancelada.</strong> Seu acesso aos recursos foi revogado. Entre em contato com o suporte.
+                </div>
             {% endif %}
-        </div>
+        {% endif %}
+        <div id="main-content">
+            <div class="pricing-card" style="width: 100%; max-width: none; margin-bottom: 30px; text-align: left;">
+                <h2 class="plan-name"><i class="fas fa-star"></i> Minha Assinatura</h2>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+                
+                {% if assinatura %}
+                    <p><strong>Plano Contratado:</strong> {{ assinatura.plano.nome }}</p>
+                    <p><strong>Status da Assinatura:</strong> <span class="status {{ assinatura.status }}">{{ assinatura.get_status_display }}</span></p>
+                    {% if assinatura.data_expiracao %}
+                        <p><strong>Direito de Uso até:</strong> {{ assinatura.data_expiracao|date:"d/m/Y" }}</p>
+                    {% endif %}
+                    <a href="{% url 'gerenciar_assinatura' %}" class="btn-cta" id="manage-subscription-btn" style="margin-top: 20px;">Gerenciar Assinatura</a>
+                {% else %}
+                    <p>Você ainda não possui uma assinatura ativa.</p>
+                    <a href="{% url 'planos' %}" class="btn-cta complete-btn">Ver Planos</a>
+                {% endif %}
+            </div>
 
-        <div class="pricing-card" style="width: 100%; max-width: none; text-align: left;">
-             <div style="display: flex; justify-content: space-between; align-items: center;">
-                 <h2 class="plan-name"><i class="fas fa-id-card"></i> Minhas Informações</h2>
-                 <a href="{% url 'editar_perfil' %}" class="btn-action edit">Editar Informações</a>
-             </div>
-            <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+            <div class="pricing-card" style="width: 100%; max-width: none; text-align: left;">
+                 <div style="display: flex; justify-content: space-between; align-items: center;">
+                     <h2 class="plan-name"><i class="fas fa-id-card"></i> Minhas Informações</h2>
+                     <a href="{% url 'editar_perfil' %}" class="btn-action edit">Editar Informações</a>
+                 </div>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
 
-            <p><strong>Nome Completo:</strong> {% if user.get_full_name %}{{ user.get_full_name }}{% else %}Não informado{% endif %}</p>
-            <p><strong>Nome de Usuário:</strong> {{ user.username }}</p>
-            <p><strong>Email de Cadastro:</strong> {{ user.email }}</p>
-            <p><strong>Membro desde:</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+                <p><strong>Nome Completo:</strong> {% if user.get_full_name %}{{ user.get_full_name }}{% else %}Não informado{% endif %}</p>
+                <p><strong>Nome de Usuário:</strong> {{ user.username }}</p>
+                <p><strong>Email de Cadastro:</strong> {{ user.email }}</p>
+                <p><strong>Membro desde:</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+            </div>
         </div>
     </main>
 </div>
+
+{% if assinatura and assinatura.status != 'ativo' %}
+<style>
+    /* Estilo para "desativar" visualmente o conteúdo quando restrito */
+    #main-content.restricted {
+        opacity: 0.5;
+        pointer-events: none; /* Impede a maioria dos cliques */
+    }
+</style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const mainContent = document.getElementById('main-content');
+        const status = "{{ assinatura.status }}";
+
+        if (status === 'pendente' || status === 'cancelado') {
+            mainContent.classList.add('restricted');
+
+            // Desabilita todos os links e botões dentro do conteúdo principal
+            mainContent.querySelectorAll('a, button').forEach(el => {
+                el.setAttribute('disabled', 'disabled');
+                el.style.pointerEvents = 'none'; // Força a desativação de cliques
+            });
+
+            // Exceção: Reativa o botão de gerenciar assinatura para que o usuário possa corrigir o status
+            const manageSubscriptionBtn = document.getElementById('manage-subscription-btn');
+            if (manageSubscriptionBtn) {
+                manageSubscriptionBtn.removeAttribute('disabled');
+                manageSubscriptionBtn.style.pointerEvents = 'auto';
+            }
+        }
+    });
+</script>
+{% endif %}
 {% endblock %}

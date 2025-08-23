@@ -25,6 +25,14 @@
             <a href="{% url 'admin:core_usuario_add' %}" class="btn-add" target="_blank">+ Novo Usuário</a>
         </header>
 
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" style="background-color: #333; color: #fff; padding: 15px; margin-bottom: 20px; border-radius: 5px; border-left: 5px solid {% if message.tags == 'success' %}#28a745{% elif message.tags == 'warning' %}#ffc107{% elif message.tags == 'error' %}#dc3545{% else %}#17a2b8{% endif %};">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         <section class="dashboard-table">
             <table>
                 <thead>
@@ -55,8 +63,14 @@
                         <td>{{ user.videos_no_mes }} / 100</td>
 
                         <td>
+                            {% with assinatura=user.assinatura_set.first %}
+                                {% if assinatura %}
+                                    <a href="{% url 'deixar_assinatura_pendente' assinatura.id %}" class="btn-action" style="background-color: #f0ad4e;" onclick="return confirm('Tem certeza que deseja marcar esta assinatura como pendente?');">Pendente</a>
+                                    <a href="{% url 'cancelar_assinatura_admin' assinatura.id %}" class="btn-action cancel" onclick="return confirm('Tem certeza que deseja cancelar esta assinatura? Esta ação não pode ser desfeita.');">Cancelar</a>
+                                {% endif %}
+                            {% endwith %}
                             <a href="{% url 'editar_usuario' user.id %}" class="btn-action edit">Editar</a>
-                            <a href="{% url 'deletar_usuario' user.id %}" class="btn-action delete">Deletar</a>
+                            <a href="{% url 'deletar_usuario' user.id %}" class="btn-action delete" onclick="return confirm('Tem certeza que deseja deletar este usuário?');">Deletar</a>
                         </td>
                     </tr>
                     {% empty %}
