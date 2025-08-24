@@ -1,7 +1,6 @@
 # ==============================================================================
 # IMPORTS ORGANIZADOS
 # ==============================================================================
-from django.core.mail import send_mail
 from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
@@ -13,7 +12,7 @@ import random
 import os
 from datetime import timedelta
 from django.utils import timezone # <-- ADICIONE ESTA LINHA
-from django.db.models import Count, Q
+from django.db.models import Count, Q,Sum
 import platform
 import textwrap
 from django.shortcuts import render, redirect, get_object_or_404
@@ -27,7 +26,7 @@ from PIL import Image, ImageDraw, ImageFont
 from .forms import GeradorFormSet, CadastroUsuarioForm, AdminUsuarioForm, EditarPerfilForm, ConfiguracaoForm,EditarAssinaturaForm
 from .models import (
     Assinatura, Pagamento, Configuracao, VideoBase, 
-    MusicaBase, VideoGerado, CategoriaVideo, CategoriaMusica, Plano,Usuario
+    MusicaBase, VideoGerado, CategoriaVideo, CategoriaMusica, Plano,Usuario,VideoGerado
 )
 
 
@@ -254,24 +253,9 @@ def cadastre_se(request):
             user = form.save()
             login(request, user)
             messages.success(request, "Cadastro realizado com sucesso!")
-
-            # --- ADICIONADO: LÓGICA DE ENVIO DE E-MAIL DE BOAS-VINDAS ---
-            try:
-                subject = 'Bem-vindo ao L.E DARK!'
-                message = f'Olá, {user.username}!\n\nSua conta foi criada com sucesso. Estamos felizes em ter você conosco.'
-                from_email = settings.DEFAULT_FROM_EMAIL
-                recipient_list = [user.email]
-                send_mail(subject, message, from_email, recipient_list)
-            except Exception as e:
-                # Opcional: Registra o erro se o e-mail falhar, mas não impede o fluxo
-                print(f"Erro ao enviar e-mail de boas-vindas: {e}")
-            # -----------------------------------------------------------
-
             return redirect("pagina_gerador")
     else:
         form = CadastroUsuarioForm()
-    
-    # Verifique se o caminho do template está correto
     return render(request, "core/user/cadastre-se.html", {"form": form})
 
 def login_view(request):
@@ -461,24 +445,29 @@ def editar_perfil(request):
 
 @login_required
 def meu_perfil(request):
-    """
-    CORRIGIDO: Esta view agora busca a assinatura do usuário e a passa para o template.
-    Isso garante que os banners de status ('pendente', 'cancelado') funcionem corretamente.
-    """
-    assinatura = None  # Começamos com a assinatura como None
-    try:
-        # Busca a primeira (e idealmente única) assinatura associada ao usuário logado.
-        assinatura = Assinatura.objects.get(usuario=request.user)
-    except Assinatura.DoesNotExist:
-        # Se o usuário não tiver nenhuma assinatura, não há problema.
-        # A variável 'assinatura' permanecerá como None.
-        pass
+    assinatura = Assinatura.objects.filter(usuario=request.user).first()
 
-    # O contexto agora envia o objeto 'assinatura' para o template.
-    # Se não houver assinatura, o template receberá None e tratará isso corretamente.
+    # --- INÍCIO DA ATUALIZAÇÃO ---
+    # Busca o limite de vídeos no banco de dados
+    try:
+        limite_videos_mes = int(Configuracao.objects.get(nome='LIMITE_VIDEOS_MES').valor)
+    except (Configuracao.DoesNotExist, ValueError):
+        limite_videos_mes = 100 # Valor padrão caso não encontre
+
+    # Conta quantos vídeos o usuário fez nos últimos 30 dias
+    trinta_dias_atras = timezone.now() - timedelta(days=30)
+    videos_criados_no_mes = VideoGerado.objects.filter(
+        usuario=request.user, 
+        criado_em__gte=trinta_dias_atras
+    ).count()
+    # --- FIM DA ATUALIZAÇÃO ---
+
     context = {
         'user': request.user,
         'assinatura': assinatura,
+        # Enviando os novos dados para o template
+        'videos_criados_no_mes': videos_criados_no_mes,
+        'limite_videos_mes': limite_videos_mes,
     }
     return render(request, 'core/usuarios/perfil.html', context)
 
@@ -515,7 +504,27 @@ def gerenciar_assinatura_redirect(request):
 @login_required
 def meus_videos(request):
     videos = VideoGerado.objects.filter(usuario=request.user).order_by('-criado_em')
-    return render(request, 'core/meus_videos.html', {'videos': videos})
+
+    # --- INÍCIO DA ATUALIZAÇÃO ---
+    # REPETIMOS A MESMA LÓGICA AQUI PARA TER OS DADOS NA PÁGINA DE VÍDEOS
+    try:
+        limite_videos_mes = int(Configuracao.objects.get(nome='LIMITE_VIDEOS_MES').valor)
+    except (Configuracao.DoesNotExist, ValueError):
+        limite_videos_mes = 100
+
+    trinta_dias_atras = timezone.now() - timedelta(days=30)
+    videos_criados_no_mes = VideoGerado.objects.filter(
+        usuario=request.user, 
+        criado_em__gte=trinta_dias_atras
+    ).count()
+    # --- FIM DA ATUALIZAÇÃO ---
+
+    context = {
+        'videos': videos,
+        'videos_criados_no_mes': videos_criados_no_mes,
+        'limite_videos_mes': limite_videos_mes,
+    }
+    return render(request, 'core/meus_videos.html', context)
 
 @login_required
 def pagina_gerador(request):
@@ -717,35 +726,25 @@ def admin_assinaturas(request):
 
 # ... (resto dos seus imports e views)
 
+@login_required
 def planos(request):
-    """
-    CORRIGIDO: Permite que usuários anônimos vejam os planos.
-    Se o usuário estiver logado e já tiver um plano ativo, 
-    redireciona para a página de gerenciamento do plano.
-    """
-    # Primeiro, verifica se o usuário está autenticado
-    if request.user.is_authenticated:
-        # Se estiver autenticado, verifica se ele tem um plano ativo
-        if request.user.plano_ativo:
-            # Busca a assinatura ativa para exibir os detalhes
-            assinatura_ativa = Assinatura.objects.filter(
-                usuario=request.user, 
-                status='ativo'
-            ).order_by('-data_inicio').first()
-            
-            context = {
-                'assinatura': assinatura_ativa
-            }
-            # Renderiza a página que mostra o plano já ativo
-            return render(request, 'core/planos/plano_ativo.html', context)
+    # Verifica se o usuário tem um plano ativo
+    if request.user.plano_ativo:
+        # Busca a assinatura ativa mais recente do usuário no banco de dados
+        assinatura_ativa = Assinatura.objects.filter(usuario=request.user, status='ativo').order_by('-data_inicio').first()
+        
+        context = {
+            'assinatura': assinatura_ativa
+        }
+        # ATENÇÃO: Verifique o caminho correto do seu template.
+        # Pode ser 'core/planos/plano_ativo.html' ou apenas 'plano_ativo.html' dependendo da sua estrutura
+        return render(request, 'core/planos/plano_ativo.html', context)
     
-    # Se o usuário não estiver logado OU não tiver um plano ativo,
-    # mostra a página normal de planos para assinar.
+    # Se não tiver plano ativo, mostra a página normal para assinar
     context = {
         'stripe_publishable_key': os.getenv("STRIPE_PUBLISHABLE_KEY")
     }
     return render(request, 'core/planos/planos.html', context)
-
 @login_required
 @user_passes_test(is_admin)
 def ativar_assinatura(request, id):
@@ -958,18 +957,58 @@ def admin_pagamentos(request):
 @user_passes_test(is_admin)
 def aprovar_pagamento(request, id):
     pagamento = get_object_or_404(Pagamento, id=id)
+    usuario = pagamento.usuario
+
+    # 1. Atualiza o status do pagamento (como já fazia)
     pagamento.status = 'aprovado'
     pagamento.save()
-    messages.success(request, "Pagamento aprovado.")
+
+    # --- INÍCIO DA CORREÇÃO ---
+    # 2. Busca a duração padrão da assinatura nas configurações
+    try:
+        config_duracao = Configuracao.objects.get(nome='DURACAO_ASSINATURA_DIAS')
+        duracao_dias = int(config_duracao.valor)
+    except (Configuracao.DoesNotExist, ValueError):
+        duracao_dias = 30 # Usa 30 dias como padrão se não encontrar
+
+    # 3. Atualiza ou cria a ASSINATURA do usuário, deixando-a ativa
+    Assinatura.objects.update_or_create(
+        usuario=usuario,
+        defaults={
+            'plano': pagamento.plano,
+            'status': 'ativo',
+            'data_expiracao': timezone.now() + timedelta(days=duracao_dias)
+        }
+    )
+    # O método .save() da Assinatura já vai garantir que o 'usuario.plano_ativo' seja True.
+    # --- FIM DA CORREÇÃO ---
+
+    messages.success(request, f"Pagamento de {usuario.username} aprovado e assinatura ativada/atualizada.")
     return redirect('admin_pagamentos')
 
 @login_required
 @user_passes_test(is_admin)
 def recusar_pagamento(request, id):
     pagamento = get_object_or_404(Pagamento, id=id)
+    usuario = pagamento.usuario
+
+    # 1. Atualiza o status do pagamento
     pagamento.status = 'recusado'
     pagamento.save()
-    messages.warning(request, "Pagamento recusado.")
+
+    # --- INÍCIO DA CORREÇÃO ---
+    # 2. Busca a assinatura do usuário (se existir)
+    assinatura = Assinatura.objects.filter(usuario=usuario).first()
+    if assinatura:
+        # 3. Altera o status da assinatura para pendente
+        #    Isso vai desativar o acesso do usuário ao gerador
+        assinatura.status = 'pendente'
+        assinatura.save()
+        messages.warning(request, f"Pagamento de {usuario.username} recusado e assinatura marcada como pendente.")
+    else:
+        messages.warning(request, f"Pagamento de {usuario.username} recusado.")
+    # --- FIM DA CORREÇÃO ---
+    
     return redirect('admin_pagamentos')
 
 @login_required
@@ -983,15 +1022,37 @@ def deletar_pagamento(request, id):
 @login_required
 @user_passes_test(is_admin)
 def admin_relatorios(request):
-    # Usando select_related para otimizar a busca no banco de dados
+    # --- LÓGICA ANTIGA (BUSCANDO AS LISTAS) ---
     assinaturas = Assinatura.objects.select_related('usuario', 'plano').order_by('-data_inicio')
     pagamentos = Pagamento.objects.select_related('usuario', 'plano').order_by('-data_pagamento')
+
+    # --- NOVA LÓGICA (CALCULANDO OS INDICADORES / KPIs) ---
+
+    # 1. Total de Assinantes com status 'ativo'
+    total_assinantes_ativos = Assinatura.objects.filter(status='ativo').count()
+
+    # 2. Receita total, somando apenas pagamentos 'aprovados'
+    receita_total = Pagamento.objects.filter(status='aprovado').aggregate(soma=Sum('valor'))['soma'] or 0
+
+    # 3. Novos assinantes nos últimos 30 dias
+    trinta_dias_atras = timezone.now() - timedelta(days=30)
+    novos_assinantes = Assinatura.objects.filter(data_inicio__gte=trinta_dias_atras).count()
     
+    # 4. Total de vídeos gerados na plataforma
+    total_videos_gerados = VideoGerado.objects.count()
+
     context = {
         'assinaturas': assinaturas,
         'pagamentos': pagamentos,
+        # Adicionando os novos KPIs ao contexto para serem usados no template
+        'total_assinantes_ativos': total_assinantes_ativos,
+        'receita_total': receita_total,
+        'novos_assinantes': novos_assinantes,
+        'total_videos_gerados': total_videos_gerados,
     }
     return render(request, 'core/user/admin_relatorios.html', context)
+
+
 @login_required
 def pagamento_sucesso(request):
     """

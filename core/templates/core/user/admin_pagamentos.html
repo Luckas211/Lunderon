@@ -26,10 +26,11 @@
                 <thead>
                     <tr>
                         <th>Usuário</th>
-                        <th>Valor</th>
-                        <th>Método</th>
-                        <th>Status</th>
-                        <th>Data</th>
+                        <th>Plano</th>
+                        <th>Valor Pago</th>
+                        <th>Status do Pagamento</th>
+                        <th>Data do Pagamento</th>
+                        <th>Próxima Cobrança / Vencimento</th>
                         <th>Ações</th>
                     </tr>
                 </thead>
@@ -37,18 +38,34 @@
                     {% for pagamento in pagamentos %}
                     <tr>
                         <td>{{ pagamento.usuario.username }}</td>
-                        <td>{{ pagamento.valor }}</td>
-                        <td>{{ pagamento.metodo }}</td>
-                        <td>{{ pagamento.status }}</td>
-                        <td>{{ pagamento.criado_em|date:"d/m/Y H:i" }}</td>
+                        <td>{{ pagamento.plano.nome }}</td>
+                        <td>R$ {{ pagamento.valor|floatformat:2 }}</td>
                         <td>
-                            <a href="{% url 'aprovar_pagamento' pagamento.id %}" class="btn-action">Aprovar</a>
+                            {# CORREÇÃO: Usando get_status_display para mostrar o texto amigável (ex: "Aprovado") #}
+                            <span class="status {{ pagamento.status }}">{{ pagamento.get_status_display }}</span>
+                        </td>
+                        <td>
+                            {# CORREÇÃO: O nome do campo correto é 'data_pagamento' #}
+                            {{ pagamento.data_pagamento|date:"d/m/Y H:i" }}
+                        </td>
+                        <td>
+                            {# MELHORIA: Buscando a data de expiração da assinatura do usuário #}
+                            {% with assinatura=pagamento.usuario.assinatura_set.first %}
+                                {% if assinatura and assinatura.data_expiracao %}
+                                    {{ assinatura.data_expiracao|date:"d/m/Y" }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            <a href="{% url 'aprovar_pagamento' pagamento.id %}" class="btn-action edit">Aprovar</a>
                             <a href="{% url 'recusar_pagamento' pagamento.id %}" class="btn-action cancel">Recusar</a>
                             <a href="{% url 'deletar_pagamento' pagamento.id %}" class="btn-action delete">Excluir</a>
                         </td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6">Nenhum pagamento encontrado.</td></tr>
+                    <tr><td colspan="7" style="text-align: center; padding: 20px;">Nenhum pagamento encontrado.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

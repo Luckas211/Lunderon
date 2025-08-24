@@ -1844,3 +1844,199 @@ a {
 
 /*edição
 
+/* static/core/css/style.css */
+
+/* --- Estilos Gerais para as Novas Seções --- */
+.info-section {
+    width: 100%;
+    max-width: 100px;
+    margin: 80px auto;
+    padding: 20px;
+    text-align: center;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    color: #ffffff;
+    margin-bottom: 20px;
+}
+
+.section-subtitle {
+    font-size: 1.2rem;
+    color: #b0b0b0;
+    max-width: 700px;
+    margin: 0 auto 50px auto;
+}
+
+/* --- Hero Section Atualizada --- */
+.hero-subtext {
+    margin-top: 10px;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+/* --- Seção Como Funciona --- */
+.steps-container {
+    display: flex;
+    justify-content: space-around;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.step-card {
+    background-color: #1e1e1e;
+    padding: 40px 25px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    flex-basis: 30%;
+    min-width: 280px;
+}
+
+.step-icon {
+    font-size: 2.5rem;
+    color: #a855f7; /* Um roxo vibrante */
+    margin-bottom: 20px;
+}
+
+.step-card h3 {
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+.step-card p {
+    color: #b0b0b0;
+    line-height: 1.6;
+}
+
+/* --- Seção de Recursos --- */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    text-align: left;
+}
+
+.feature-item {
+    background-color: #1e1e1e;
+    padding: 30px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    display: flex;
+    flex-direction: column;
+}
+
+.feature-icon {
+    font-size: 2rem;
+    color: #a855f7;
+    margin-bottom: 20px;
+}
+
+.feature-item h4 {
+    font-size: 1.3rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.feature-item p {
+    color: #b0b0b0;
+    line-height: 1.6;
+}
+
+/* --- Seção de Depoimentos --- */
+.testimonial-card {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: #1e1e1e;
+    padding: 40px;
+    border-radius: 10px;
+    border-left: 5px solid #a855f7;
+}
+
+.testimonial-text {
+    font-size: 1.3rem;
+    font-style: italic;
+    color: #ddd;
+    line-height: 1.7;
+    margin-bottom: 20px;
+}
+
+.testimonial-author {
+    font-size: 1rem;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* --- Seção de Preços --- */
+.pricing-card-home {
+    max-width: 400px;
+    margin: 0 auto;
+    background: #1e1e1e;
+    border: 2px solid #a855f7;
+    padding: 40px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+}
+
+.pricing-card-home h3 {
+    font-size: 1.8rem;
+    color: #fff;
+}
+
+.price {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #fff;
+    margin: 20px 0;
+}
+
+.price-period {
+    font-size: 1rem;
+    color: #b0b0b0;
+    font-weight: normal;
+}
+
+.pricing-card-home ul {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 30px;
+    text-align: left;
+}
+
+.pricing-card-home li {
+    color: #ddd;
+    margin-bottom: 10px;
+}
+
+.pricing-card-home .fas.fa-check {
+    color: #34d399; /* Um verde vibrante */
+    margin-right: 10px;
+}
+
+/* --- Seção de FAQ --- */
+.faq-item {
+    max-width: 700px;
+    margin: 0 auto 20px auto;
+    background-color: #1e1e1e;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: left;
+    border: 1px solid #333;
+}
+
+.faq-item h4 {
+    font-size: 1.3rem;
+    color: #fff;
+    margin-bottom: 10px;
+}
+
+.faq-item p {
+    color: #b0b0b0;
+    line-height: 1.6;
+}
+
+/* --- Seção Final de CTA --- */
+.final-cta .btn-booking {
+    padding: 18px 40px;
+    font-size: 1.2rem;
+}

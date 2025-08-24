@@ -47,14 +47,9 @@
                         <td>{{ ass.usuario.username }}</td>
                         <td>{{ ass.usuario.email }}</td>
                         <td>{{ ass.plano.nome }}</td>
+                        {# CÓDIGO NOVO E PADRONIZADO #}
                         <td>
-                            {% if ass.status == "ativo" %}
-                                <span class="status ativo">Ativo</span>
-                            {% elif ass.status == "pendente" %}
-                                <span class="status pendente">Pendente</span>
-                            {% else %}
-                                <span class="status cancelado">Cancelado</span>
-                            {% endif %}
+                            <span class="status {{ ass.status }}">{{ ass.get_status_display }}</span>
                         </td>
                         <td>{{ ass.data_inicio|date:"d/m/Y" }}</td>
                         <td>{% if ass.data_expiracao %}{{ ass.data_expiracao|date:"d/m/Y" }}{% else %}-{% endif %}</td>
