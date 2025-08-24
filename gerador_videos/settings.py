@@ -114,4 +114,17 @@ STRIPE_PRICE_ID = env('STRIPE_PRICE_ID') # <-- ADICIONE ESTA LINHA
 STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='whsec_...') 
 
 # No final do seu settings.py
-APPEND_SLASH = False
+APPEND_SLASH = True
+
+
+# ================================================================
+# CONFIGURAÇÕES DE E-MAIL
+# ================================================================
+# Lê as credenciais do e-mail do arquivo .env para segurança
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # <-- ADICIONE ESTA LINHA PARA TESTE
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
