@@ -13,13 +13,37 @@
     <section class="faq-section">
         <h2>Perguntas Frequentes</h2>
 
-        <details class="faq-item">
+        <details class="faq-item" open>
             <summary class="faq-question">
                 Como funciona o processo de assinatura?
                 <i class="fas fa-chevron-down"></i>
             </summary>
             <div class="faq-answer">
-                <p>Nosso processo é simples! Primeiro, crie uma conta em nossa plataforma. Depois, navegue até a página de <a href="{% url 'planos' %}">Planos</a>, escolha a opção que melhor se adapta às suas necessidades e siga as instruções de pagamento. Seu acesso é liberado imediatamente após a confirmação.</p>
+                <p>Nosso processo de assinatura é projetado para ser rápido e seguro. Siga os passos abaixo:</p>
+                <ol>
+                    <li><strong>Crie sua Conta:</strong> Primeiro, <a href="{% url 'cadastre_se' %}">cadastre-se gratuitamente</a> em nossa plataforma.</li>
+                    <li><strong>Escolha o Plano:</strong> Navegue até a página de <a href="{% url 'planos' %}">Planos</a>. Oferecemos um plano completo com acesso a todas as funcionalidades.</li>
+                    <li><strong>Pagamento Seguro:</strong> Ao clicar em "Assinar agora", você será redirecionado para o nosso parceiro de pagamentos, Stripe, um dos mais seguros do mundo.</li>
+                    <li><strong>Confirmação e Acesso:</strong> Preencha seus dados de pagamento (aceitamos os principais cartões de crédito). Após a confirmação, seu acesso ao Gerador de Vídeos é liberado <strong>imediatamente</strong>.</li>
+                </ol>
+            </div>
+        </details>
+
+        <details class="faq-item">
+            <summary class="faq-question">
+                Como funciona o Gerador de Vídeos?
+                <i class="fas fa-chevron-down"></i>
+            </summary>
+            <div class="faq-answer">
+                <p>O nosso gerador é uma ferramenta poderosa para transformar suas ideias em vídeos curtos e engajantes. O processo é simples:</p>
+                <ul>
+                    <li><strong>1. Escolha o Tipo de Conteúdo:</strong> Você decide se quer um vídeo com <strong>Narração (IA)</strong>, onde a duração é automática baseada na fala, ou com <strong>Texto Estático</strong>, onde você define a duração manualmente.</li>
+                    <li><strong>2. Adicione seu Texto:</strong> Escreva o roteiro para a narração ou o texto que aparecerá na tela. Aqui você pode ativar a nossa popular função de <strong>Legendas Karaokê</strong> para aumentar a retenção do seu público!</li>
+                    <li><strong>3. Personalize Tudo:</strong> Escolha a voz do narrador, a velocidade e o tom. Defina o estilo do texto, como fonte, cor, tamanho e posição na tela.</li>
+                    <li><strong>4. Escolha a Mídia de Fundo:</strong> Selecione uma categoria de vídeo e uma categoria de música da nossa vasta biblioteca livre de direitos autorais. O sistema escolherá um fundo dinâmico para você.</li>
+                    <li><strong>5. Gere em Lote:</strong> Para máxima produtividade, você pode configurar e gerar até 3 vídeos de uma só vez.</li>
+                </ul>
+                <p>Após clicar em "Gerar Vídeos", nosso sistema processa tudo e os vídeos finalizados aparecerão na sua área de <a href="{% url 'meus_videos' %}">Meus Vídeos</a>, prontos para baixar e postar.</p>
             </div>
         </details>
 
@@ -29,17 +53,17 @@
                 <i class="fas fa-chevron-down"></i>
             </summary>
             <div class="faq-answer">
-                <p>Aceitamos os principais cartões de crédito (Visa, MasterCard, American Express) e também pagamentos via Pix para facilitar sua compra. Toda a transação é feita em um ambiente seguro.</p>
+                <p>Através da nossa parceria com a Stripe, aceitamos os principais cartões de crédito, como Visa, MasterCard e American Express. Todas as transações são processadas em um ambiente 100% seguro.</p>
             </div>
         </details>
 
         <details class="faq-item">
             <summary class="faq-question">
-                Posso cancelar ou alterar meu plano a qualquer momento?
+                Posso cancelar minha assinatura a qualquer momento?
                 <i class="fas fa-chevron-down"></i>
             </summary>
             <div class="faq-answer">
-                <p>Sim! Você tem total flexibilidade para alterar ou cancelar seu plano. Basta acessar a área "Minha Conta" (que criaremos em breve), ir para a seção "Assinatura" e escolher a opção desejada. As alterações são aplicadas no próximo ciclo de faturamento.</p>
+                <p>Sim! Você tem total controle sobre sua assinatura. Para cancelar, basta acessar a página <a href="{% url 'meu_perfil' %}">Meu Perfil</a> e clicar no botão "Gerenciar Assinatura". Você será levado ao seu portal de cliente seguro, onde poderá cancelar a renovação automática com apenas alguns cliques. Seu acesso continuará ativo até o final do período já pago.</p>
             </div>
         </details>
 
@@ -58,7 +82,17 @@
         <h2>Ainda precisa de ajuda?</h2>
         <p>Se não encontrou sua resposta acima, preencha o formulário abaixo e nossa equipe entrará em contato.</p>
         
-        <form action="#" method="POST" class="contact-form">
+        {# Bloco para exibir mensagens de sucesso ou erro #}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" style="padding: 1rem; margin-bottom: 1.5rem; border-radius: 5px; text-align: center; font-weight: bold; background-color: {% if message.tags == 'success' %}#28a745{% else %}#dc3545{% endif %}; color: #fff;">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {# Formulário agora aponta para a URL 'suporte' para que a view possa processá-lo #}
+        <form action="{% url 'suporte' %}" method="POST" class="contact-form">
             {% csrf_token %}
             <div class="input-group">
                 <i class="fas fa-user"></i>

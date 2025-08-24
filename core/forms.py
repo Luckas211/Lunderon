@@ -79,17 +79,22 @@ class EditarPerfilForm(forms.ModelForm):
     """
     class Meta:
         model = Usuario
-        fields = ['first_name', 'last_name', 'email']
+        # Adicionamos 'data_nascimento' aos campos
+        fields = ['first_name', 'last_name', 'email', 'data_nascimento']
         labels = {
             'first_name': 'Nome',
             'last_name': 'Sobrenome',
             'email': 'Email de Cadastro',
+            'data_nascimento': 'Data de Nascimento', # Novo label
         }
         widgets = {
             'first_name': forms.TextInput(attrs={'placeholder': 'Seu primeiro nome'}),
             'last_name': forms.TextInput(attrs={'placeholder': 'Seu sobrenome'}),
             'email': forms.EmailInput(attrs={'placeholder': 'seu.email@exemplo.com'}),
+            # Novo widget para um seletor de data amigável
+            'data_nascimento': forms.DateInput(attrs={'type': 'date'}), 
         }
+
 
 class EditarAssinaturaForm(forms.ModelForm):
     class Meta:

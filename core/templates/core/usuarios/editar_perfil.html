@@ -7,7 +7,7 @@
 <div class="admin-dashboard">
 
     <aside class="sidebar">
-        <h2 class="sidebar-logo">{{ user.username }}</h2>
+        <h2 class="sidebar-logo">{% firstof user.first_name user.username %}</h2>
         <nav>
             <ul>
                 <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic"></i> Gerador</a></li>
@@ -22,21 +22,37 @@
             <h1>Editar Meu Perfil</h1>
         </header>
 
-        <section class="signup-form-wrapper" style="max-width: 100%; animation: none;">
+        <section class="signup-form-wrapper" style="max-width: 100%; animation: none; padding: 40px;">
             <form method="POST" class="signup-form">
                 {% csrf_token %}
                 
-                {% for field in form %}
+                {# Renderizando campos individualmente para melhor controle e clareza #}
                 <div class="input-group">
-                    {{ field }}
+                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                    {{ form.first_name }}
                 </div>
-                {% for error in field.errors %}
-                    <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px;">{{ error }}</p>
-                {% endfor %}
+
+                <div class="input-group">
+                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                    {{ form.last_name }}
+                </div>
+
+                <div class="input-group">
+                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                    {{ form.email }}
+                </div>
+                
+                <div class="input-group">
+                    <label for="{{ form.data_nascimento.id_for_label }}">{{ form.data_nascimento.label }}</label>
+                    {{ form.data_nascimento }}
+                </div>
+
+                {% for error in form.non_field_errors %}
+                    <p style="color: #ff6b6b; font-size: 0.9em; text-align: center;">{{ error }}</p>
                 {% endfor %}
 
-                <button type="submit" class="btn-signup">Salvar Alterações</button>
-                <a href="{% url 'meu_perfil' %}" class="btn-action cancel" style="display: block; text-align: center; margin-top: 15px; background-color: #6c757d;">Cancelar</a>
+                <button type="submit" class="btn-signup" style="margin-top: 20px;">Salvar Alterações</button>
+                <a href="{% url 'meu_perfil' %}" class="btn-action cancel" style="display: block; text-align: center; margin-top: 15px; background-color: #6c757d; border-radius: 50px; padding: 15px; border: none; font-weight: 600;">Cancelar</a>
             </form>
         </section>
     </main>

@@ -78,7 +78,21 @@
             </div>
 
             <div class="pricing-card" style="width: 100%; max-width: none; text-align: left;">
-                 {# ... (card de Minhas Informações continua aqui, sem alteração) ... #}
+                 {# Substitua o card de "Minhas Informações" por este #}
+
+            <div class="pricing-card" style="width: 100%; max-width: none; text-align: left;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                    <h2 class="plan-name"><i class="fas fa-id-card"></i> Minhas Informações</h2>
+                    <a href="{% url 'editar_perfil' %}" class="btn-action edit">Editar Informações</a>
+                </div>
+                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
+
+                <p><strong>Nome Completo:</strong> {% if user.get_full_name %}{{ user.get_full_name }}{% else %}Não informado{% endif %}</p>
+                <p><strong>Nome de Usuário:</strong> {{ user.username }}</p>
+                <p><strong>Email de Cadastro:</strong> {{ user.email }}</p>
+                <p><strong>Data de Nascimento:</strong> {% if user.data_nascimento %}{{ user.data_nascimento|date:"d/m/Y" }}{% else %}Não informada{% endif %}</p>
+                <p><strong>Membro desde:</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+            </div>
             </div>
         </div>
     </main>

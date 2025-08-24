@@ -13,6 +13,7 @@ class Usuario(AbstractUser):
 
     plano_ativo = models.BooleanField(default=False)
     stripe_subscription_id = models.CharField(max_length=255, blank=True, null=True)
+    data_nascimento = models.DateField(blank=True, null=True)
 
     def __str__(self):
         return self.username
@@ -164,7 +165,7 @@ class Pagamento(models.Model):
         ('recusado', 'Recusado'),
     ]
 
-    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     plano = models.ForeignKey('Plano', on_delete=models.CASCADE)  # 'Plano' se estiver no mesmo app
     valor = models.DecimalField(max_digits=8, decimal_places=2)  # permite valores até 999,999.99
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pendente')

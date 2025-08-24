@@ -30,6 +30,10 @@ from .models import (
 )
 
 
+from django.core.mail import send_mail
+
+
+
 
 # Pega o modelo de usuário customizado que definimos
 User = get_user_model()
@@ -246,11 +250,81 @@ def como_funciona(request): return render(request, 'core/como_funciona.html')
 def planos(request): return render(request, 'core/planos.html')
 def suporte(request): return render(request, 'core/suporte.html')
 
+
+
+
+
+
+def suporte(request):
+    if request.method == 'POST':
+        # Coleta os dados que o usuário preencheu no formulário
+        nome = request.POST.get('name')
+        email_contato = request.POST.get('email')
+        assunto = request.POST.get('subject')
+        mensagem = request.POST.get('message')
+
+        # Validação para garantir que todos os campos foram preenchidos
+        if not all([nome, email_contato, assunto, mensagem]):
+            messages.error(request, 'Por favor, preencha todos os campos do formulário.')
+            return render(request, 'core/suporte.html')
+
+        # Monta o corpo do e-mail que você vai receber
+        corpo_email = f"""
+        Nova mensagem de suporte recebida através do site:
+
+        Nome do Remetente: {nome}
+        E-mail para Contato: {email_contato}
+        Assunto: {assunto}
+
+        Mensagem:
+        --------------------------------
+        {mensagem}
+        --------------------------------
+        """
+
+        try:
+            # Tenta enviar o e-mail
+            send_mail(
+                subject=f'Suporte L.E DARK: {assunto}',  # Assunto do e-mail
+                message=corpo_email,                      # O corpo da mensagem que montamos acima
+                from_email=settings.EMAIL_HOST_USER,      # O e-mail configurado no seu .env para enviar
+                recipient_list=['ledark.sac@gmail.com'],  # <<< SEU E-MAIL DE SUPORTE VAI AQUI
+                fail_silently=False,
+            )
+            # Se o envio for bem-sucedido, mostra uma mensagem de sucesso
+            messages.success(request, 'Sua mensagem foi enviada com sucesso! Nossa equipe responderá em breve.')
+            return redirect('suporte')
+
+        except Exception as e:
+            # Se ocorrer um erro, mostra uma mensagem de falha
+            print(f"Erro ao enviar e-mail de suporte: {e}")
+            messages.error(request, 'Ocorreu um erro ao tentar enviar sua mensagem. Por favor, tente novamente mais tarde.')
+
+    # Se a requisição for GET (usuário apenas acessou a página), mostra a página normalmente
+    return render(request, 'core/suporte.html')
+
 def cadastre_se(request):
     if request.method == "POST":
         form = CadastroUsuarioForm(request.POST)
         if form.is_valid():
             user = form.save()
+            
+            # --- INÍCIO DO CÓDIGO CORRIGIDO ---
+            # Este bloco estava faltando. Ele envia o e-mail de boas-vindas.
+            try:
+                send_mail(
+                    subject='Bem-vindo à L.E DARK!',
+                    message=f'Olá, {user.username}!\n\nSua conta foi criada com sucesso. Estamos felizes em ter você conosco.\n\nAcesse nosso site e comece a criar vídeos incríveis agora mesmo.\n\nAtenciosamente,\nEquipe L.E DARK',
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                # Se o e-mail falhar, o cadastro não é desfeito,
+                # mas você verá um erro no seu terminal para investigar.
+                print(f"ERRO AO ENVIAR E-MAIL DE BOAS-VINDAS: {e}")
+            # --- FIM DO CÓDIGO CORRIGIDO ---
+
             login(request, user)
             messages.success(request, "Cadastro realizado com sucesso!")
             return redirect("pagina_gerador")
