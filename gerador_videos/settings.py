@@ -19,8 +19,8 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-default-key-for-dev')
 DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = [
-    '35.198.0.107',
-    '.ngrok-free.app',
+    '35.198.0.107'
+    '.ngrok-free.app', # O ponto no início permite qualquer subdomínio do ngrok
     'localhost',
     '127.0.0.1',
 ]
@@ -95,14 +95,10 @@ USE_TZ = True
 
 
 # --- Arquivos Estáticos e de Mídia ---
-# --- Arquivos Estáticos e de Mídia ---
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'static'),
 ]
-# ADICIONE A LINHA ABAIXO
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
