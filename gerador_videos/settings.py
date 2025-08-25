@@ -19,7 +19,7 @@ SECRET_KEY = env('SECRET_KEY', default='django-insecure-default-key-for-dev')
 DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = [
-    '34.95.162.185',
+    '35.198.0.107',
     '.ngrok-free.app',
     'localhost',
     '127.0.0.1',
