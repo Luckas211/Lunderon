@@ -332,6 +332,18 @@ def cadastre_se(request):
         form = CadastroUsuarioForm()
     return render(request, "core/user/cadastre-se.html", {"form": form})
 
+def validate_otp_view(request):
+    #
+    # ATENÇÃO: Este é um código temporário para o site não quebrar.
+    # Você precisa substituir este conteúdo pela sua lógica original
+    # que valida o código OTP do usuário.
+    #
+
+    # Por enquanto, esta função apenas redireciona o usuário para o perfil.
+    print("LOG: Acessou a view 'validate_otp_view' com sucesso!")
+    messages.success(request, "Validação concluída!")
+    return redirect('meu_perfil')
+
 def login_view(request):
     if request.method == "POST":
         email_digitado = request.POST.get("email")

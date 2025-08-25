@@ -4,6 +4,7 @@ from django.contrib.auth import views as auth_views
 # REMOVA a linha 'from django.contrib import admin', ela não é necessária aqui.
 
 urlpatterns = [
+    
     # ========================================
     # PÁGINAS PÚBLICAS E DE AUTENTICAÇÃO
     # ========================================
@@ -13,6 +14,7 @@ urlpatterns = [
     path('como-funciona/', views.como_funciona, name='como_funciona'),
     path('planos/', views.planos, name='planos'),
     path('suporte/', views.suporte, name='suporte'),
+    path('validate-otp/', views.validate_otp_view, name='validate_otp'),
     
     # Autenticação
     path('cadastre-se/', views.cadastre_se, name='cadastre_se'),
@@ -41,6 +43,7 @@ urlpatterns = [
     path('painel/usuarios/', views.admin_usuarios, name='admin_usuarios'),
     path('painel/usuarios/editar/<int:user_id>/', views.editar_usuario, name='editar_usuario'),
     path('painel/usuarios/deletar/<int:user_id>/', views.deletar_usuario, name='deletar_usuario'),
+    
     
     # Assinaturas
     path('painel/assinaturas/', views.admin_assinaturas, name='admin_assinaturas'),
