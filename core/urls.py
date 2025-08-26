@@ -1,10 +1,10 @@
+# core/urls.py
+
 from django.urls import path
 from . import views
 from django.contrib.auth import views as auth_views
-# REMOVA a linha 'from django.contrib import admin', ela não é necessária aqui.
 
 urlpatterns = [
-    
     # ========================================
     # PÁGINAS PÚBLICAS E DE AUTENTICAÇÃO
     # ========================================
@@ -14,12 +14,12 @@ urlpatterns = [
     path('como-funciona/', views.como_funciona, name='como_funciona'),
     path('planos/', views.planos, name='planos'),
     path('suporte/', views.suporte, name='suporte'),
-    path('validate-otp/', views.validate_otp_view, name='validate_otp'),
     
     # Autenticação
     path('cadastre-se/', views.cadastre_se, name='cadastre_se'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
+    path('validate-otp/', views.validate_otp_view, name='validate_otp'), # <-- LINHA ADICIONADA AQUI
 
     # ========================================
     # PERFIL E ASSINATURA DO USUÁRIO
@@ -39,36 +39,25 @@ urlpatterns = [
     # ========================================
     # PAINEL DE ADMIN CUSTOMIZADO (/painel/)
     # ========================================
-    # Usuários
+    # ... (o resto do seu painel de admin continua aqui igual) ...
     path('painel/usuarios/', views.admin_usuarios, name='admin_usuarios'),
     path('painel/usuarios/editar/<int:user_id>/', views.editar_usuario, name='editar_usuario'),
     path('painel/usuarios/deletar/<int:user_id>/', views.deletar_usuario, name='deletar_usuario'),
-    
-    
-    # Assinaturas
     path('painel/assinaturas/', views.admin_assinaturas, name='admin_assinaturas'),
     path('painel/assinaturas/ativar/<int:id>/', views.ativar_assinatura, name='ativar_assinatura'),
     path('painel/assinaturas/cancelar/<int:id>/', views.cancelar_assinatura, name='cancelar_assinatura'),
     path('painel/assinaturas/editar/<int:id>/', views.editar_assinatura, name='editar_assinatura'),
     path('painel/assinaturas/excluir/<int:id>/', views.excluir_assinatura, name='excluir_assinatura'),
-    
-    # Ações de Status da Assinatura (do painel de usuários)
     path('painel/assinatura/<int:assinatura_id>/pendente/', views.deixar_assinatura_pendente, name='deixar_assinatura_pendente'),
     path('painel/assinatura/<int:assinatura_id>/cancelar/', views.cancelar_assinatura_admin, name='cancelar_assinatura_admin'),
-
-    # Pagamentos
     path('painel/pagamentos/', views.admin_pagamentos, name='admin_pagamentos'),
     path('painel/aprovar_pagamento/<int:id>/', views.aprovar_pagamento, name='aprovar_pagamento'),
     path('painel/recusar_pagamento/<int:id>/', views.recusar_pagamento, name='recusar_pagamento'),
     path('painel/deletar_pagamento/<int:id>/', views.deletar_pagamento, name='deletar_pagamento'),
-
-    # Configurações
     path('painel/configuracoes/', views.admin_configuracoes, name='admin_configuracoes'),
     path('painel/configuracoes/adicionar/', views.adicionar_configuracao, name='adicionar_configuracao'),
     path('painel/configuracoes/editar/<int:id>/', views.editar_configuracao, name='editar_configuracao'),
     path('painel/deletar_configuracao/<int:id>/', views.deletar_configuracao, name='deletar_configuracao'),
-    
-    # Relatórios
     path('painel/relatorios/', views.admin_relatorios, name='admin_relatorios'),
 
     # ========================================
@@ -82,15 +71,12 @@ urlpatterns = [
     path('reset_password/', 
          auth_views.PasswordResetView.as_view(template_name="core/password_reset/password_reset_form.html"), 
          name="password_reset"),
-
     path('reset_password_sent/', 
          auth_views.PasswordResetDoneView.as_view(template_name="core/password_reset/password_reset_done.html"), 
          name="password_reset_done"),
-
     path('reset/<uidb64>/<token>/', 
          auth_views.PasswordResetConfirmView.as_view(template_name="core/password_reset/password_reset_confirm.html"), 
          name="password_reset_confirm"),
-
     path('reset_password_complete/', 
          auth_views.PasswordResetCompleteView.as_view(template_name="core/password_reset/password_reset_complete.html"), 
          name="password_reset_complete"),
