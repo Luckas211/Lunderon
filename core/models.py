@@ -39,7 +39,7 @@ class CategoriaMusica(models.Model):
 class VideoBase(models.Model):
     titulo = models.CharField(max_length=200)
     categoria = models.ForeignKey(CategoriaVideo, on_delete=models.PROTECT)
-    arquivo_video = models.FileField(upload_to='videos_base/')
+    arquivo_video = models.FileField(upload_to='videos_base/', blank=True, null=True)
 
     def __str__(self):
         return self.titulo
@@ -48,7 +48,7 @@ class VideoBase(models.Model):
 class MusicaBase(models.Model):
     titulo = models.CharField(max_length=200)
     categoria = models.ForeignKey(CategoriaMusica, on_delete=models.PROTECT)
-    arquivo_musica = models.FileField(upload_to='musicas_base/')
+    arquivo_musica = models.FileField(upload_to='musicas_base/', blank=True, null=True)
 
     def __str__(self):
         return self.titulo
