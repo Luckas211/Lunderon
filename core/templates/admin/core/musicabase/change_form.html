@@ -1,0 +1,60 @@
+{% extends "admin/change_form.html" %}
+
+{# Só exibe a seção de upload múltiplo na página de ADIÇÃO (que não tem um object_id) #}
+{% if not object_id %}
+    {% block after_field_sets %}
+    <fieldset class="module aligned">
+        <h2>Upload de Múltiplas Músicas</h2>
+        <div class="form-row">
+            <div>
+                <label for="id_arquivo_musica_multiple">Selecionar músicas:</label>
+                <input type="file" name="arquivo_musica_multiple" multiple id="id_arquivo_musica_multiple">
+                <p class="help">
+                    Selecione vários arquivos. Uma lista aparecerá abaixo para que você possa definir um título para cada música.
+                </p>
+                <div id="musica-titles-container" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+    </fieldset>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('id_arquivo_musica_multiple');
+        const titlesContainer = document.getElementById('musica-titles-container');
+
+        fileInput.addEventListener('change', function(event) {
+            titlesContainer.innerHTML = '';
+            const files = event.target.files;
+
+            if (files.length > 0) {
+                const header = document.createElement('h4');
+                header.textContent = 'Definir Títulos (opcional):';
+                titlesContainer.appendChild(header);
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+
+                const fieldWrapper = document.createElement('div');
+                fieldWrapper.style.marginBottom = '10px';
+
+                const fileLabel = document.createElement('label');
+                fileLabel.textContent = file.name;
+                fileLabel.style.display = 'block';
+                fileLabel.style.fontWeight = 'bold';
+
+                const titleInput = document.createElement('input');
+                titleInput.type = 'text';
+                titleInput.name = 'titulos_customizados';
+                titleInput.placeholder = 'Digite um título ou deixe em branco para usar o nome do arquivo';
+                titleInput.style.width = '100%';
+
+                fieldWrapper.appendChild(fileLabel);
+                fieldWrapper.appendChild(titleInput);
+                titlesContainer.appendChild(fieldWrapper);
+            }
+        });
+    });
+    </script>
+    {% endblock %}
+{% endif %}
