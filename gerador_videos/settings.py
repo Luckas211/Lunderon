@@ -20,7 +20,7 @@ DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = [
     '35.198.0.107',
-    '.ngrok-free.app', # O ponto no início permite qualquer subdomínio do ngrok
+    '.ngrok-free.app',  # O ponto no início permite qualquer subdomínio do ngrok
     'localhost',
     '127.0.0.1',
 ]
@@ -95,9 +95,10 @@ USE_TZ = True
 
 
 # --- Arquivos Estáticos e de Mídia ---
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # pasta para produção
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, 'static'),  # ainda pode manter sua pasta "static" do app
 ]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
