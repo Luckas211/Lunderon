@@ -812,21 +812,31 @@ def admin_assinaturas(request):
 
 # ... (resto dos seus imports e views)
 
-@login_required
+
 def planos(request):
-    # Verifica se o usuário tem um plano ativo
-    if request.user.plano_ativo:
-        # Busca a assinatura ativa mais recente do usuário no banco de dados
-        assinatura_ativa = Assinatura.objects.filter(usuario=request.user, status='ativo').order_by('-data_inicio').first()
-        
-        context = {
-            'assinatura': assinatura_ativa
-        }
-        # ATENÇÃO: Verifique o caminho correto do seu template.
-        # Pode ser 'core/planos/plano_ativo.html' ou apenas 'plano_ativo.html' dependendo da sua estrutura
-        return render(request, 'core/planos/plano_ativo.html', context)
+    """
+    CORRIGIDO: Permite que usuários anônimos vejam os planos.
+    Se o usuário estiver logado e já tiver um plano ativo, 
+    redireciona para a página de gerenciamento do plano.
+    """
+    # Primeiro, verifica se o usuário está autenticado
+    if request.user.is_authenticated:
+        # Se estiver autenticado, verifica se ele tem um plano ativo
+        if request.user.plano_ativo:
+            # Busca a assinatura ativa para exibir os detalhes
+            assinatura_ativa = Assinatura.objects.filter(
+                usuario=request.user, 
+                status='ativo'
+            ).order_by('-data_inicio').first()
+            
+            context = {
+                'assinatura': assinatura_ativa
+            }
+            # Renderiza a página que mostra o plano já ativo
+            return render(request, 'core/planos/plano_ativo.html', context)
     
-    # Se não tiver plano ativo, mostra a página normal para assinar
+    # Se o usuário não estiver logado OU não tiver um plano ativo,
+    # mostra a página normal de planos para assinar.
     context = {
         'stripe_publishable_key': os.getenv("STRIPE_PUBLISHABLE_KEY")
     }
