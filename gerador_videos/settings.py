@@ -13,16 +13,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
+
 # --- Configurações de Segurança ---
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-default-key-for-dev')
-DEBUG = env.bool('DEBUG', default=False)  # Alterado para False em produção
+DEBUG = env.bool('DEBUG', default=True)
 
 ALLOWED_HOSTS = [
-    '35.198.0.107',
-    '.ngrok-free.app',  # O ponto no início permite qualquer subdomínio do ngrok
+    '35.198.0.107'
+    '.ngrok-free.app', # O ponto no início permite qualquer subdomínio do ngrok
     'localhost',
     '127.0.0.1',
 ]
+
 
 # --- Aplicações e Middlewares ---
 INSTALLED_APPS = [
@@ -33,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'core',
+    
 ]
 
 MIDDLEWARE = [
@@ -50,7 +53,9 @@ ROOT_URLCONF = 'gerador_videos.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        # 1. 'DIRS' deve ficar vazio para não competir com a busca nos apps.
         'DIRS': [],
+        # 2. 'APP_DIRS': True é a configuração chave que faz essa estrutura funcionar.
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -62,12 +67,16 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = 'gerador_videos.wsgi.application'
 
+
 # --- Banco de Dados ---
+# Esta é a forma correta e limpa de ler a configuração do seu arquivo .env
 DATABASES = {
     'default': env.db()
 }
+
 
 # --- Validação de Senhas ---
 AUTH_PASSWORD_VALIDATORS = [
@@ -77,39 +86,43 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+
 # --- Internacionalização ---
 LANGUAGE_CODE = 'pt-br'
 TIME_ZONE = 'America/Sao_Paulo'
 USE_I18N = True
 USE_TZ = True
 
+
 # --- Arquivos Estáticos e de Mídia ---
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'core', 'static'),
-]
 
 # --- Configurações de Autenticação ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'
 AUTH_USER_MODEL = 'core.Usuario'
 
+
 # --- Configurações do Stripe ---
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY')
-STRIPE_PRICE_ID = env('STRIPE_PRICE_ID')
-STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='whsec_...')
+STRIPE_PRICE_ID = env('STRIPE_PRICE_ID') # <-- ADICIONE ESTA LINHA
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='whsec_...') 
 
 # No final do seu settings.py
 APPEND_SLASH = True
 
+
 # ================================================================
 # CONFIGURAÇÕES DE E-MAIL
 # ================================================================
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+# Lê as credenciais do e-mail do arquivo .env para segurança
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' # <-- ADICIONE ESTA LINHA PARA TESTE
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
