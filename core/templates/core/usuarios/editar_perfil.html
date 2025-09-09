@@ -1,18 +1,19 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Editar Perfil - L.E DARK{% endblock %}
+{% block title %}Editar Perfil - LUNDERON{% endblock %}
 
 {% block content %}
-<div class="admin-dashboard">
-
+<div class="dashboard-layout">
     <aside class="sidebar">
-        <h2 class="sidebar-logo">{% firstof user.first_name user.username %}</h2>
-        <nav>
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+        </div>
+        <nav class="sidebar-nav">
             <ul>
-                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic"></i> Gerador</a></li>
-                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video"></i> Meus Vídeos</a></li>
-                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle"></i> Meu Perfil</a></li>
+                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
+                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
             </ul>
         </nav>
     </aside>
@@ -22,39 +23,78 @@
             <h1>Editar Meu Perfil</h1>
         </header>
 
-        <section class="signup-form-wrapper" style="max-width: 100%; animation: none; padding: 40px;">
-            <form method="POST" class="signup-form">
+        <div class="dashboard-card" style="max-width: 800px;">
+            <form method="POST">
                 {% csrf_token %}
-                
-                {# Renderizando campos individualmente para melhor controle e clareza #}
-                <div class="input-group">
-                    <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
-                    {{ form.first_name }}
-                </div>
+                <div class="card-body">
+                    {% if form.non_field_errors %}
+                        <div class="form-errors">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
 
-                <div class="input-group">
-                    <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
-                    {{ form.last_name }}
-                </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">Nome</label>
+                            {{ form.first_name }}
+                             {% for error in form.first_name.errors %}
+                                <div class="field-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Sobrenome</label>
+                            {{ form.last_name }}
+                            {% for error in form.last_name.errors %}
+                                <div class="field-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
 
-                <div class="input-group">
-                    <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
-                    {{ form.email }}
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                        {{ form.email }}
+                        {% for error in form.email.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.data_nascimento.id_for_label }}" class="form-label">Data de Nascimento</label>
+                        {{ form.data_nascimento }}
+                        {% for error in form.data_nascimento.errors %}
+                            <div class="field-error">{{ error }}</div>
+                        {% endfor %}
+                        <small class="form-help-text">Formato: DD/MM/AAAA</small>
+                    </div>
                 </div>
-                
-                <div class="input-group">
-                    <label for="{{ form.data_nascimento.id_for_label }}">{{ form.data_nascimento.label }}</label>
-                    {{ form.data_nascimento }}
+                <div class="card-footer">
+                    <div class="form-actions">
+                        <a href="{% url 'meu_perfil' %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
                 </div>
-
-                {% for error in form.non_field_errors %}
-                    <p style="color: #ff6b6b; font-size: 0.9em; text-align: center;">{{ error }}</p>
-                {% endfor %}
-
-                <button type="submit" class="btn-signup" style="margin-top: 20px;">Salvar Alterações</button>
-                <a href="{% url 'meu_perfil' %}" class="btn-action cancel" style="display: block; text-align: center; margin-top: 15px; background-color: #6c757d; border-radius: 50px; padding: 15px; border: none; font-weight: 600;">Cancelar</a>
             </form>
-        </section>
+        </div>
     </main>
 </div>
+
+<script>
+    // Script para adicionar a classe 'form-input' aos campos do formulário Django
+    document.addEventListener("DOMContentLoaded", function() {
+        const fieldIds = ['id_first_name', 'id_last_name', 'id_email', 'id_data_nascimento'];
+        
+        fieldIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.classList.add('form-input');
+                // Adiciona o placeholder para o campo de data, se for o caso
+                if (id === 'id_data_nascimento') {
+                    element.placeholder = 'Ex: 25/12/1990';
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}

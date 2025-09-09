@@ -1,37 +1,66 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Plano Único | L.E. DARK{% endblock %}
+{% block title %}Nosso Plano | LUNDERON{% endblock %}
 
 {% block content %}
-<main class="main-content">
-    <div class="hero-section">
-        <h1 class="hero-title">O Plano Perfeito para o seu Canal</h1>
-        <p class="hero-subtitle">Um único plano com todas as ferramentas que você precisa para dominar as redes sociais.</p>
+
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-header-title">O Plano Perfeito Para o Seu Canal</h1>
+        <p class="page-header-subtitle">Um único plano com todas as ferramentas que você precisa para dominar as redes sociais, sem complicações ou taxas escondidas.</p>
     </div>
-</main>
+</section>
 
 <section class="pricing-section">
-    <div class="pricing-container-single">
+    <div class="pricing-card-wrapper">
 
-        <div class="pricing-card complete">
-            <h2 class="plan-name">Plano Completo</h2>
-            <p class="plan-price">R$ 49,90<span class="plan-periodo">/mês</span></p>
-            
+        <div class="pricing-card">
+            <span class="promo-badge">PROMOÇÃO</span> <div class="pricing-card-header">
+                <h2 class="plan-name">Plano Completo</h2>
+                <p class="plan-description">Acesso total a todas as funcionalidades da plataforma.</p>
+            </div>
+
+            <div class="plan-price">
+                R$ 49,90<span class="plan-period">/mês</span>
+            </div>
+
             <ul class="plan-features">
                 <li><i class="fas fa-check-circle"></i> <strong>Geração em Lote:</strong> Crie até 3 vídeos de uma só vez.</li>
                 <li><i class="fas fa-check-circle"></i> <strong>Narração com IA:</strong> Vozes realistas para seus roteiros.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Duração Automática:</strong> Vídeos com narração terminam no tempo exato da fala.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Controle Total do Texto:</strong> Personalize cor, fonte, tamanho e posição.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Legendas Karaokê:</strong> Aumente a retenção com legendas dinâmicas.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Telas Finais Personalizadas:</strong> Adicione seu "call to action" no final.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Vasta Biblioteca de Mídia:</strong> Milhares de vídeos e músicas livres de copyright.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Suporte Prioritário</strong></li>
+                <li><i class="fas fa-check-circle"></i> <strong>Legendas Karaokê:</strong> Aumente a retenção do público.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Controle Criativo Total:</strong> Personalize fontes, cores e mais.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Vasta Biblioteca de Mídia:</strong> Vídeos e músicas sem copyright.</li>
+                <li><i class="fas fa-check-circle"></i> <strong>Suporte Prioritário</strong> via e-mail e chat.</li>
             </ul>
 
-            <a href="{% url 'criar_checkout' %}" class="btn">Assinar agora</a>
+            <a href="{% url 'criar_checkout' %}" class="btn btn-primary btn-full">Assinar Agora</a>
         </div>
 
     </div>
 </section>
+
+<section class="faq-section">
+    <div class="container">
+        <div class="section-header">
+            <h2>Dúvidas Comuns</h2>
+            <p>Respostas rápidas para as perguntas mais importantes.</p>
+        </div>
+        <div class="faq-grid">
+            <div class="faq-item">
+                <h4>Posso cancelar a qualquer momento?</h4>
+                <p>Sim! Você pode cancelar sua assinatura quando quiser, sem burocracia. Seu acesso continuará ativo até o final do período já pago.</p>
+            </div>
+            <div class="faq-item">
+                <h4>Quais métodos de pagamento são aceitos?</h4>
+                <p>Aceitamos os principais cartões de crédito (Visa, MasterCard, Amex) através da nossa parceria com a Stripe, uma das plataformas de pagamento mais seguras do mundo.</p>
+            </div>
+            <div class="faq-item">
+                <h4>O que acontece após o pagamento?</h4>
+                <p>Seu acesso a todas as funcionalidades é liberado imediatamente após a confirmação do pagamento. Você já pode começar a criar seus vídeos na mesma hora.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 {% endblock %}

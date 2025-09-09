@@ -1,47 +1,21 @@
 {% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Admin | Relatórios{% endblock %}
 
 {% block content %}
-
-{# NOVO: Estilos para os cards dos indicadores #}
-<style>
-    .kpi-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-        gap: 20px;
-        margin-bottom: 40px;
-    }
-    .kpi-card {
-        background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 12px;
-        padding: 25px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-    }
-    .kpi-card .value {
-        font-size: 2.2em;
-        font-weight: 700;
-        color: #c99e63;
-        margin-bottom: 5px;
-    }
-    .kpi-card .title {
-        font-size: 1em;
-        color: #ccc;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-</style>
-
-<div class="admin-dashboard">
-
+<div class="dashboard-layout">
     <aside class="sidebar">
-        <h2 class="sidebar-logo">L.E DARK</h2>
-        <nav>
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">Painel Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
             <ul>
-                <li><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
-                <li><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
-                <li><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
-                <li><a href="{% url 'admin_pagamentos' %}">💳 Pagamentos</a></li>
-                <li><a href="{% url 'admin_relatorios' %}" class="active">📊 Relatórios</a></li>
+                <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
+                <li class="active"><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
             </ul>
         </nav>
     </aside>
@@ -51,81 +25,92 @@
             <h1>Relatórios do Sistema</h1>
         </header>
 
-        {# NOVO: Grid com os cards dos indicadores #}
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="value">{{ total_assinantes_ativos }}</div>
-                <div class="title">Assinantes Ativos</div>
+                <span class="kpi-value">{{ total_assinantes_ativos }}</span>
+                <span class="kpi-title">Assinantes Ativos</span>
             </div>
             <div class="kpi-card">
-                <div class="value">R$ {{ receita_total|floatformat:2 }}</div>
-                <div class="title">Receita Total</div>
+                <span class="kpi-value">R$ {{ receita_total|floatformat:2 }}</span>
+                <span class="kpi-title">Receita Total</span>
             </div>
             <div class="kpi-card">
-                <div class="value">{{ novos_assinantes }}</div>
-                <div class="title">Novos Assinantes (30d)</div>
+                <span class="kpi-value">{{ novos_assinantes }}</span>
+                <span class="kpi-title">Novos Assinantes (30d)</span>
             </div>
             <div class="kpi-card">
-                <div class="value">{{ total_videos_gerados }}</div>
-                <div class="title">Vídeos Gerados</div>
+                <span class="kpi-value">{{ total_videos_gerados }}</span>
+                <span class="kpi-title">Vídeos Gerados</span>
             </div>
         </div>
 
-        <section class="dashboard-table">
-            <h2>Assinaturas</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Usuário</th>
-                        <th>Plano</th>
-                        <th>Status</th>
-                        <th>Início</th>
-                        <th>Expiração</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for ass in assinaturas %}
-                    <tr>
-                        <td>{{ ass.usuario.username }}</td>
-                        <td>{{ ass.plano.nome }}</td>
-                        <td>
-                            <span class="status {{ ass.status }}">{{ ass.get_status_display }}</span>
-                        </td>
-                        <td>{{ ass.data_inicio|date:"d/m/Y" }}</td>
-                        <td>{% if ass.data_expiracao %}{{ ass.data_expiracao|date:"d/m/Y" }}{% else %}-{% endif %}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="5">Nenhuma assinatura encontrada.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="dashboard-card">
+            <div class="card-header">
+                <h2 class="card-title">Últimas Assinaturas</h2>
+            </div>
+            <div class="card-body full-bleed">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Plano</th>
+                            <th>Status</th>
+                            <th>Início</th>
+                            <th>Expiração</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ass in assinaturas %}
+                        <tr>
+                            <td>{{ ass.usuario.username }}</td>
+                            <td>{{ ass.plano.nome }}</td>
+                            <td>
+                                <span class="status-badge status-{{ ass.status|lower }}">{{ ass.get_status_display }}</span>
+                            </td>
+                            <td>{{ ass.data_inicio|date:"d/m/Y" }}</td>
+                            <td>{% if ass.data_expiracao %}{{ ass.data_expiracao|date:"d/m/Y" }}{% else %}-{% endif %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center">Nenhuma assinatura encontrada.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-            <h2 style="margin-top: 40px;">Pagamentos</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Usuário</th>
-                        <th>Plano Pago</th>
-                        <th>Valor</th>
-                        <th>Status</th>
-                        <th>Data do Pagamento</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for pagamento in pagamentos %}
-                    <tr>
-                        <td>{{ pagamento.usuario.username }}</td>
-                        <td>{{ pagamento.plano.nome }}</td>
-                        <td>R$ {{ pagamento.valor|floatformat:2 }}</td>
-                        <td><span class="status {{ pagamento.status }}">{{ pagamento.get_status_display }}</span></td>
-                        <td>{{ pagamento.data_pagamento|date:"d/m/Y às H:i" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="5" style="text-align: center; padding: 20px;">Nenhum pagamento encontrado.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </section>
+        <div class="dashboard-card" style="margin-top: 30px;">
+            <div class="card-header">
+                <h2 class="card-title">Últimos Pagamentos</h2>
+            </div>
+             <div class="card-body full-bleed">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Plano</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pagamento in pagamentos %}
+                        <tr>
+                            <td>{{ pagamento.usuario.username }}</td>
+                            <td>{{ pagamento.plano.nome }}</td>
+                            <td>R$ {{ pagamento.valor|floatformat:2 }}</td>
+                            <td>
+                                <span class="status-badge status-{{ pagamento.status|lower }}">{{ pagamento.get_status_display }}</span>
+                            </td>
+                            <td>{{ pagamento.data_pagamento|date:"d/m/Y H:i" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="5" class="text-center">Nenhum pagamento encontrado.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
 </div>
 {% endblock %}

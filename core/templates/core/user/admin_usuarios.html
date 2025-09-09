@@ -1,20 +1,21 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Painel de Usuários - L.E DARK{% endblock %}
+{% block title %}Admin | Gerenciar Usuários{% endblock %}
 
 {% block content %}
-<div class="admin-dashboard">
-
+<div class="dashboard-layout">
     <aside class="sidebar">
-        <h2 class="sidebar-logo">L.E DARK</h2>
-        <nav>
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">Painel Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
             <ul>
-                <li><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
-                <li class="active"><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
-                <li><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
-                <li><a href="{% url 'admin_pagamentos' %}">💳 Pagamentos</a></li>
-                <li><a href="{% url 'admin_relatorios' %}">📊 Relatórios</a></li>
+                <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
+                <li class="active"><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
             </ul>
         </nav>
     </aside>
@@ -22,63 +23,62 @@
     <main class="dashboard-content">
         <header class="dashboard-header">
             <h1>Gerenciamento de Usuários</h1>
-            <a href="{% url 'admin:core_usuario_add' %}" class="btn-add" target="_blank">+ Novo Usuário</a>
+            <a href="{% url 'admin:core_usuario_add' %}" class="btn btn-primary" target="_blank">
+                <i class="fas fa-plus"></i> Novo Usuário
+            </a>
         </header>
-
+        
         {% if messages %}
+            <div class="dashboard-messages">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}" style="background-color: #333; color: #fff; padding: 15px; margin-bottom: 20px; border-radius: 5px; border-left: 5px solid {% if message.tags == 'success' %}#28a745{% elif message.tags == 'warning' %}#ffc107{% elif message.tags == 'error' %}#dc3545{% else %}#17a2b8{% endif %};">
-                    {{ message }}
-                </div>
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
             {% endfor %}
+            </div>
         {% endif %}
 
-        <section class="dashboard-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Nome</th>
-                        <th>Email</th>
-                        <th>Plano</th>
-                        <th>Status Assinatura</th>
-                        <th>Vídeos Criados (30d)</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in usuarios %}
-                    <tr>
-                        <td>{{ user.username }}</td>
-                        <td>{{ user.email }}</td>
-
-                        {% with assinatura=user.assinatura_set.first %}
-                            {% if assinatura %}
-                                <td>{{ assinatura.plano.nome }}</td>
-                                <td><span class="status {{ assinatura.status }}">{{ assinatura.get_status_display }}</span></td>
-                            {% else %}
-                                <td colspan="2" style="text-align: center; color: #888;">Sem Assinatura</td>
-                            {% endif %}
-                        {% endwith %}
-
-                        <td>{{ user.videos_no_mes }} / 100</td>
-
-                        <td>
+        <div class="dashboard-card">
+            <div class="card-body full-bleed">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Nome de Usuário</th>
+                            <th>Email</th>
+                            <th>Plano</th>
+                            <th>Status</th>
+                            <th>Vídeos (30d)</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in usuarios %}
+                        <tr>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
                             {% with assinatura=user.assinatura_set.first %}
                                 {% if assinatura %}
-                                    <a href="{% url 'deixar_assinatura_pendente' assinatura.id %}" class="btn-action" style="background-color: #f0ad4e;" onclick="return confirm('Tem certeza que deseja marcar esta assinatura como pendente?');">Pendente</a>
-                                    <a href="{% url 'cancelar_assinatura_admin' assinatura.id %}" class="btn-action cancel" onclick="return confirm('Tem certeza que deseja cancelar esta assinatura? Esta ação não pode ser desfeita.');">Cancelar</a>
+                                    <td>{{ assinatura.plano.nome }}</td>
+                                    <td><span class="status-badge status-{{ assinatura.status|lower }}">{{ assinatura.get_status_display }}</span></td>
+                                {% else %}
+                                    <td class="text-center text-muted" colspan="2">Sem Assinatura</td>
                                 {% endif %}
                             {% endwith %}
-                            <a href="{% url 'editar_usuario' user.id %}" class="btn-action edit">Editar</a>
-                            <a href="{% url 'deletar_usuario' user.id %}" class="btn-action delete" onclick="return confirm('Tem certeza que deseja deletar este usuário?');">Deletar</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="6">Nenhum usuário encontrado.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </section>
+                            <td>{{ user.videos_no_mes }} / 100</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'editar_usuario' user.id %}" class="btn btn-secondary btn-sm">Editar</a>
+                                    <a href="{% url 'deletar_usuario' user.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja deletar este usuário?');">Deletar</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">Nenhum usuário encontrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
 </div>
 {% endblock %}

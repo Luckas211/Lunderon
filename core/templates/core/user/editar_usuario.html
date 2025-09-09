@@ -1,20 +1,21 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Editar Usuário - L.E DARK{% endblock %}
+{% block title %}Admin | Editar Usuário{% endblock %}
 
 {% block content %}
-<div class="admin-dashboard">
-
+<div class="dashboard-layout">
     <aside class="sidebar">
-        <h2 class="sidebar-logo">L.E DARK</h2>
-        <nav>
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">Painel Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
             <ul>
-                <li><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
-                <li><a href="{% url 'admin_usuarios' %}" class="active">👥 Usuários</a></li>
-                <li><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
-                <li><a href="{% url 'admin_pagamentos' %}">💳 Pagamentos</a></li>
-                <li><a href="{% url 'admin_relatorios' %}">📊 Relatórios</a></li>
+                <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
+                <li class="active"><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
             </ul>
         </nav>
     </aside>
@@ -24,55 +25,76 @@
             <h1>Editar Usuário: {{ usuario_editando.username }}</h1>
         </header>
 
-        <section class="form-container" style="background-color: #2a2a2a; padding: 25px; border-radius: 8px;">
+        <div class="dashboard-card">
             <form method="POST">
                 {% csrf_token %}
-
-                <fieldset style="border: 1px solid #444; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-                    <legend style="padding: 0 10px; color: #fff;">Dados da Conta</legend>
-                    <p><strong>Data de Cadastro:</strong> {{ usuario_editando.date_joined|date:"d/m/Y H:i" }}</p>
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; color: #ccc;">{{ form.username.label }}</label>
-                        {{ form.username }}
-                    </div>
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; color: #ccc;">{{ form.email.label }}</label>
-                        {{ form.email }}
-                    </div>
-                    <div class="form-group" style="margin-bottom: 20px; display: flex; align-items: center;">
-                        {{ form.is_staff }}
-                        <label for="{{ form.is_staff.id_for_label }}" style="margin-left: 10px; color: #ccc;">{{ form.is_staff.label }}</label>
-                    </div>
-                </fieldset>
-
-                <fieldset style="border: 1px solid #444; padding: 20px; border-radius: 5px;">
-                    <legend style="padding: 0 10px; color: #fff;">Gerenciar Assinatura</legend>
-                    {% if assinatura %}
-                        <p><strong>Assinatura Expira em:</strong> {{ assinatura.data_expiracao|date:"d/m/Y" }}</p>
+                <div class="card-body">
+                    {% if form.non_field_errors %}
+                        <div class="form-errors">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
                     {% endif %}
-                    <div class="form-group" style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; color: #ccc;">{{ form.plano.label }}</label>
-                        {{ form.plano }}
-                    </div>
-                     <div class="form-group" style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; color: #ccc;">{{ form.status.label }}</label>
-                        {{ form.status }}
-                    </div>
-                </fieldset>
-                
-                {% if form.errors %}
-                <div class="form-errors" style="color: #ff6b6b; margin-top: 15px;">
-                    <p>Por favor, corrija os erros abaixo:</p>
-                    {{ form.errors }}
+
+                    <fieldset class="form-fieldset">
+                        <legend>Dados da Conta</legend>
+                        <div class="form-group">
+                            <label for="{{ form.username.id_for_label }}" class="form-label">{{ form.username.label }}</label>
+                            {{ form.username }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_staff }}
+                                <label for="{{ form.is_staff.id_for_label }}" class="form-check-label">{{ form.is_staff.label }}</label>
+                            </div>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="form-fieldset">
+                        <legend>Gerenciar Assinatura</legend>
+                        <div class="form-group">
+                            <label for="{{ form.plano.id_for_label }}" class="form-label">{{ form.plano.label }}</label>
+                            {{ form.plano }}
+                        </div>
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">{{ form.status.label }}</label>
+                            {{ form.status }}
+                        </div>
+                    </fieldset>
                 </div>
-                {% endif %}
-                
-                <div style="margin-top: 25px;">
-                    <button type="submit" class="btn-action edit">Salvar Alterações</button>
-                    <a href="{% url 'admin_usuarios' %}" class="btn-action cancel">Cancelar</a>
+                <div class="card-footer">
+                    <div class="form-actions">
+                        <a href="{% url 'admin_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                    </div>
                 </div>
             </form>
-        </section>
+        </div>
     </main>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Adiciona classes aos inputs de texto
+        ['id_username', 'id_email'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.classList.add('form-input');
+        });
+
+        // Adiciona classes aos selects
+        ['id_plano', 'id_status'].forEach(id => {
+            const element = document.getElementById(id);
+            if (element) element.classList.add('form-select');
+        });
+
+        // Adiciona classe ao checkbox
+        const checkbox = document.getElementById('id_is_staff');
+        if (checkbox) checkbox.classList.add('form-check-input');
+    });
+</script>
 {% endblock %}

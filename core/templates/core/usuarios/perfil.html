@@ -1,101 +1,110 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Meu Painel - L.E DARK{% endblock %}
+{% block title %}Meu Painel - LUNDERON{% endblock %}
 
 {% block content %}
-{# NOVO: Estilos para a barra de progresso #}
-<style>
-    .progress-bar {
-        background-color: #333;
-        border-radius: 50px;
-        height: 12px;
-        width: 100%;
-        margin-top: 8px;
-        overflow: hidden;
-    }
-    .progress-bar-inner {
-        background-color: #c99e63;
-        height: 100%;
-        border-radius: 50px;
-        transition: width 0.5s ease-in-out;
-    }
-</style>
-
-<div class="admin-dashboard">
+<div class="dashboard-layout">
     <aside class="sidebar">
-        <h2 class="sidebar-logo">{% firstof user.first_name user.username %}</h2>
-        <nav>
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+        </div>
+        <nav class="sidebar-nav">
             <ul>
-                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic"></i> Gerador</a></li>
-                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video"></i> Meus Vídeos</a></li>
-                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle"></i> Meu Perfil</a></li>
-
-                <li style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #444;">
-                    <p style="padding: 0 15px; color: #888; font-size: 0.9em; text-transform: uppercase;">Siga-nos</p>
-                    <a href="https://www.tiktok.com/" target="_blank" style="display: block; padding: 10px 15px; color: #ddd; text-decoration: none;"><i class="fab fa-tiktok"></i> TikTok</a>
-                    <a href="https://www.instagram.com/reels/" target="_blank" style="display: block; padding: 10px 15px; color: #ddd; text-decoration: none;"><i class="fab fa-instagram"></i> Instagram Reels</a>
-                </li>
+                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
+                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
             </ul>
         </nav>
+        <div class="sidebar-footer">
+            <h3 class="sidebar-section-title">Siga-nos</h3>
+            <ul>
+                <li><a href="https://www.tiktok.com/" target="_blank"><i class="fab fa-tiktok fa-fw"></i> TikTok</a></li>
+                <li><a href="https://www.instagram.com/reels/" target="_blank"><i class="fab fa-instagram fa-fw"></i> Instagram</a></li>
+            </ul>
+        </div>
     </aside>
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <h1>Painel do Usuário</h1>
+            <h1>Meu Painel</h1>
         </header>
 
-        {% if assinatura.status == 'pendente' or assinatura.status == 'cancelado' %}
-            {# ... (seus banners de aviso continuam aqui, sem alteração) ... #}
-        {% endif %}
-
-        <div id="main-content">
-            <div class="pricing-card" style="width: 100%; max-width: none; margin-bottom: 30px; text-align: left;">
-                <h2 class="plan-name"><i class="fas fa-star"></i> Minha Assinatura</h2>
-                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
-                
-                {% if assinatura %}
-                    <p><strong>Plano Contratado:</strong> {{ assinatura.plano.nome }}</p>
-                    <p><strong>Status da Assinatura:</strong> <span class="status {{ assinatura.status }}">{{ assinatura.get_status_display }}</span></p>
-                    {% if assinatura.data_expiracao %}
-                        <p><strong>Direito de Uso até:</strong> {{ assinatura.data_expiracao|date:"d/m/Y" }}</p>
-                    {% endif %}
-
-                    {# --- INÍCIO DA ATUALIZAÇÃO --- #}
-                    <div style="margin-top: 15px;">
-                        <p><strong>Uso no Ciclo Atual:</strong> {{ videos_criados_no_mes }} de {{ limite_videos_mes }} vídeos gerados.</p>
-                        <div class="progress-bar">
-                            <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes }} / {{ limite_videos_mes }} * 100%);"></div>
-                        </div>
-                    </div>
-                    {# --- FIM DA ATUALIZAÇÃO --- #}
-
-                    <a href="{% url 'gerenciar_assinatura' %}" class="btn-cta" id="manage-subscription-btn" style="margin-top: 20px;">Gerenciar Assinatura</a>
-                {% else %}
-                    <p>Você ainda não possui uma assinatura ativa.</p>
-                    <a href="{% url 'planos' %}" class="btn-cta complete-btn">Ver Planos</a>
-                {% endif %}
-            </div>
-
-            <div class="pricing-card" style="width: 100%; max-width: none; text-align: left;">
-                 {# Substitua o card de "Minhas Informações" por este #}
-
-            <div class="pricing-card" style="width: 100%; max-width: none; text-align: left;">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                    <h2 class="plan-name"><i class="fas fa-id-card"></i> Minhas Informações</h2>
-                    <a href="{% url 'editar_perfil' %}" class="btn-action edit">Editar Informações</a>
+        <div class="dashboard-grid">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-star"></i> Minha Assinatura</h2>
                 </div>
-                <hr style="border-color: rgba(255,255,255,0.1); margin: 15px 0;">
-
-                <p><strong>Nome Completo:</strong> {% if user.get_full_name %}{{ user.get_full_name }}{% else %}Não informado{% endif %}</p>
-                <p><strong>Nome de Usuário:</strong> {{ user.username }}</p>
-                <p><strong>Email de Cadastro:</strong> {{ user.email }}</p>
-                <p><strong>Data de Nascimento:</strong> {% if user.data_nascimento %}{{ user.data_nascimento|date:"d/m/Y" }}{% else %}Não informada{% endif %}</p>
-                <p><strong>Membro desde:</strong> {{ user.date_joined|date:"d/m/Y" }}</p>
+                <div class="card-body">
+                    {% if assinatura %}
+                        <ul class="info-list">
+                            <li class="info-item">
+                                <span class="info-label">Plano Contratado</span>
+                                <span class="info-value">{{ assinatura.plano.nome }}</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">Status</span>
+                                <span class="status-badge status-{{ assinatura.status|lower }}">{{ assinatura.get_status_display }}</span>
+                            </li>
+                            {% if assinatura.data_expiracao %}
+                            <li class="info-item">
+                                <span class="info-label">Acesso até</span>
+                                <span class="info-value">{{ assinatura.data_expiracao|date:"d/m/Y" }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        <div class="usage-meter">
+                            <div class="info-item">
+                                <span class="info-label">Uso no ciclo atual</span>
+                                <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }}</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes }} / {{ limite_videos_mes }} * 100%);"></div>
+                            </div>
+                        </div>
+                        <div class="card-footer">
+                             <a href="{% url 'gerenciar_assinatura' %}" class="btn btn-secondary btn-full">Gerenciar Assinatura</a>
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <p>Você ainda não possui uma assinatura ativa.</p>
+                            <a href="{% url 'planos' %}" class="btn btn-primary">Ver Planos</a>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-id-card"></i> Minhas Informações</h2>
+                    <a href="{% url 'editar_perfil' %}" class="btn btn-secondary btn-sm">Editar</a>
+                </div>
+                <div class="card-body">
+                     <ul class="info-list">
+                        <li class="info-item">
+                            <span class="info-label">Nome Completo</span>
+                            <span class="info-value">{% firstof user.get_full_name 'Não informado' %}</span>
+                        </li>
+                        <li class="info-item">
+                            <span class="info-label">Nome de Usuário</span>
+                            <span class="info-value">{{ user.username }}</span>
+                        </li>
+                         <li class="info-item">
+                            <span class="info-label">Email</span>
+                            <span class="info-value">{{ user.email }}</span>
+                        </li>
+                         <li class="info-item">
+                            <span class="info-label">Data de Nascimento</span>
+                            <span class="info-value">{% if user.data_nascimento %}{{ user.data_nascimento|date:"d/m/Y" }}{% else %}Não informada{% endif %}</span>
+                        </li>
+                         <li class="info-item">
+                            <span class="info-label">Membro desde</span>
+                            <span class="info-value">{{ user.date_joined|date:"d/m/Y" }}</span>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </main>
 </div>
-{# ... (seu script de restrição continua aqui, sem alteração) ... #}
 {% endblock %}
