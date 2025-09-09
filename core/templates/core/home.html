@@ -1,0 +1,25 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}LUNDERON - Automatize Vídeos em Escala{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-glow"></div>
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                Transforme Ideias em Vídeos Virais com IA
+            </h1>
+            <p class="hero-subtitle">
+                A única ferramenta que você precisa para criar e automatizar vídeos para canais de conteúdo em escala. Produza mais, em menos tempo.
+            </p>
+            <div class="hero-actions">
+                <a href="{% url 'cadastre_se' %}" class="btn btn-primary">Começar Agora (Grátis)</a>
+                <a href="{% url 'como_funciona' %}" class="btn btn-secondary">Ver Funcionalidades</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

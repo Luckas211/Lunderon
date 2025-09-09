@@ -1,0 +1,17 @@
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card-animated">
+        <div class="alert alert-danger" role="alert">
+          <h4 class="alert-heading">Pagamento Recusado!</h4>
+          <p>Ocorreu um problema ao processar seu pagamento. Por favor, verifique os dados do seu cartão ou tente novamente com outra forma de pagamento.</p>
+          <hr>
+          <p class="mb-0">
+            Você pode tentar <a href="{% url 'planos' %}">comprar novamente</a> ou entrar em contato com o suporte se o problema persistir.
+          </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

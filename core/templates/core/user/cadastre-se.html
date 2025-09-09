@@ -1,0 +1,83 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Crie sua Conta - LUNDERON{% endblock %}
+
+{% block content %}
+<section class="form-section">
+    <div class="form-wrapper">
+        <form action="{% url 'cadastre_se' %}" method="POST" class="form-content">
+            {% csrf_token %}
+            
+            <div class="form-header">
+                <h2>Crie Sua Conta</h2>
+                <p>Comece sua jornada conosco hoje mesmo.</p>
+            </div>
+
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}" class="form-label">Nome de Usuário</label>
+                {{ form.username }}
+                {% for error in form.username.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}" class="form-label">E-mail</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.password1.id_for_label }}" class="form-label">Senha</label>
+                {{ form.password1 }}
+                 {% for error in form.password1.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.password2.id_for_label }}" class="form-label">Confirme a Senha</label>
+                {{ form.password2 }}
+                {% for error in form.password2.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-full">Criar Conta</button>
+
+            <div class="form-footer">
+                <p>Já tem uma conta? <a href="{% url 'login' %}">Faça Login</a></p>
+            </div>
+        </form>
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const fields = {
+            'id_username': { placeholder: 'Crie um nome de usuário', class: 'form-input' },
+            'id_email': { placeholder: 'Seu melhor e-mail', class: 'form-input' },
+            'id_password1': { placeholder: 'Crie uma senha forte', class: 'form-input' },
+            'id_password2': { placeholder: 'Confirme sua senha', class: 'form-input' }
+        };
+        for (const id in fields) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.placeholder = fields[id].placeholder;
+                element.classList.add(fields[id].class);
+            }
+        }
+    });
+</script>
+{% endblock %}

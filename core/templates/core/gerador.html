@@ -1,0 +1,433 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Gerador de Vídeos - LUNDERON{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li class="active"><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
+                <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <div class="generator-container">
+            <header class="generator-header">
+                <div class="header-content">
+                    <div class="header-icon"><i class="fas fa-magic"></i></div>
+                    <div class="header-text">
+                        <h1>Gerador de Vídeos IA</h1>
+                        <p>Crie vídeos profissionais em escala com apenas alguns cliques.</p>
+                    </div>
+                </div>
+                <div class="header-badges">
+                    <span class="badge"><i class="fas fa-bolt"></i> Rápido</span>
+                    <span class="badge"><i class="fas fa-cogs"></i> Automatizado</span>
+                    <span class="badge"><i class="fas fa-palette"></i> Customizável</span>
+                </div>
+            </header>
+
+            <div class="video-tabs-container">
+                <div class="tabs-scroll" id="video-tabs-scroll">
+                    {% for form in formset %}
+                    <div class="video-tab {% if forloop.first %}active{% endif %}" data-tab-id="{{ forloop.counter0 }}">
+                        <div class="tab-icon"><i class="fas fa-video"></i></div>
+                        <div class="tab-content">
+                            <span class="tab-title">Vídeo {{ forloop.counter }}</span>
+                            <span class="tab-badge">Configuração</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <form class="video-form" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ formset.management_form }}
+
+                <div id="form-container">
+                    {% for form in formset %}
+                    <div class="video-panel {% if forloop.first %}active{% endif %}" data-panel-id="{{ forloop.counter0 }}">
+                        
+                        {% if form.errors %}
+                            <div class="alert alert-danger">{{ form.errors }}</div>
+                        {% endif %}
+
+                        <div class="panel-navigation">
+                            <div class="nav-steps">
+                                <div class="step" data-step="0"><div class="step-number">1</div><div class="step-info"><span class="step-title">Tipo</span></div></div>
+                                <div class="step" data-step="1"><div class="step-number">2</div><div class="step-info"><span class="step-title">Conteúdo</span></div></div>
+                                <div class="step" data-step="2"><div class="step-number">3</div><div class="step-info"><span class="step-title">Estilo</span></div></div>
+                                <div class="step" data-step="3" data-step-conditional="narrador"><div class="step-number">4</div><div class="step-info"><span class="step-title">Voz</span></div></div>
+                                <div class="step" data-step="4"><div class="step-number">5</div><div class="step-info"><span class="step-title">Mídia</span></div></div>
+                            </div>
+                            <div class="progress-bar"><div class="progress-fill"></div></div>
+                        </div>
+
+                        <div class="panel-content">
+                            <div class="form-step" data-step-content="0">
+                                <div class="step-header">
+                                    <h3><i class="fas fa-stream"></i> Qual o tipo de conteúdo?</h3>
+                                    <p>Escolha como o texto principal do seu vídeo será gerado.</p>
+                                </div>
+                                <div class="option-cards">
+                                    {% for radio in form.tipo_conteudo %}
+                                    <label class="option-card">
+                                        {{ radio.tag }}
+                                        <div class="card-content">
+                                            {% if forloop.counter == 1 %}
+                                                <div class="card-icon"><i class="fas fa-microphone-alt"></i></div>
+                                                <div class="card-info"><h4>Texto com Narração</h4><p>Gera uma voz a partir do seu texto.</p></div>
+                                            {% elif forloop.counter == 2 %}
+                                                <div class="card-icon"><i class="fas fa-font"></i></div>
+                                                <div class="card-info"><h4>Texto Estático</h4><p>Exibe um texto fixo na tela.</p></div>
+                                                
+                                            {% endif %}
+                                            <div class="card-check"><i class="fas fa-check-circle"></i></div>
+                                        </div>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="form-step" data-step-content="1">
+                                <div class="secao-conteudo" data-content-type="estatico">
+                                    <div class="step-header"><h3><i class="fas fa-paragraph"></i> Conteúdo do Texto Estático</h3></div>
+                                    <div class="form-field">{{ form.texto_overlay.label_tag }} {{ form.texto_overlay }}</div>
+                                    <div class="form-field">{{ form.duracao_segundos.label_tag }} {{ form.duracao_segundos }} <div class="field-tip">{{ form.duracao_segundos.help_text }}</div></div>
+                                </div>
+                                <div class="secao-conteudo" data-content-type="narrador">
+                                    <div class="step-header"><h3><i class="fas fa-comment-dots"></i> Conteúdo da Narração</h3></div>
+                                    <div class="form-field">{{ form.narrador_texto.label_tag }} {{ form.narrador_texto }}</div>
+                                    <div class="text-counter">0/1500 caracteres</div>
+                                    <div class="estimativa-container"><div class="estimativa-narracao"><i class="fas fa-clock"></i> Digite para ver a estimativa</div></div>
+                                </div>
+                            </div>
+
+                            <div class="form-step" data-step-content="2">
+                                <div class="step-header"><h3><i class="fas fa-palette"></i> Estilo do Texto</h3><p>Personalize a aparência do texto na tela.</p></div>
+                                <div class="form-field">{{ form.posicao_texto.label_tag }}<div class="radio-group">{{ form.posicao_texto }}</div></div>
+                                <div class="form-grid">
+                                    <div class="form-field">{{ form.cor_da_fonte.label_tag }} {{ form.cor_da_fonte }}</div>
+                                    <div class="form-field">{{ form.texto_fonte.label_tag }} {{ form.texto_fonte }}</div>
+                                    <div class="form-field">{{ form.texto_tamanho.label_tag }} {{ form.texto_tamanho }}</div>
+                                </div>
+                                <div class="form-field"><label>Formatos:</label>
+                                    <div class="checkbox-group">
+                                        <label class="checkbox-option">{{ form.texto_negrito }}<div class="option-content"><span class="option-title">Negrito</span></div></label>
+                                        <label class="checkbox-option">{{ form.texto_sublinhado }}<div class="option-content"><span class="option-title">Sublinhado</span></div></label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-step" data-step-content="3" data-step-conditional="narrador">
+                                <div class="step-header"><h3><i class="fas fa-volume-up"></i> Opções da Voz</h3><p>Ajuste os detalhes da narração.</p></div>
+                                <div class="form-field">{{ form.narrador_voz.label_tag }}
+                                    <div class="input-group">{{ form.narrador_voz }}<button type="button" class="btn btn-secondary play-voice-preview-btn"><i class="fas fa-play"></i> Ouvir</button></div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-field">{{ form.narrador_velocidade.label_tag }} {{ form.narrador_velocidade }}</div>
+                                    <div class="form-field">{{ form.narrador_tom.label_tag }} {{ form.narrador_tom }}</div>
+                                </div>
+                                <div class="form-field"><label class="checkbox-option large">{{ form.legenda_sincronizada }}<div class="option-content"><span class="option-title">Legenda Sincronizada</span><span class="option-desc">{{ form.legenda_sincronizada.help_text }}</span></div></label></div>
+                            </div>
+
+                            <div class="form-step" data-step-content="4">
+                                <div class="step-header"><h3><i class="fas fa-photo-video"></i> Mídia de Fundo e Encerramento</h3></div>
+                                <div class="form-grid">
+                                    <div class="form-field">{{ form.categoria_video.label_tag }} {{ form.categoria_video }}</div>
+                                    <div class="form-field">{{ form.categoria_musica.label_tag }} {{ form.categoria_musica }}</div>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="form-field">{{ form.volume_musica.label_tag }} {{ form.volume_musica }}</div>
+                                    <div class="form-field" style="align-self: end; padding-bottom: 5px;"><label class="checkbox-option">{{ form.loop_video }} <span class="option-title">{{ form.loop_video.label }}</span></label></div>
+                                </div>
+                                <div class="form-field">{{ form.texto_tela_final.label_tag }}{{ form.texto_tela_final }}
+                                    <div class="field-tip">{{ form.texto_tela_final.help_text }}</div>
+                                    <div class="end-screen-preview" style="display: none;"><div class="end-screen-content"><span class="end-screen-text"></span></div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-actions">
+                            <button type="button" class="btn btn-outline prev-step-btn"><i class="fas fa-arrow-left"></i> Voltar</button>
+                            <button type="button" class="btn btn-primary next-step-btn">Avançar <i class="fas fa-arrow-right"></i></button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="global-actions">
+                    <button type="button" id="add-form-btn" class="btn btn-outline btn-large"><i class="fas fa-plus"></i> Adicionar Vídeo</button>
+                    <button type="submit" class="btn btn-primary btn-large">Gerar Vídeos <i class="fas fa-rocket"></i></button>
+                </div>
+            </form>
+        </div>
+    </main>
+</div>
+
+<template id="form-template">
+    <div class="video-tab" data-tab-id="__prefix__">
+        <div class="tab-icon"><i class="fas fa-video"></i></div>
+        <div class="tab-content"><span class="tab-title">Vídeo __num__</span><span class="tab-badge">Configuração</span></div>
+    </div>
+</template>
+<template id="panel-template"></template>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- VARIÁVEIS GLOBAIS ---
+    const formContainer = document.getElementById('form-container');
+    const tabsContainer = document.getElementById('video-tabs-scroll');
+    const addFormBtn = document.getElementById('add-form-btn');
+    const totalFormsInput = document.querySelector('#id_form-TOTAL_FORMS');
+    const maxForms = parseInt(document.querySelector('#id_form-MAX_NUM_FORMS').value);
+    
+    const firstPanel = document.querySelector('.video-panel');
+    if (firstPanel) {
+        document.getElementById('panel-template').content.appendChild(firstPanel.cloneNode(true));
+    }
+
+    // --- LÓGICA PRINCIPAL ---
+
+    /**
+     * Configura todos os eventos e a lógica interna para um único painel de formulário.
+     * @param {HTMLElement} panel O elemento .video-panel a ser inicializado.
+     */
+    function setupPanel(panel) {
+        if (panel.dataset.initialized) return;
+
+        const steps = panel.querySelectorAll('.nav-steps .step');
+        const stepContents = panel.querySelectorAll('.form-step');
+        const prevBtn = panel.querySelector('.prev-step-btn');
+        const nextBtn = panel.querySelector('.next-step-btn');
+        const progressBar = panel.querySelector('.progress-fill');
+        const contentTypeRadios = panel.querySelectorAll('input[name$="-tipo_conteudo"]');
+        
+        let state = { currentStep: 0, availableSteps: [] };
+
+        const updateAvailableSteps = () => {
+            const selectedType = panel.querySelector('input[name$="-tipo_conteudo"]:checked')?.value;
+            state.availableSteps = [];
+            steps.forEach(step => {
+                const stepIndex = parseInt(step.dataset.step);
+                const condition = step.dataset.stepConditional;
+                if (!condition || condition === selectedType) {
+                    step.style.display = 'flex';
+                    state.availableSteps.push(stepIndex);
+                } else {
+                    step.style.display = 'none';
+                }
+            });
+        };
+        
+        const goToStep = (stepIndex) => {
+            state.currentStep = stepIndex;
+            const currentPos = state.availableSteps.indexOf(stepIndex);
+            
+            steps.forEach(s => {
+                s.classList.toggle('active', parseInt(s.dataset.step) === stepIndex);
+                s.classList.toggle('completed', parseInt(s.dataset.step) < stepIndex);
+            });
+            stepContents.forEach(c => c.classList.toggle('active', parseInt(c.dataset.stepContent) === stepIndex));
+            
+            progressBar.style.width = `${((currentPos + 1) / state.availableSteps.length) * 100}%`;
+            prevBtn.style.display = currentPos > 0 ? 'flex' : 'none';
+            nextBtn.style.display = currentPos < state.availableSteps.length - 1 ? 'flex' : 'none';
+        };
+
+        prevBtn.addEventListener('click', () => {
+            const currentPos = state.availableSteps.indexOf(state.currentStep);
+            if (currentPos > 0) goToStep(state.availableSteps[currentPos - 1]);
+        });
+        nextBtn.addEventListener('click', () => {
+            const currentPos = state.availableSteps.indexOf(state.currentStep);
+            if (currentPos < state.availableSteps.length - 1) goToStep(state.availableSteps[currentPos + 1]);
+        });
+        steps.forEach(step => step.addEventListener('click', () => {
+            const stepIndex = parseInt(step.dataset.step);
+            if (state.availableSteps.includes(stepIndex)) goToStep(stepIndex);
+        }));
+        contentTypeRadios.forEach(radio => radio.addEventListener('change', () => {
+            panel.querySelectorAll('.secao-conteudo').forEach(sec => sec.style.display = sec.dataset.contentType === radio.value ? 'block' : 'none');
+            updateAvailableSteps();
+            goToStep(state.currentStep);
+        }));
+        
+        // Inicializa o estado do painel
+        const checkedRadio = panel.querySelector('input[name$="-tipo_conteudo"]:checked') || contentTypeRadios[0];
+        if (checkedRadio) {
+            checkedRadio.checked = true;
+            checkedRadio.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        
+        goToStep(0);
+        setupPanelFields(panel);
+        panel.dataset.initialized = 'true';
+    }
+
+    /**
+     * Configura funcionalidades específicas de campos (estimativa, preview, etc.).
+     * @param {HTMLElement} panel O painel cujos campos serão configurados.
+     */
+    function setupPanelFields(panel) {
+        // Estimativa de Narração
+        const textoNarracao = panel.querySelector('[name$="-narrador_texto"]');
+        if (textoNarracao) {
+            const selectVelocidade = panel.querySelector('[name$="-narrador_velocidade"]');
+            const estimativaElement = panel.querySelector('.estimativa-narracao');
+            const counterElement = panel.querySelector('.text-counter');
+            
+            const calcularEstimativa = () => {
+                const texto = textoNarracao.value;
+                if (counterElement) counterElement.textContent = `${texto.length}/1500 caracteres`;
+                if (!texto.trim()) {
+                    if(estimativaElement) estimativaElement.innerHTML = '<i class="fas fa-clock"></i> Digite para ver a estimativa';
+                    return;
+                }
+                const velocidade = selectVelocidade ? parseInt(selectVelocidade.value, 10) || 100 : 100;
+
+                fetch('/estimativa-narracao/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken')},
+                    body: JSON.stringify({ texto: texto, velocidade: velocidade })
+                })
+                .then(res => res.ok ? res.json() : Promise.reject(res))
+                .then(data => {
+                    if (estimativaElement) estimativaElement.innerHTML = `<i class="fas fa-clock"></i> Estimativa: ${data.duracao_segundos.toFixed(1)}s, ${data.num_palavras} palavras`;
+                })
+                .catch(error => {
+                    console.error('Erro ao calcular estimativa:', error);
+                    if (estimativaElement) estimativaElement.innerHTML = `<i class="fas fa-exclamation-circle"></i> Erro ao calcular estimativa`;
+                });
+            };
+            textoNarracao.addEventListener('input', calcularEstimativa);
+            if (selectVelocidade) selectVelocidade.addEventListener('change', calcularEstimativa);
+        }
+
+        // Preview da Tela Final
+        const endScreenTextarea = panel.querySelector('[name$="-texto_tela_final"]');
+        if (endScreenTextarea) {
+             const previewContainer = panel.querySelector('.end-screen-preview');
+             const previewText = panel.querySelector('.end-screen-text');
+             endScreenTextarea.addEventListener('input', function() {
+                const text = this.value.trim();
+                if(previewText) previewText.innerText = text;
+                if(previewContainer) previewContainer.style.display = text ? 'block' : 'none';
+            });
+            endScreenTextarea.dispatchEvent(new Event('input'));
+        }
+    }
+
+    // --- CONFIGURAÇÃO DE EVENTOS GLOBAIS ---
+    
+    // Lógica das Abas
+    tabsContainer.addEventListener('click', (event) => {
+        const clickedTab = event.target.closest('.video-tab');
+        if (!clickedTab) return;
+
+        const tabId = clickedTab.dataset.tabId;
+        document.querySelectorAll('.video-tab').forEach(t => t.classList.toggle('active', t.dataset.tabId === tabId));
+        document.querySelectorAll('.video-panel').forEach(p => p.classList.toggle('active', p.dataset.panelId === tabId));
+    });
+
+    // Lógica de Adicionar Vídeo
+    addFormBtn.addEventListener('click', () => {
+        const currentFormCount = formContainer.querySelectorAll('.video-panel').length;
+        if (currentFormCount >= maxForms) return;
+
+        const newFormIndex = currentFormCount;
+        const tabTemplate = document.getElementById('form-template').innerHTML;
+        const panelTemplateContent = document.getElementById('panel-template').content.firstElementChild;
+
+        if (!panelTemplateContent) return;
+
+        tabsContainer.insertAdjacentHTML('beforeend', tabTemplate.replace(/__prefix__/g, newFormIndex).replace(/__num__/g, newFormIndex + 1));
+        const newPanel = panelTemplateContent.cloneNode(true);
+        delete newPanel.dataset.initialized;
+        newPanel.dataset.panelId = newFormIndex;
+        newPanel.classList.remove('active');
+
+        newPanel.querySelectorAll('input, select, textarea, label').forEach(el => {
+            ['name', 'id', 'for'].forEach(attr => {
+                if (el.getAttribute(attr)) el.setAttribute(attr, el.getAttribute(attr).replace(/form-\d+/, `form-${newFormIndex}`));
+            });
+        });
+        
+        newPanel.querySelectorAll('input[type="text"], input[type="number"], textarea').forEach(el => el.value = '');
+        newPanel.querySelectorAll('select').forEach(el => el.selectedIndex = 0);
+        newPanel.querySelectorAll('input[type="checkbox"]').forEach(el => el.checked = false);
+        newPanel.querySelectorAll('input[name$="-tipo_conteudo"]').forEach((r, i) => r.checked = i === 0);
+        
+        formContainer.appendChild(newPanel);
+        totalFormsInput.value = newFormIndex + 1;
+        updateAddButtonState();
+        setupPanel(newPanel);
+        
+        document.querySelector(`.video-tab[data-tab-id='${newFormIndex}']`).click();
+    });
+
+    // Lógica do Preview de Voz
+    let audioPlayer = new Audio();
+    document.body.addEventListener('click', (event) => {
+        const button = event.target.closest('.play-voice-preview-btn');
+        if (!button || button.disabled) return;
+        const voiceSelect = button.closest('.form-field').querySelector('select');
+        if (!voiceSelect || !voiceSelect.value) return;
+
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+
+        if (!audioPlayer.paused) audioPlayer.pause();
+        audioPlayer.src = `/preview-voz/${voiceSelect.value}/`;
+        audioPlayer.play().catch(e => { button.innerHTML = originalIcon; button.disabled = false; });
+        
+        const onAudioEnd = () => {
+            button.innerHTML = originalIcon;
+            button.disabled = false;
+            audioPlayer.removeEventListener('ended', onAudioEnd);
+            audioPlayer.removeEventListener('error', onAudioEnd);
+        };
+        audioPlayer.addEventListener('ended', onAudioEnd);
+        audioPlayer.addEventListener('error', onAudioEnd);
+    });
+
+    // --- EXECUÇÃO INICIAL ---
+    document.querySelectorAll('.video-panel').forEach(setupPanel);
+    updateAddButtonState();
+    
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function updateAddButtonState() {
+        const currentFormCount = formContainer.querySelectorAll('.video-panel').length;
+        addFormBtn.disabled = currentFormCount >= maxForms;
+        addFormBtn.innerHTML = currentFormCount >= maxForms ?
+            '<i class="fas fa-ban"></i> Máximo atingido' :
+            '<i class="fas fa-plus"></i> Adicionar Vídeo';
+    }
+});
+</script>
+{% endblock %}

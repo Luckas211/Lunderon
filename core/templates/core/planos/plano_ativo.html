@@ -1,0 +1,33 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Plano Ativo - LUNDERON{% endblock %}
+
+{% block content %}
+<section class="status-section">
+    <div class="status-box">
+        <div class="status-icon info">
+            <i class="fas fa-info-circle"></i>
+        </div>
+        <h1 class="status-title">Você já possui um plano ativo!</h1>
+
+        {% if assinatura %}
+        <p class="status-message">
+            Seu <strong>{{ assinatura.plano.nome }}</strong> está ativo e seu acesso vai até <strong>{{ assinatura.data_expiracao|date:"d/m/Y" }}</strong>.
+        </p>
+        {% else %}
+         <p class="status-message">
+            Sua conta já tem uma assinatura ativa. Você pode gerenciar os detalhes abaixo.
+        </p>
+        {% endif %}
+        
+        <div class="status-actions">
+            <a href="{% url 'meu_perfil' %}" class="btn btn-secondary">Voltar ao Painel</a>
+            <a href="{% url 'gerenciar_assinatura' %}" class="btn btn-primary">Gerenciar Assinatura</a>
+        </div>
+        <p class="status-redirect" style="margin-top: 20px;">
+           No portal de gerenciamento você pode alterar seu método de pagamento ou cancelar a renovação.
+        </p>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Admin | Configurações{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">Painel Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
+                <li class="active"><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Gerenciamento de Configurações</h1>
+            <a href="{% url 'adicionar_configuracao' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nova Configuração
+            </a>
+        </header>
+
+        <div class="dashboard-card">
+            <div class="card-body full-bleed">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Nome da Chave</th>
+                            <th>Valor</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for config in configuracoes %}
+                        <tr>
+                            <td>
+                                <code class="code-badge">{{ config.nome }}</code>
+                            </td>
+                            <td>{{ config.valor }}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'editar_configuracao' config.id %}" class="btn btn-secondary btn-sm">Editar</a>
+                                    <a href="{% url 'deletar_configuracao' config.id %}" class="btn btn-danger btn-sm">Deletar</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">Nenhuma configuração encontrada.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

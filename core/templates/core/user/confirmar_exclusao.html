@@ -1,0 +1,49 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Confirmar Exclusão - LUNDERON{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">Painel Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
+                <li class="active"><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
+        <header class="dashboard-header">
+            <h1>Confirmar Exclusão</h1>
+        </header>
+
+        <div class="dashboard-card" style="max-width: 600px;">
+            <div class="card-body" style="text-align: center;">
+                <div class="status-icon error" style="margin-bottom: 20px;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <p style="font-size: 1.2rem; color: var(--color-text-primary); margin-bottom: 10px;">
+                    Você tem certeza que deseja excluir a configuração: <br>
+                    <code class="code-badge" style="font-size: 1rem; margin-top: 10px;">{{ item.nome }}</code>?
+                </p>
+                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+            </div>
+            <div class="card-footer">
+                <form method="POST" class="form-actions" style="justify-content: center;">
+                    {% csrf_token %}
+                    <a href="{{ request.META.HTTP_REFERER|default:'admin_configuracoes' }}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-danger">Sim, Excluir</button>
+                </form>
+            </div>
+        </div>
+    </main>
+</div>
+{% endblock %}

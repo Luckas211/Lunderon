@@ -1,0 +1,26 @@
+# Arquivos de Segredos e Credenciais
+# Contêm chaves de API, senhas de banco de dados, etc. NUNCA devem ir para o GitHub.
+.env
+# Ambiente Virtual
+# Contém os pacotes instalados, é específico para cada computador.
+/venv/
+
+# Banco de Dados de Desenvolvimento
+# Cada desenvolvedor geralmente tem seu próprio banco de dados local.
+db.sqlite3
+*.sqlite3
+
+# Cache do Python
+# Arquivos gerados automaticamente pelo Python para otimização.
+__pycache__/
+*.pyc
+
+# Mídia do Usuário
+# Pasta para onde vão os vídeos gerados e outros uploads. Pode ficar muito grande.
+/media/
+/videos_gerados/
+
+# Arquivos estáticos coletados (boa prática)
+# Pasta para onde o comando `collectstatic` envia os arquivos em produção.
+/staticfiles/
+/static_root/

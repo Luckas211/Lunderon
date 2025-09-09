@@ -1,0 +1,106 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Central de Ajuda | LUNDERON{% endblock %}
+
+{% block content %}
+
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-header-title">Central de Ajuda</h1>
+        <p class="page-header-subtitle">Encontre respostas rápidas para suas dúvidas ou entre em contato com nossa equipe.</p>
+    </div>
+</section>
+
+<section class="support-section">
+    <div class="container">
+        <div class="support-grid">
+
+            <div class="faq-column">
+                <h2 class="section-title">Perguntas Frequentes</h2>
+                <div class="faq-accordion">
+                    <details class="faq-item" open>
+                        <summary class="faq-question">
+                            <span>Como funciona o processo de assinatura?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>Nosso processo é rápido e seguro. Crie sua conta, escolha o plano e realize o pagamento. Seu acesso é liberado imediatamente após a confirmação.</p>
+                        </div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary class="faq-question">
+                            <span>Como funciona o Gerador de Vídeos?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>É simples: escolha o tipo de conteúdo (narração ou texto), escreva seu roteiro, personalize o estilo, escolha a mídia de fundo e gere até 3 vídeos de uma só vez. Eles aparecerão na sua área "Meus Vídeos" prontos para baixar.</p>
+                        </div>
+                    </details>
+
+                    <details class="faq-item">
+                        <summary class="faq-question">
+                            <span>Quais métodos de pagamento são aceitos?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>Aceitamos os principais cartões de crédito, como Visa, MasterCard e American Express, através da nossa parceria com a Stripe, uma plataforma 100% segura.</p>
+                        </div>
+                    </details>
+                    
+                    <details class="faq-item">
+                        <summary class="faq-question">
+                            <span>Posso cancelar quando quiser?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>Sim. Você pode gerenciar e cancelar sua assinatura a qualquer momento através do seu perfil. Seu acesso permanecerá ativo até o final do período já pago.</p>
+                        </div>
+                    </details>
+                </div>
+            </div>
+
+            <div class="contact-column">
+                <div class="form-wrapper">
+                    <form action="{% url 'suporte' %}" method="POST" class="form-content">
+                        {% csrf_token %}
+                        <div class="form-header">
+                            <h2>Ainda precisa de ajuda?</h2>
+                            <p>Envie sua mensagem e responderemos em breve.</p>
+                        </div>
+
+                        {% if messages %}
+                            <div class="form-messages">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                            {% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="form-group">
+                            <label for="name" class="form-label">Nome Completo</label>
+                            <input type="text" id="name" name="name" class="form-input" placeholder="Seu nome" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email" class="form-label">E-mail</label>
+                            <input type="email" id="email" name="email" class="form-input" placeholder="seu@email.com" required>
+                        </div>
+                         <div class="form-group">
+                            <label for="subject" class="form-label">Assunto</label>
+                            <input type="text" id="subject" name="subject" class="form-input" placeholder="Sobre o que é sua dúvida?" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="message" class="form-label">Mensagem</label>
+                            <textarea id="message" name="message" class="form-input" rows="5" placeholder="Descreva seu problema ou dúvida aqui..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-full">Enviar Mensagem</button>
+                    </form>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</section>
+
+{% endblock %}
