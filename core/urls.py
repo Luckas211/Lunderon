@@ -64,6 +64,16 @@ urlpatterns = [
     # OUTRAS FUNCIONALIDADES
     # ========================================
     path('preview-voz/<str:nome_da_voz>/', views.preview_voz, name='preview_voz'),
+    path('estimativa-narracao/', views.estimativa_narracao, name='estimativa_narracao'),
+    path('download-video/<int:video_id>/', views.download_video_direto, name='download_video_direto'),
+     path('gerador/', views.pagina_gerador, name='pagina_gerador'),
+    path('meus-videos/', views.meus_videos, name='meus_videos'),
+    path('download-video/<int:video_id>/', views.download_video_direto, name='download_video_direto'),
+    # ... outras URLs existentes
+
+
+
+    
 
     # ========================================
     # URLS PARA RESET DE SENHA (NOVAS)

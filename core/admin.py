@@ -7,6 +7,10 @@ from .models import (
     VideoGerado, Plano, Assinatura, Configuracao, Pagamento
 )
 from itertools import zip_longest
+import os
+
+
+
 
 # 1. Registro do modelo de usuário customizado
 # ----------------------------------------------------
@@ -25,59 +29,87 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(Usuario, CustomUserAdmin)
 
+# 2. AÇÃO PARA CRIAR PASTAS MANUALMENTE
+# ----------------------------------------------------
+
+
 
 # 2. Registros de modelos de Mídia e Categorias
 # ----------------------------------------------------
+# 3. ADMIN DAS CATEGORIAS MODIFICADO
+# ----------------------------------------------------
+# Adicione ações para forçar criação de pastas
+def criar_pastas_categorias(modeladmin, request, queryset):
+    for categoria in queryset:
+        categoria.save()  # Isso vai forçar a criação da pasta
+    modeladmin.message_user(request, f"Pastas criadas para {queryset.count()} categorias.")
+criar_pastas_categorias.short_description = "Criar pastas no Cloudflare R2"
+
 @admin.register(CategoriaVideo)
 class CategoriaVideoAdmin(admin.ModelAdmin):
-    list_display = ('nome',)
-    search_fields = ('nome',)
+    list_display = ('nome', 'pasta')
+    search_fields = ('nome', 'pasta')
+    actions = [criar_pastas_categorias]
 
 @admin.register(CategoriaMusica)
 class CategoriaMusicaAdmin(admin.ModelAdmin):
-    list_display = ('nome',)
-    search_fields = ('nome',)
+    list_display = ('nome', 'pasta')
+    search_fields = ('nome', 'pasta')
+    actions = [criar_pastas_categorias]
+
+# Ação para corrigir object_keys - VERSÃO DEFINITIVA CORRIGIDA
+def corrigir_object_keys(modeladmin, request, queryset):
+    corrigidos = 0
+    for midia in queryset:
+        current_key = midia.object_key or ''
+        
+        # Extrai apenas o nome do arquivo (remove qualquer caminho existente)
+        filename = os.path.basename(current_key)
+        
+        # Define o caminho correto baseado no tipo de mídia
+        if isinstance(midia, VideoBase):
+            correct_key = f'media/videos_base/{filename}'
+        elif isinstance(midia, MusicaBase):
+            correct_key = f'media/musicas_base/{filename}'
+        else:
+            continue
+        
+        # Atualiza SEMPRE para o caminho correto (mesmo que já esteja "correto" mas sem media/)
+        if current_key != correct_key:
+            midia.object_key = correct_key
+            midia.save()
+            corrigidos += 1
+            print(f"Corrigido: {current_key} -> {correct_key}")  # Debug
+    
+    modeladmin.message_user(request, f"Object keys de {corrigidos} mídias foram corrigidos.")
+corrigir_object_keys.short_description = "Corrigir object_keys para incluir caminho completo"
+
+# Ação para forçar recálculo das URLs
+def recalc_urls(modeladmin, request, queryset):
+    for midia in queryset:
+        midia.save()  # Isso força o recálculo da URL
+    modeladmin.message_user(request, f"URLs de {queryset.count()} mídias foram recalculadas.")
+recalc_urls.short_description = "Recalcular URLs"
 
 @admin.register(VideoBase)
 class VideoBaseAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'categoria', 'arquivo_video')
-    list_filter = ('categoria',)
-    search_fields = ('titulo',)
-    change_form_template = 'admin/core/videobase/change_form.html'
-
-    def add_view(self, request, form_url='', extra_context=None):
-        if request.method == 'POST':
-            files = request.FILES.getlist('arquivo_video_multiple')
-            # Pega a lista de títulos customizados
-            titles = request.POST.getlist('titulos_customizados')
-            categoria_id = request.POST.get('categoria')
-            
-            if files and categoria_id:
-                categoria = CategoriaVideo.objects.get(pk=categoria_id)
-                
-                # Combina os arquivos com os títulos. fillvalue=None para caso um título não seja preenchido
-                for file, title in zip_longest(files, titles, fillvalue=None):
-                    # Se o título estiver em branco ou não for fornecido, usa o nome do arquivo
-                    final_title = title if title else file.name
-
-                    VideoBase.objects.create(
-                        titulo=final_title,
-                        categoria=categoria,
-                        arquivo_video=file
-                    )
-                
-                self.message_user(request, f"{len(files)} vídeos foram adicionados com sucesso.")
-                return redirect(reverse('admin:core_videobase_changelist'))
-        
-        return super().add_view(request, form_url, extra_context)
-
+    list_display = ('titulo', 'categoria', 'object_key', 'get_video_url')
+    readonly_fields = ('get_video_url',)
+    actions = [corrigir_object_keys, recalc_urls]
+    
+    def get_video_url(self, obj):
+        return obj.video_url if hasattr(obj, 'video_url') else 'N/A'
+    get_video_url.short_description = 'URL do Vídeo'
 
 @admin.register(MusicaBase)
 class MusicaBaseAdmin(admin.ModelAdmin):
-    list_display = ('titulo', 'categoria', 'arquivo_musica')
-    list_filter = ('categoria',)
-    search_fields = ('titulo',)
-    change_form_template = 'admin/core/musicabase/change_form.html'
+    list_display = ('titulo', 'categoria', 'object_key', 'get_musica_url')
+    readonly_fields = ('get_musica_url',)
+    actions = [corrigir_object_keys, recalc_urls]
+    
+    def get_musica_url(self, obj):
+        return obj.musica_url if hasattr(obj, 'musica_url') else 'N/A'
+    get_musica_url.short_description = 'URL da Música'
 
     def add_view(self, request, form_url='', extra_context=None):
         if request.method == 'POST':
@@ -90,11 +122,13 @@ class MusicaBaseAdmin(admin.ModelAdmin):
                 
                 for file, title in zip_longest(files, titles, fillvalue=None):
                     final_title = title if title else file.name
-                    MusicaBase.objects.create(
+                    # Salva com object_key correto
+                    musica = MusicaBase(
                         titulo=final_title,
                         categoria=categoria,
                         arquivo_musica=file
                     )
+                    musica.save()  # Isso automaticamente seta o object_key correto
                 
                 self.message_user(request, f"{len(files)} músicas foram adicionadas com sucesso.")
                 return redirect(reverse('admin:core_musicabase_changelist'))

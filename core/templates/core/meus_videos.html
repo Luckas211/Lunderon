@@ -1,141 +1,19 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Meus Vídeos - L.E DARK{% endblock %}
+{% block title %}Meus Vídeos - LUNDERON{% endblock %}
 
 {% block content %}
-<style>
-    /* Estilos específicos para a página Meus Vídeos */
-    .dashboard-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
-
-    .header-actions {
-        text-align: right;
-    }
-
-    .usage-stats {
-        color: #ccc;
-        margin-bottom: 10px;
-    }
-
-    .usage-stats .count {
-        font-weight: 700;
-        color: #c99e63;
-    }
-
-    .video-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 30px;
-        margin-top: 30px;
-    }
-
-    .video-card {
-        background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-        border-radius: 12px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease-out;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
-    .video-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7);
-    }
-
-    .video-preview {
-        width: 100%;
-        height: 400px;
-        background-color: #000;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .video-preview video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    .video-placeholder {
-        padding: 20px;
-        text-align: center;
-        color: #888;
-    }
-    
-    .card-content {
-        padding: 25px;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .card-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 15px;
-    }
-    .card-header h3 {
-        font-size: 1.1em;
-        font-weight: 600;
-        color: #fff;
-        margin: 0;
-    }
-
-    .status-badge {
-        font-size: 0.8em;
-        font-weight: 700;
-        padding: 4px 10px;
-        border-radius: 50px;
-        text-transform: uppercase;
-    }
-    .concluido { background-color: #28a745; color: #fff; }
-    .erro { background-color: #dc3545; color: #fff; }
-    .processando { background-color: #ffc107; color: #000; }
-
-    .card-info {
-        font-size: 0.9em;
-        color: #ccc;
-        word-wrap: break-word;
-        flex-grow: 1;
-    }
-
-    .card-footer {
-        padding: 25px;
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        margin-top: auto;
-    }
-
-    .empty-state {
-        grid-column: 1 / -1;
-        text-align: center;
-        padding: 80px 40px;
-        background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-    .empty-state p {
-        font-size: 1.2em;
-        color: #ccc;
-        margin-bottom: 20px;
-    }
-</style>
-
-<div class="admin-dashboard">
+<div class="dashboard-layout">
     <aside class="sidebar">
-        <h2 class="sidebar-logo">{% firstof user.first_name user.username %}</h2>
-        <nav>
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+        </div>
+        <nav class="sidebar-nav">
             <ul>
-                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic"></i> Gerador</a></li>
-                <li class="active"><a href="{% url 'meus_videos' %}"><i class="fas fa-video"></i> Meus Vídeos</a></li>
-                <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle"></i> Meu Perfil</a></li>
+                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li class="active"><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
+                <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
             </ul>
         </nav>
     </aside>
@@ -145,12 +23,24 @@
             <h1>Meus Vídeos</h1>
             <div class="header-actions">
                 <div class="usage-stats">
-                    Uso no ciclo atual: 
-                    <span class="count">{{ videos_criados_no_mes }} / {{ limite_videos_mes }}</span>
+                    Uso no ciclo:
+                    <span>{{ videos_criados_no_mes }} / {{ limite_videos_mes }}</span>
                 </div>
-                <a href="{% url 'pagina_gerador' %}" class="btn">Gerar Novo Vídeo</a>
+                <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Gerar Novo Vídeo
+                </a>
             </div>
         </header>
+
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         {% if videos %}
             <div class="video-grid">
@@ -158,35 +48,55 @@
                     <div class="video-card">
                         <div class="video-preview">
                             {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
-                                <video src="{{ video.arquivo_final.url }}" controls muted loop></video>
+                                {% with video_path=video.arquivo_final.url %}
+                                    {% if video_path %}
+                                        <video src="{{ video_path }}" controls muted loop preload="metadata"></video>
+                                    {% else %}
+                                        <div class="video-placeholder">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                            <span>Arquivo não disponível</span>
+                                        </div>
+                                    {% endif %}
+                                {% endwith %}
                             {% else %}
                                 <div class="video-placeholder">
-                                    <p>Vídeo com status: {{ video.get_status_display }}</p>
-                                    <p>Preview indisponível.</p>
+                                    <i class="fas fa-hourglass-half"></i>
+                                    <span>Status: {{ video.get_status_display }}</span>
+                                    <small>O preview estará disponível em breve.</small>
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="card-content">
+                        <div class="card-body">
                             <div class="card-header">
-                                <h3>{{ video.criado_em|date:"d/m/Y H:i" }}</h3>
-                                <span class="status-badge {{ video.status|lower }}">{{ video.get_status_display }}</span>
+                                <h3 class="video-card-title">{{ video.criado_em|date:"d/m/Y H:i" }}</h3>
+                                <span class="status-badge status-{{ video.status|lower }}">{{ video.get_status_display }}</span>
                             </div>
-                            <div class="card-info">
-                                <p><strong>Texto:</strong> "{{ video.narrador_texto|default:video.texto_overlay|truncatechars:100|default:'N/A' }}"</p>
-                            </div>
+                            <p class="video-card-info">
+                                <strong>Texto:</strong> "{{ video.narrador_texto|default:video.texto_overlay|truncatechars:80|default:'N/A' }}"
+                            </p>
                         </div>
                         {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
                         <div class="card-footer">
-                            <a href="{{ video.arquivo_final.url }}" class="btn" download>Baixar Vídeo (MP4)</a>
+                            <a href="{% url 'download_video_direto' video.id %}" class="btn btn-secondary btn-full">
+                                <i class="fas fa-download"></i> Baixar Vídeo (MP4)
+                            </a>
                         </div>
                         {% endif %}
                     </div>
                 {% endfor %}
             </div>
         {% else %}
-            <div class="empty-state">
-                <p>Você ainda não gerou nenhum vídeo.</p>
-                <a href="{% url 'pagina_gerador' %}" class="btn">Comece a criar agora</a>
+            <div class="empty-state-card">
+                <div class="status-icon info">
+                    <i class="fas fa-video-slash"></i>
+                </div>
+                <h2 class="status-title">Nenhum vídeo foi gerado ainda</h2>
+                <p class="status-message">
+                    Parece que você ainda não criou nenhum vídeo. Clique no botão abaixo para começar a usar o gerador.
+                </p>
+                <div class="status-actions">
+                     <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">Começar a Criar Agora</a>
+                </div>
             </div>
         {% endif %}
     </main>

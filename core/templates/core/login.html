@@ -1,37 +1,47 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Login - L.E DARK{% endblock %}
+{% block title %}Login - LUNDERON{% endblock %}
 
 {% block content %}
-<main class="login-container">
-    <div class="login-form-wrapper">
-        <form action="{% url 'login' %}" method="POST" class="login-form">
-            {% csrf_token %} {# Tag de segurança obrigatória do Django #}
+<section class="form-section">
+    <div class="form-wrapper">
+        <form action="{% url 'login' %}" method="POST" class="form-content">
+            {% csrf_token %}
             
-            <h2>Acesse Sua Conta</h2>
-            <p class="form-subtitle">Bem-vindo de volta!</p>
-
-            <div class="input-group">
-                <i class="fas fa-envelope"></i>
-                <input type="email" id="email" name="email" placeholder="Seu e-mail" required>
+            <div class="form-header">
+                <h2>Acesse Sua Conta</h2>
+                <p>Bem-vindo de volta!</p>
             </div>
 
-            <div class="input-group">
-                <i class="fas fa-lock"></i>
-                <input type="password" id="password" name="password" placeholder="Sua senha" required>
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="email" class="form-label">E-mail</label>
+                <input type="email" id="email" name="email" class="form-input" placeholder="seu@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Senha</label>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Sua senha" required>
             </div>
             
-            <div class="options-link">
+            <div class="form-options">
                 <a href="{% url 'password_reset' %}">Esqueceu a senha?</a>
             </div>
 
-            <button type="submit" class="btn-login">Entrar</button>
+            <button type="submit" class="btn btn-primary btn-full">Entrar</button>
 
-            <div class="register-link">
+            <div class="form-footer">
                 <p>Não tem uma conta? <a href="{% url 'cadastre_se' %}">Cadastre-se</a></p>
             </div>
         </form>
     </div>
-</main>
+</section>
 {% endblock %}

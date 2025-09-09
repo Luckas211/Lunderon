@@ -1,74 +1,83 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Crie sua Conta - L.E DARK{% endblock %}
+{% block title %}Crie sua Conta - LUNDERON{% endblock %}
 
 {% block content %}
-<main class="signup-container">
-    <div class="signup-form-wrapper">
-
-        <form action="{% url 'cadastre_se' %}" method="POST" class="signup-form">
+<section class="form-section">
+    <div class="form-wrapper">
+        <form action="{% url 'cadastre_se' %}" method="POST" class="form-content">
             {% csrf_token %}
-            <h2>Crie Sua Conta</h2>
-            <p class="form-subtitle">Comece sua jornada conosco hoje mesmo.</p>
+            
+            <div class="form-header">
+                <h2>Crie Sua Conta</h2>
+                <p>Comece sua jornada conosco hoje mesmo.</p>
+            </div>
 
             {% if form.non_field_errors %}
-                <div style="color: #ff6b6b; margin-bottom: 15px; text-align: center;">
+                <div class="form-errors">
                     {% for error in form.non_field_errors %}
                         <p>{{ error }}</p>
                     {% endfor %}
                 </div>
             {% endif %}
 
-            <div class="input-group">
-                <i class="fas fa-user"></i>
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}" class="form-label">Nome de Usuário</label>
                 {{ form.username }}
+                {% for error in form.username.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
             </div>
-            {% for error in form.username.errors %}
-                <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px; text-align: left; width: 100%; padding-left: 15px;">{{ error }}</p>
-            {% endfor %}
 
-            <div class="input-group">
-                <i class="fas fa-envelope"></i>
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}" class="form-label">E-mail</label>
                 {{ form.email }}
+                {% for error in form.email.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
             </div>
-            {% for error in form.email.errors %}
-                <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px; text-align: left; width: 100%; padding-left: 15px;">{{ error }}</p>
-            {% endfor %}
 
-            <div class="input-group">
-                <i class="fas fa-lock"></i>
+            <div class="form-group">
+                <label for="{{ form.password1.id_for_label }}" class="form-label">Senha</label>
                 {{ form.password1 }}
+                 {% for error in form.password1.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
             </div>
-            {% for error in form.password1.errors %}
-                 <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px; text-align: left; width: 100%; padding-left: 15px;">{{ error }}</p>
-            {% endfor %}
 
-            <div class="input-group">
-                <i class="fas fa-lock"></i>
+            <div class="form-group">
+                <label for="{{ form.password2.id_for_label }}" class="form-label">Confirme a Senha</label>
                 {{ form.password2 }}
+                {% for error in form.password2.errors %}
+                    <div class="field-error">{{ error }}</div>
+                {% endfor %}
             </div>
-             {% for error in form.password2.errors %}
-                 <p style="color: #ff6b6b; font-size: 0.9em; margin-top: -10px; text-align: left; width: 100%; padding-left: 15px;">{{ error }}</p>
-            {% endfor %}
 
-            <button type="submit" class="btn-signup">Criar Conta</button>
+            <button type="submit" class="btn btn-primary btn-full">Criar Conta</button>
 
-            <div class="login-link">
+            <div class="form-footer">
                 <p>Já tem uma conta? <a href="{% url 'login' %}">Faça Login</a></p>
             </div>
         </form>
     </div>
-</main>
+</section>
 
 <script>
-    // Script para adicionar os placeholders de volta, já que o Django não faz isso por padrão
     document.addEventListener("DOMContentLoaded", function() {
-        document.querySelector("#id_username").placeholder = "Nome de Usuário";
-        document.querySelector("#id_email").placeholder = "Seu melhor e-mail";
-        document.querySelector("#id_password1").placeholder = "Crie uma senha";
-        document.querySelector("#id_password2").placeholder = "Confirme sua senha";
+        const fields = {
+            'id_username': { placeholder: 'Crie um nome de usuário', class: 'form-input' },
+            'id_email': { placeholder: 'Seu melhor e-mail', class: 'form-input' },
+            'id_password1': { placeholder: 'Crie uma senha forte', class: 'form-input' },
+            'id_password2': { placeholder: 'Confirme sua senha', class: 'form-input' }
+        };
+        for (const id in fields) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.placeholder = fields[id].placeholder;
+                element.classList.add(fields[id].class);
+            }
+        }
     });
 </script>
-
 {% endblock %}

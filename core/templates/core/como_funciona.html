@@ -1,55 +1,83 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Como Funcionas | L.E. DARK{% endblock %}
+{% block title %}Como Funciona | LUNDERON{% endblock %}
 
 {% block content %}
-<main class="main-content">
-    <div class="hero-section">
-        <h1 class="hero-title">A Fábrica de Conteúdo para o Seu Canals</h1>
-        <p class="hero-subtitle">Entenda como nossa ferramenta transforma suas ideias em vídeos virais em questão de minutos.</p>
-    </div>
-</main>
 
-<section class="features-cards">
-    <div class="card-container">
-        
-        <div class="card">
-            <div class="card-icon"><i class="fas fa-layer-group"></i></div>
-            <h3>Biblioteca de Mídia Gigante</h3>
-            <p>Acesse um acervo com milhares de vídeos de fundo e trilhas sonoras, divididos por nichos como Motivacional, Animes, Terror e Esportes. Conteúdo de alta qualidade e sem preocupações com direitos autorais.</p>
-        </div>
-
-        <div class="card">
-            <div class="card-icon"><i class="fas fa-microphone-alt"></i></div>
-            <h3>Narração com Inteligência Artificial</h3>
-            <p>Dê vida aos seus roteiros com vozes de IA realistas, masculinas e femininas. Esqueça o microfone. Apenas digite seu texto e transforme-o em uma narração profissional com um clique.</p>
-        </div>
-
-        <div class="card">
-            <div class="card-icon"><i class="fas fa-palette"></i></div>
-            <h3>Controle Criativo Total</h3>
-            <p>Deixe cada vídeo com a sua identidade. Personalize a cor, o tipo e o tamanho da fonte. Escolha a posição do texto: centralizado para impacto ou na parte inferior para um estilo de legenda clássico.</p>
-        </div>
-        
-        <div class="card">
-            <div class="card-icon"><i class="fas fa-rocket"></i></div>
-            <h3>Produção em Escala</h3>
-            <p>Otimize seu tempo ao máximo. Configure e gere até 3 vídeos de uma só vez. Enquanto você planeja seu próximo conteúdo, nossa plataforma faz o trabalho pesado por você. Nunca mais fique sem vídeos para postar.</p>
-        </div>
-
-        <div class="card">
-            <div class="card-icon"><i class="fas fa-closed-captioning"></i></div>
-            <h3>Legendas que Retêm a Atenção</h3>
-            <p>Ative as legendas dinâmicas no estilo karaokê para aumentar o engajamento e a retenção do seu público. Perfeito para prender a atenção em plataformas como TikTok e Reels, mesmo com o áudio desligado.</p>
-        </div>
-
-        <div class="card">
-            <div class="card-icon"><i class="fas fa-chart-line"></i></div>
-            <h3>Crescimento e Monetização</h3>
-            <p>Com um fluxo consistente de vídeos profissionais e otimizados para engajamento, você acelera o crescimento do seu canal. Alcance os requisitos de monetização mais rápido e transforme seu canal dark em uma fonte de renda.</p>
-        </div>
-
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-header-title">A Fábrica de Conteúdo para o Seu Canal</h1>
+        <p class="page-header-subtitle">Entenda como nossa ferramenta transforma suas ideias em vídeos virais em questão de minutos.</p>
     </div>
 </section>
+
+<section class="features-section">
+    <div class="container">
+        <div class="features-grid">
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <h3 class="feature-title">Biblioteca de Mídia Gigante</h3>
+                <p class="feature-description">
+                    Acesse um acervo com milhares de vídeos de fundo e trilhas sonoras, divididos por nichos. Conteúdo de alta qualidade e sem preocupações com direitos autorais.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-microphone-alt"></i>
+                </div>
+                <h3 class="feature-title">Narração com IA</h3>
+                <p class="feature-description">
+                    Dê vida aos seus roteiros com vozes de IA realistas. Apenas digite seu texto e transforme-o em uma narração profissional com um clique.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <h3 class="feature-title">Controle Criativo Total</h3>
+                <p class="feature-description">
+                    Deixe cada vídeo com a sua identidade. Personalize a cor, fonte e tamanho do texto, além de escolher sua posição na tela.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h3 class="feature-title">Produção em Escala</h3>
+                <p class="feature-description">
+                    Otimize seu tempo ao máximo. Configure e gere até 3 vídeos de uma só vez. Nossa plataforma faz o trabalho pesado por você.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-closed-captioning"></i>
+                </div>
+                <h3 class="feature-title">Legendas que Retêm a Atenção</h3>
+                <p class="feature-description">
+                    Ative legendas dinâmicas no estilo karaokê para aumentar o engajamento e a retenção do seu público, mesmo com o áudio desligado.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="feature-title">Crescimento e Monetização</h3>
+                <p class="feature-description">
+                    Com um fluxo consistente de vídeos profissionais, você acelera o crescimento e alcança os requisitos de monetização mais rápido.
+                </p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
 {% endblock %}

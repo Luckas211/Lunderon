@@ -1,17 +1,21 @@
 {% extends "core/base.html" %}
+{% load static %}
+
+{% block title %}Admin | Gerenciar Pagamentos{% endblock %}
 
 {% block content %}
-<div class="admin-dashboard">
-
+<div class="dashboard-layout">
     <aside class="sidebar">
-        <h2 class="sidebar-logo">L.E DARK</h2>
-        <nav>
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">Painel Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
             <ul>
-                <li><a href="{% url 'admin_assinaturas' %}">📋 Assinaturas</a></li>
-                <li><a href="{% url 'admin_usuarios' %}">👥 Usuários</a></li>
-                <li><a href="{% url 'admin_configuracoes' %}">⚙️ Configurações</a></li>
-                <li><a href="{% url 'admin_pagamentos' %}" class="active">💳 Pagamentos</a></li>
-                <li><a href="{% url 'admin_relatorios' %}">📊 Relatórios</a></li>
+                <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
+                <li class="active"><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
             </ul>
         </nav>
     </aside>
@@ -21,56 +25,56 @@
             <h1>Gerenciamento de Pagamentos</h1>
         </header>
 
-        <section class="dashboard-table">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Usuário</th>
-                        <th>Plano</th>
-                        <th>Valor Pago</th>
-                        <th>Status do Pagamento</th>
-                        <th>Data do Pagamento</th>
-                        <th>Próxima Cobrança / Vencimento</th>
-                        <th>Ações</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for pagamento in pagamentos %}
-                    <tr>
-                        <td>{{ pagamento.usuario.username }}</td>
-                        <td>{{ pagamento.plano.nome }}</td>
-                        <td>R$ {{ pagamento.valor|floatformat:2 }}</td>
-                        <td>
-                            {# CORREÇÃO: Usando get_status_display para mostrar o texto amigável (ex: "Aprovado") #}
-                            <span class="status {{ pagamento.status }}">{{ pagamento.get_status_display }}</span>
-                        </td>
-                        <td>
-                            {# CORREÇÃO: O nome do campo correto é 'data_pagamento' #}
-                            {{ pagamento.data_pagamento|date:"d/m/Y H:i" }}
-                        </td>
-                        <td>
-                            {# MELHORIA: Buscando a data de expiração da assinatura do usuário #}
-                            {% with assinatura=pagamento.usuario.assinatura_set.first %}
-                                {% if assinatura and assinatura.data_expiracao %}
-                                    {{ assinatura.data_expiracao|date:"d/m/Y" }}
-                                {% else %}
-                                    -
-                                {% endif %}
-                            {% endwith %}
-                        </td>
-                        <td>
-                            <a href="{% url 'aprovar_pagamento' pagamento.id %}" class="btn-action edit">Aprovar</a>
-                            <a href="{% url 'recusar_pagamento' pagamento.id %}" class="btn-action cancel">Recusar</a>
-                            <a href="{% url 'deletar_pagamento' pagamento.id %}" class="btn-action delete">Excluir</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="7" style="text-align: center; padding: 20px;">Nenhum pagamento encontrado.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </section>
+        <div class="dashboard-card">
+            <div class="card-body full-bleed">
+                <table class="dashboard-table">
+                    <thead>
+                        <tr>
+                            <th>Usuário</th>
+                            <th>Plano</th>
+                            <th>Valor</th>
+                            <th>Status</th>
+                            <th>Data</th>
+                            <th>Próx. Cobrança</th>
+                            <th class="text-right">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for pagamento in pagamentos %}
+                        <tr>
+                            <td>{{ pagamento.usuario.username }}</td>
+                            <td>{{ pagamento.plano.nome }}</td>
+                            <td>R$ {{ pagamento.valor|floatformat:2 }}</td>
+                            <td>
+                                <span class="status-badge status-{{ pagamento.status|lower }}">{{ pagamento.get_status_display }}</span>
+                            </td>
+                            <td>{{ pagamento.data_pagamento|date:"d/m/Y H:i" }}</td>
+                            <td>
+                                {% with assinatura=pagamento.usuario.assinatura_set.first %}
+                                    {% if assinatura and assinatura.data_expiracao %}
+                                        {{ assinatura.data_expiracao|date:"d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'aprovar_pagamento' pagamento.id %}" class="btn btn-success btn-sm">Aprovar</a>
+                                    <a href="{% url 'recusar_pagamento' pagamento.id %}" class="btn btn-warning btn-sm">Recusar</a>
+                                    <a href="{% url 'deletar_pagamento' pagamento.id %}" class="btn btn-danger btn-sm">Excluir</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center">Nenhum pagamento encontrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </main>
-
 </div>
 {% endblock %}

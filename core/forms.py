@@ -7,6 +7,23 @@ from .models import Usuario, CategoriaVideo, CategoriaMusica, Plano, Assinatura,
 # ================================================================
 # FORMULÁRIOS DE USUÁRIO E ADMIN
 # ================================================================
+# Definindo as vozes do Kokoro primeiro para evitar duplicação
+# Definindo as vozes do Kokoro para português brasileiro
+VOZES_KOKORO = [
+    ('pf_dora', 'Feminina - Dora'),
+    ('pm_alex', 'Masculina - Alex'),
+    ('pm_santa', 'Masculina - Santa'),
+]
+
+# Opções de velocidade para a narração
+VELOCIDADE_NARRACAO = [
+    (80, 'Lenta (80%)'),
+    (90, 'Um pouco lenta (90%)'),
+    (100, 'Normal (100%)'),
+    (110, 'Um pouco rápida (110%)'),
+    (120, 'Rápida (120%)'),
+]
+
 class EditarConfiguracaoForm(forms.ModelForm):
     class Meta:
         model = Configuracao
@@ -19,6 +36,7 @@ class EditarConfiguracaoForm(forms.ModelForm):
             'nome': forms.TextInput(attrs={'class': 'form-control'}),
             'valor': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
 class ConfiguracaoForm(forms.ModelForm):
     class Meta:
         model = Configuracao
@@ -127,14 +145,6 @@ COR_FONTE_CHOICES = [
     ('#FF69B4', 'Rosa Choque'),
 ]
 
-VOZES_NARRADOR = [
-    ('pt-BR-Wavenet-A', 'Feminina - Voz A (Padrão)'),
-    ('pt-BR-Wavenet-C', 'Feminina - Voz C'),
-    ('pt-BR-Wavenet-D', 'Feminina - Voz D'),
-    ('pt-BR-Wavenet-B', 'Masculina - Voz B (Padrão)'),
-    ('pt-BR-Neural2-B', 'Masculina - Voz Neural'),
-]
-
 TONS_VOZ = [(2.0, 'Agudo'), (0.0, 'Normal'), (-2.0, 'Grave')]
 PLANO_DE_FUNDO_CHOICES = [('normal', 'Normal / Escuro'), ('claro', 'Claro')]
 
@@ -171,8 +181,16 @@ class GeradorForm(forms.Form):
     )
 
     # 2. CONTEÚDO E ESTILO DO TEXTO
-    texto_overlay = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), required=False, label="Texto Estático")
-    narrador_texto = forms.CharField(widget=forms.Textarea(attrs={'rows': 4}), required=False, label="Texto para Narração")
+    texto_overlay = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}), 
+        required=False, 
+        label="Texto Estático"
+    )
+    narrador_texto = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 4}), 
+        required=False, 
+        label="Texto para Narração"
+    )
     
     posicao_texto = forms.ChoiceField(
         choices=POSICAO_TEXTO_CHOICES,
@@ -204,21 +222,20 @@ class GeradorForm(forms.Form):
     
     # 3. OPÇÕES DE NARRAÇÃO
     legenda_sincronizada = forms.BooleanField(
-        label='Ativar Legenda Karaokê',
+        label='Ativar Legenda Sincronizada Estimada',
         required=False,
-        help_text='Funciona apenas com Narração.'
+        help_text='A sincronização é estimada e pode não ser perfeita.'
     )
     narrador_voz = forms.ChoiceField(
-        choices=VOZES_NARRADOR,
+        choices=VOZES_KOKORO,
         required=False,
         label="Voz do Narrador"
     )
-    narrador_velocidade = forms.IntegerField(
-        min_value=80,
-        max_value=120,
-        initial=105,
+    narrador_velocidade = forms.ChoiceField(
+        choices=VELOCIDADE_NARRACAO,
+        initial=100,
         required=False,
-        label="Velocidade (%)"
+        label="Velocidade da Narração"
     )
     narrador_tom = forms.ChoiceField(
         choices=TONS_VOZ,
@@ -228,15 +245,26 @@ class GeradorForm(forms.Form):
     )
 
     # 4. MÍDIA DE FUNDO E DURAÇÃO
-    categoria_video = forms.ModelChoiceField(queryset=CategoriaVideo.objects.all(), label="Categoria do Vídeo")
-    categoria_musica = forms.ModelChoiceField(queryset=CategoriaMusica.objects.all(), label="Categoria da Música")
+    categoria_video = forms.ModelChoiceField(
+        queryset=CategoriaVideo.objects.all(), 
+        label="Categoria do Vídeo"
+    )
+    categoria_musica = forms.ModelChoiceField(
+        queryset=CategoriaMusica.objects.all(), 
+        label="Categoria da Música"
+    )
     volume_musica = forms.IntegerField(
         min_value=0,
         max_value=100,
         initial=50,
         label="Volume da Música (%)",
     )
-    loop_video = forms.BooleanField(required=False, label="Repetir o vídeo (loop)?", initial=True)
+    loop_video = forms.BooleanField(
+        required=False, 
+        label="Repetir o vídeo (loop)?", 
+        initial=True,
+        help_text="O vídeo de fundo ficará em loop durante toda a narração"
+    )
     duracao_segundos = forms.IntegerField(
         min_value=10,
         max_value=60,

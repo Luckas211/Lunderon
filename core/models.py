@@ -3,6 +3,13 @@ from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 from django.db import models
+from storages.backends.s3boto3 import S3Boto3Storage
+import boto3
+from botocore.exceptions import ClientError
+from django.conf import settings
+import os
+import unicodedata
+import re
 
 # ================================================================
 # USUÁRIO CUSTOMIZADO
@@ -19,40 +26,175 @@ class Usuario(AbstractUser):
         return self.username
 
 
+
+
+#-----------------------------Cloudflare e admin
+def criar_pasta_no_r2(caminho_pasta):
+    """
+    Cria uma pasta (objeto vazio) no Cloudflare R2
+    """
+    try:
+        s3_client = boto3.client(
+            's3',
+            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_S3_REGION_NAME,
+        )
+        
+        # Cria um objeto vazio para simular uma pasta
+        s3_client.put_object(
+            Bucket=settings.AWS_STORAGE_BUCKET_NAME,
+            Key=f"{caminho_pasta}/",  # A barra no final indica que é uma pasta
+            Body=b'',
+            ContentLength=0
+        )
+        return True
+    except ClientError as e:
+        print(f"Erro ao criar pasta no R2: {e}")
+        return False
+
+
+
 # ================================================================
-# CATEGORIAS E MÍDIA BASE
+# CATEGORIAS MODIFICADAS - COM PASTAS AUTOMÁTICAS
 # ================================================================
 class CategoriaVideo(models.Model):
     nome = models.CharField(max_length=100, unique=True)
+    pasta = models.CharField(max_length=100, blank=True, null=True, help_text="Nome da pasta no Cloudflare R2")
+
+    def save(self, *args, **kwargs):
+        # Gera o nome da pasta se não existir
+        if not self.pasta:
+            # Remove acentos e caracteres especiais, converte para minúsculas
+            import unicodedata
+            import re
+            nome_normalizado = unicodedata.normalize('NFKD', self.nome).encode('ASCII', 'ignore').decode('ASCII')
+            self.pasta = re.sub(r'[^a-zA-Z0-9_]', '_', nome_normalizado).lower()
+        
+        # Chama o save original primeiro
+        super().save(*args, **kwargs)
+        
+        # Cria a pasta no Cloudflare R2 após salvar
+        caminho_pasta_videos = f"media/videos_base/{self.pasta}"
+        criar_pasta_no_r2(caminho_pasta_videos)
 
     def __str__(self):
         return self.nome
-
 
 class CategoriaMusica(models.Model):
     nome = models.CharField(max_length=100, unique=True)
+    pasta = models.CharField(max_length=100, blank=True, null=True, help_text="Nome da pasta no Cloudflare R2")
+
+    def save(self, *args, **kwargs):
+        # Gera o nome da pasta se não existir
+        if not self.pasta:
+            import unicodedata
+            import re
+            nome_normalizado = unicodedata.normalize('NFKD', self.nome).encode('ASCII', 'ignore').decode('ASCII')
+            self.pasta = re.sub(r'[^a-zA-Z0-9_]', '_', nome_normalizado).lower()
+        
+        super().save(*args, **kwargs)
+        
+        # Cria a pasta no Cloudflare R2
+        caminho_pasta_musicas = f"media/musicas_base/{self.pasta}"
+        criar_pasta_no_r2(caminho_pasta_musicas)
 
     def __str__(self):
         return self.nome
 
+# ================================================================
+# STORAGE CONFIGURATION (mantém igual)
+# ================================================================
+class MediaStorage(S3Boto3Storage):
+    location = 'media'
+    file_overwrite = False
 
+
+
+
+# ================================================================
+# FUNÇÕES PARA UPLOAD DINÂMICO
+# ================================================================
+def upload_video_para_categoria(instance, filename):
+    """
+    Retorna o caminho dinâmico para upload de vídeos baseado na categoria
+    Ex: 'videos_base/news/filename.mp4'
+    """
+    if instance.categoria and instance.categoria.pasta:
+        return f'videos_base/{instance.categoria.pasta}/{filename}'
+    return f'videos_base/{filename}'
+
+def upload_musica_para_categoria(instance, filename):
+    """
+    Retorna o caminho dinâmico para upload de músicas baseado na categoria
+    Ex: 'musicas_base/instrumental/filename.mp3'
+    """
+    if instance.categoria and instance.categoria.pasta:
+        return f'musicas_base/{instance.categoria.pasta}/{filename}'
+    return f'musicas_base/{filename}'
+# ================================================================
+# MÍDIA BASE MODIFICADA - UPLOAD DINÂMICO
+# ================================================================
 class VideoBase(models.Model):
     titulo = models.CharField(max_length=200)
     categoria = models.ForeignKey(CategoriaVideo, on_delete=models.PROTECT)
-    arquivo_video = models.FileField(upload_to='videos_base/', blank=True, null=True)
+    arquivo_video = models.FileField(
+        storage=MediaStorage(),
+        upload_to=upload_video_para_categoria,  # AGORA É DINÂMICO!
+        blank=True, 
+        null=True
+    )
+    
+    object_key = models.CharField(max_length=500, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.arquivo_video:
+            # CORREÇÃO: Usa a pasta da categoria no object_key
+            nome_arquivo = os.path.basename(self.arquivo_video.name)
+            self.object_key = f'media/videos_base/{self.categoria.pasta}/{nome_arquivo}'
+        super().save(*args, **kwargs)
+    
+    @property
+    def video_url(self):
+        if self.arquivo_video:
+            return self.arquivo_video.url
+        return None
 
     def __str__(self):
         return self.titulo
-
 
 class MusicaBase(models.Model):
     titulo = models.CharField(max_length=200)
     categoria = models.ForeignKey(CategoriaMusica, on_delete=models.PROTECT)
-    arquivo_musica = models.FileField(upload_to='musicas_base/', blank=True, null=True)
+    arquivo_musica = models.FileField(
+        storage=MediaStorage(),
+        upload_to=upload_musica_para_categoria,  # AGORA É DINÂMICO!
+        blank=True, 
+        null=True
+    )
+
+    object_key = models.CharField(max_length=500, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if self.arquivo_musica:
+            # CORREÇÃO: Usa a pasta da categoria no object_key
+            nome_arquivo = os.path.basename(self.arquivo_musica.name)
+            self.object_key = f'media/musicas_base/{self.categoria.pasta}/{nome_arquivo}'
+        super().save(*args, **kwargs)
+    
+    @property
+    def musica_url(self):
+        if self.arquivo_musica:
+            return self.arquivo_musica.url
+        return None
 
     def __str__(self):
         return self.titulo
 
+# ================================================================
+# RESTANTE DOS MODELOS (mantém igual)
+# ================================================================
 
 # ================================================================
 # VÍDEOS GERADOS
@@ -120,7 +262,6 @@ class Assinatura(models.Model):
     data_expiracao = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
-        # Melhoria: Usar get_status_display() para mostrar o rótulo amigável (ex: "Ativo" em vez de "ativo")
         return f"{self.usuario.username} - {self.plano.nome} ({self.get_status_display()})"
 
     def save(self, *args, **kwargs):
@@ -139,9 +280,6 @@ class Assinatura(models.Model):
         
         # Salva o usuário, atualizando apenas o campo necessário para maior eficiência.
         self.usuario.save(update_fields=['plano_ativo'])
-
-    def __str__(self):
-        return f"{self.usuario.username} - {self.plano.nome} ({self.status})"
 
 
 # ================================================================
@@ -166,8 +304,8 @@ class Pagamento(models.Model):
     ]
 
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    plano = models.ForeignKey('Plano', on_delete=models.CASCADE)  # 'Plano' se estiver no mesmo app
-    valor = models.DecimalField(max_digits=8, decimal_places=2)  # permite valores até 999,999.99
+    plano = models.ForeignKey('Plano', on_delete=models.CASCADE)
+    valor = models.DecimalField(max_digits=8, decimal_places=2)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pendente')
     data_pagamento = models.DateTimeField(auto_now_add=True)
 
