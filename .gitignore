@@ -1,12 +1,6 @@
 # Arquivos de Segredos e Credenciais
 # Contêm chaves de API, senhas de banco de dados, etc. NUNCA devem ir para o GitHub.
 .env
-<<<<<<< HEAD
-gcloud-auth.json
-gcp-credentials.json
-
-=======
->>>>>>> ec41c5cc912ccc6d5f292e30b1908063fa6f6c96
 # Ambiente Virtual
 # Contém os pacotes instalados, é específico para cada computador.
 /venv/
