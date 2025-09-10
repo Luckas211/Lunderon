@@ -3,7 +3,6 @@ from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 from .models import Usuario, CategoriaVideo, CategoriaMusica, Plano, Assinatura, Configuracao
 
-
 # ================================================================
 # FORMULÁRIOS DE USUÁRIO E ADMIN
 # ================================================================
@@ -62,18 +61,18 @@ class AdminUsuarioForm(forms.Form):
     """
     # Campos do modelo Usuario
     username = forms.CharField(
-        label="Nome de Usuário", 
+        label="Nome de Usuário",
         max_length=150,
-        widget=forms.TextInput(attrs={'class': 'form-control'}) # Classe adicionada
+        widget=forms.TextInput(attrs={'class': 'form-control'})
     )
     email = forms.EmailField(
         label="Email de Cadastro",
-        widget=forms.EmailInput(attrs={'class': 'form-control'}) # Classe adicionada
+        widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
     is_staff = forms.BooleanField(
-        label="É um administrador? (Pode acessar o painel)", 
+        label="É um administrador? (Pode acessar o painel)",
         required=False,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}) # Classe adicionada
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
 
     # Campos do modelo Assinatura
@@ -82,13 +81,13 @@ class AdminUsuarioForm(forms.Form):
         label="Plano da Assinatura",
         required=False,
         empty_label="-- Sem Plano --",
-        widget=forms.Select(attrs={'class': 'form-control'}) # Classe adicionada
+        widget=forms.Select(attrs={'class': 'form-control'})
     )
     status = forms.ChoiceField(
         choices=Assinatura.STATUS_CHOICES,
         label="Status da Assinatura",
         required=False,
-        widget=forms.Select(attrs={'class': 'form-control'}) # Classe adicionada
+        widget=forms.Select(attrs={'class': 'form-control'})
     )
 
 class EditarPerfilForm(forms.ModelForm):
@@ -97,22 +96,19 @@ class EditarPerfilForm(forms.ModelForm):
     """
     class Meta:
         model = Usuario
-        # Adicionamos 'data_nascimento' aos campos
         fields = ['first_name', 'last_name', 'email', 'data_nascimento']
         labels = {
             'first_name': 'Nome',
             'last_name': 'Sobrenome',
             'email': 'Email de Cadastro',
-            'data_nascimento': 'Data de Nascimento', # Novo label
+            'data_nascimento': 'Data de Nascimento',
         }
         widgets = {
             'first_name': forms.TextInput(attrs={'placeholder': 'Seu primeiro nome'}),
             'last_name': forms.TextInput(attrs={'placeholder': 'Seu sobrenome'}),
             'email': forms.EmailInput(attrs={'placeholder': 'seu.email@exemplo.com'}),
-            # Novo widget para um seletor de data amigável
-            'data_nascimento': forms.DateInput(attrs={'type': 'date'}), 
+            'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
         }
-
 
 class EditarAssinaturaForm(forms.ModelForm):
     class Meta:
@@ -122,19 +118,16 @@ class EditarAssinaturaForm(forms.ModelForm):
             'plano': 'Mudar para o Plano',
             'status': 'Mudar Status da Assinatura',
         }
-        # ADICIONADO: Define a classe CSS para os campos
         widgets = {
             'plano': forms.Select(attrs={'class': 'form-control'}),
             'status': forms.Select(attrs={'class': 'form-control'}),
         }
-
 
 # ================================================================
 # FORMULÁRIO DO GERADOR DE VÍDEO
 # ================================================================
 
 # --- Listas de Opções (Choices) ---
-
 COR_FONTE_CHOICES = [
     ('#FFFFFF', 'Branco'),
     ('#FFFF00', 'Amarelo'),
@@ -161,14 +154,14 @@ FONTES_TEXTO = [
 
 TIPO_CONTEUDO_CHOICES = [
     ('narrador', 'Narração (Duração Automática)'),
-    ('estatico', 'Texto Estático (Duração Manual)'),
+    ('texto', 'Texto Estático (Duração Manual)'),
+    ('vendedor', 'Vendedor (Upload de Vídeo)'),
 ]
 
 POSICAO_TEXTO_CHOICES = [
     ('centro', 'Centro da Tela'),
     ('inferior', 'Parte Inferior (Estilo Legenda)'),
 ]
-
 
 # --- Classe do Formulário do Gerador ---
 class GeradorForm(forms.Form):
@@ -182,16 +175,16 @@ class GeradorForm(forms.Form):
 
     # 2. CONTEÚDO E ESTILO DO TEXTO
     texto_overlay = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 4}), 
-        required=False, 
+        widget=forms.Textarea(attrs={'rows': 4}),
+        required=False,
         label="Texto Estático"
     )
     narrador_texto = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 4}), 
-        required=False, 
+        widget=forms.Textarea(attrs={'rows': 4}),
+        required=False,
         label="Texto para Narração"
     )
-    
+
     posicao_texto = forms.ChoiceField(
         choices=POSICAO_TEXTO_CHOICES,
         label="Posição do Texto",
@@ -219,7 +212,7 @@ class GeradorForm(forms.Form):
     )
     texto_negrito = forms.BooleanField(required=False, label="Negrito")
     texto_sublinhado = forms.BooleanField(required=False, label="Sublinhado")
-    
+
     # 3. OPÇÕES DE NARRAÇÃO
     legenda_sincronizada = forms.BooleanField(
         label='Ativar Legenda Sincronizada Estimada',
@@ -246,12 +239,19 @@ class GeradorForm(forms.Form):
 
     # 4. MÍDIA DE FUNDO E DURAÇÃO
     categoria_video = forms.ModelChoiceField(
-        queryset=CategoriaVideo.objects.all(), 
-        label="Categoria do Vídeo"
+        queryset=CategoriaVideo.objects.all(),
+        label="Categoria do Vídeo",
+        required=False
     )
     categoria_musica = forms.ModelChoiceField(
-        queryset=CategoriaMusica.objects.all(), 
-        label="Categoria da Música"
+        queryset=CategoriaMusica.objects.all(),
+        label="Categoria da Música",
+        required=False
+    )
+    video_upload = forms.FileField(
+        label="Upload do Vídeo do Produto",
+        required=False,
+        help_text="Selecione um vídeo local do seu produto (MP4, AVI, MOV, etc.)"
     )
     volume_musica = forms.IntegerField(
         min_value=0,
@@ -260,8 +260,8 @@ class GeradorForm(forms.Form):
         label="Volume da Música (%)",
     )
     loop_video = forms.BooleanField(
-        required=False, 
-        label="Repetir o vídeo (loop)?", 
+        required=False,
+        label="Repetir o vídeo (loop)?",
         initial=True,
         help_text="O vídeo de fundo ficará em loop durante toda a narração"
     )
@@ -273,7 +273,7 @@ class GeradorForm(forms.Form):
         required=False,
         help_text="Apenas para Texto Estático."
     )
-    
+
     # --- CAMPO DE TELA FINAL ATUALIZADO PARA TEXTO ---
     texto_tela_final = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 3}),
@@ -282,6 +282,31 @@ class GeradorForm(forms.Form):
         help_text="Ex: Siga e compartilhe!"
     )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo_conteudo = cleaned_data.get('tipo_conteudo')
+        categoria_video = cleaned_data.get('categoria_video')
+        video_upload = cleaned_data.get('video_upload')
+        texto_overlay = cleaned_data.get('texto_overlay')
+        narrador_texto = cleaned_data.get('narrador_texto')
+
+        if tipo_conteudo == 'vendedor':
+            if not video_upload:
+                raise forms.ValidationError("Para o tipo 'Vendedor', você deve fazer upload de um vídeo.")
+            if not narrador_texto:
+                raise forms.ValidationError("Para o tipo 'Vendedor', o texto para narração é obrigatório.")
+        elif tipo_conteudo == 'narrador':
+            if not categoria_video:
+                raise forms.ValidationError("Para o tipo 'Narração', você deve selecionar uma categoria de vídeo.")
+            if not narrador_texto:
+                raise forms.ValidationError("Para o tipo 'Narração', o texto para narração é obrigatório.")
+        elif tipo_conteudo == 'texto':
+            if not categoria_video:
+                raise forms.ValidationError("Para o tipo 'Texto Estático', você deve selecionar uma categoria de vídeo.")
+            if not texto_overlay:
+                raise forms.ValidationError("Para o tipo 'Texto Estático', o texto é obrigatório.")
+
+        return cleaned_data
 
 # Cria o FormSet a partir do formulário
 GeradorFormSet = formset_factory(GeradorForm, extra=1, max_num=3)

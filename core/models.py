@@ -1,12 +1,9 @@
 from django.db import models
-from django.contrib.auth.models import User
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
-from django.db import models
 from storages.backends.s3boto3 import S3Boto3Storage
 import boto3
 from botocore.exceptions import ClientError
-from django.conf import settings
 import os
 import unicodedata
 import re
@@ -208,7 +205,7 @@ class VideoGerado(models.Model):
 
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PROCESSANDO')
-    arquivo_final = models.FileField(upload_to='videos_gerados/', blank=True, null=True)
+    arquivo_final = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho do vídeo gerado (local ou R2)")
     criado_em = models.DateTimeField(auto_now_add=True)
 
     duracao_segundos = models.IntegerField(default=30)
@@ -231,6 +228,11 @@ class VideoGerado(models.Model):
     narrador_voz = models.CharField(max_length=50, default='pt-BR-Wavenet-B')
     narrador_velocidade = models.IntegerField(default=100)
     narrador_tom = models.FloatField(default=0.0)
+
+    # Novos campos para integração total com o gerador
+    caminho_audio_narrador = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho do áudio de narração gerado")
+    caminho_legenda_ass = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho da legenda ASS gerada")
+    caminho_imagem_texto = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho da imagem de texto gerada")
 
     def __str__(self):
         return f"Vídeo de {self.usuario.username} - {self.status}"

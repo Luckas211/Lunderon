@@ -66,7 +66,7 @@
                                 <div class="step" data-step="0"><div class="step-number">1</div><div class="step-info"><span class="step-title">Tipo</span></div></div>
                                 <div class="step" data-step="1"><div class="step-number">2</div><div class="step-info"><span class="step-title">Conteúdo</span></div></div>
                                 <div class="step" data-step="2"><div class="step-number">3</div><div class="step-info"><span class="step-title">Estilo</span></div></div>
-                                <div class="step" data-step="3" data-step-conditional="narrador"><div class="step-number">4</div><div class="step-info"><span class="step-title">Voz</span></div></div>
+<div class="step" data-step="3" data-step-conditional="narrador,vendedor"><div class="step-number">4</div><div class="step-info"><span class="step-title">Voz</span></div></div>
                                 <div class="step" data-step="4"><div class="step-number">5</div><div class="step-info"><span class="step-title">Mídia</span></div></div>
                             </div>
                             <div class="progress-bar"><div class="progress-fill"></div></div>
@@ -89,7 +89,9 @@
                                             {% elif forloop.counter == 2 %}
                                                 <div class="card-icon"><i class="fas fa-font"></i></div>
                                                 <div class="card-info"><h4>Texto Estático</h4><p>Exibe um texto fixo na tela.</p></div>
-                                                
+                                            {% elif forloop.counter == 3 %}
+                                                <div class="card-icon"><i class="fas fa-upload"></i></div>
+                                                <div class="card-info"><h4>Vendedor (Upload de Vídeo)</h4><p>Use seu próprio vídeo com narração.</p></div>
                                             {% endif %}
                                             <div class="card-check"><i class="fas fa-check-circle"></i></div>
                                         </div>
@@ -99,14 +101,14 @@
                             </div>
 
                             <div class="form-step" data-step-content="1">
-                                <div class="secao-conteudo" data-content-type="estatico">
+                                <div class="secao-conteudo" data-content-type="texto">
                                     <div class="step-header"><h3><i class="fas fa-paragraph"></i> Conteúdo do Texto Estático</h3></div>
-                                    <div class="form-field">{{ form.texto_overlay.label_tag }} {{ form.texto_overlay }}</div>
-                                    <div class="form-field">{{ form.duracao_segundos.label_tag }} {{ form.duracao_segundos }} <div class="field-tip">{{ form.duracao_segundos.help_text }}</div></div>
+                                    <div class="form-field" id="field-texto-overlay">{{ form.texto_overlay.label_tag }} {{ form.texto_overlay }}</div>
+                                    <div class="form-field" id="field-duracao-segundos">{{ form.duracao_segundos.label_tag }} {{ form.duracao_segundos }} <div class="field-tip">{{ form.duracao_segundos.help_text }}</div></div>
                                 </div>
-                                <div class="secao-conteudo" data-content-type="narrador">
+                                <div class="secao-conteudo" data-content-type="narrador,vendedor">
                                     <div class="step-header"><h3><i class="fas fa-comment-dots"></i> Conteúdo da Narração</h3></div>
-                                    <div class="form-field">{{ form.narrador_texto.label_tag }} {{ form.narrador_texto }}</div>
+                                    <div class="form-field" id="field-narrador-texto">{{ form.narrador_texto.label_tag }} {{ form.narrador_texto }}</div>
                                     <div class="text-counter">0/1500 caracteres</div>
                                     <div class="estimativa-container"><div class="estimativa-narracao"><i class="fas fa-clock"></i> Digite para ver a estimativa</div></div>
                                 </div>
@@ -128,7 +130,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-step" data-step-content="3" data-step-conditional="narrador">
+                            <div class="form-step" data-step-content="3" data-step-conditional="narrador,vendedor">
                                 <div class="step-header"><h3><i class="fas fa-volume-up"></i> Opções da Voz</h3><p>Ajuste os detalhes da narração.</p></div>
                                 <div class="form-field">{{ form.narrador_voz.label_tag }}
                                     <div class="input-group">{{ form.narrador_voz }}<button type="button" class="btn btn-secondary play-voice-preview-btn"><i class="fas fa-play"></i> Ouvir</button></div>
@@ -144,6 +146,7 @@
                                 <div class="step-header"><h3><i class="fas fa-photo-video"></i> Mídia de Fundo e Encerramento</h3></div>
                                 <div class="form-grid">
                                     <div class="form-field">{{ form.categoria_video.label_tag }} {{ form.categoria_video }}</div>
+                                    <div class="form-field video-upload-field" id="field-video-upload" style="display: none;">{{ form.video_upload.label_tag }} {{ form.video_upload }}</div>
                                     <div class="form-field">{{ form.categoria_musica.label_tag }} {{ form.categoria_musica }}</div>
                                 </div>
                                 <div class="form-grid">
@@ -198,6 +201,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- LÓGICA PRINCIPAL ---
+    function toggleFieldsByContentType(panel, tipo) {
+        // Texto Estático
+        panel.querySelector('#field-texto-overlay').style.display = tipo === 'texto' ? 'block' : 'none';
+        panel.querySelector('#field-duracao-segundos').style.display = tipo === 'texto' ? 'block' : 'none';
+        // Narração
+        panel.querySelector('#field-narrador-texto').style.display = (tipo === 'narrador' || tipo === 'vendedor') ? 'block' : 'none';
+        // Upload vídeo vendedor
+        panel.querySelector('#field-video-upload').style.display = tipo === 'vendedor' ? 'block' : 'none';
+        // Categoria vídeo
+        const categoriaVideoField = panel.querySelector('[name$="-categoria_video"]')?.closest('.form-field');
+        if (categoriaVideoField) categoriaVideoField.style.display = tipo === 'vendedor' ? 'none' : 'block';
+    }
 
     /**
      * Configura todos os eventos e a lógica interna para um único painel de formulário.
@@ -221,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
             steps.forEach(step => {
                 const stepIndex = parseInt(step.dataset.step);
                 const condition = step.dataset.stepConditional;
-                if (!condition || condition === selectedType) {
+                if (!condition || condition.split(',').includes(selectedType)) {
                     step.style.display = 'flex';
                     state.availableSteps.push(stepIndex);
                 } else {
@@ -258,7 +273,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (state.availableSteps.includes(stepIndex)) goToStep(stepIndex);
         }));
         contentTypeRadios.forEach(radio => radio.addEventListener('change', () => {
-            panel.querySelectorAll('.secao-conteudo').forEach(sec => sec.style.display = sec.dataset.contentType === radio.value ? 'block' : 'none');
+            panel.querySelectorAll('.secao-conteudo').forEach(sec => sec.style.display = sec.dataset.contentType.split(',').includes(radio.value) ? 'block' : 'none');
+            toggleFieldsByContentType(panel, radio.value);
             updateAvailableSteps();
             goToStep(state.currentStep);
         }));
@@ -268,6 +284,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (checkedRadio) {
             checkedRadio.checked = true;
             checkedRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            toggleFieldsByContentType(panel, checkedRadio.value);
         }
         
         goToStep(0);

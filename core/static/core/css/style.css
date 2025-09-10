@@ -1,3 +1,75 @@
+/* ===================== ALERTAS E MENSAGENS - MEUS VÍDEOS ===================== */
+.dashboard-header .alert {
+    border-radius: 10px;
+    padding: 18px 24px;
+    font-size: 1rem;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 12px rgba(138,85,247,0.07);
+    border: 1px solid var(--color-border);
+    background: rgba(138,85,247,0.08);
+    color: var(--color-primary);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.dashboard-header .alert strong {
+    color: var(--color-primary);
+    margin-right: 8px;
+}
+.dashboard-header .alert-danger {
+    background: rgba(220,53,69,0.08);
+    color: #dc3545;
+    border-color: #dc3545;
+}
+.dashboard-header .alert-warning {
+    background: rgba(255,193,7,0.10);
+    color: #ffc107;
+    border-color: #ffc107;
+}
+.messages-container {
+    margin-bottom: 18px;
+}
+.messages-container .alert {
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-size: 0.98rem;
+    margin-bottom: 10px;
+    background: rgba(138,85,247,0.07);
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
+}
+.messages-container .alert-success {
+    background: rgba(40,167,69,0.10);
+    color: #28a745;
+    border-color: #28a745;
+}
+.messages-container .alert-error {
+    background: rgba(220,53,69,0.10);
+    color: #dc3545;
+    border-color: #dc3545;
+}
+.messages-container .alert-warning {
+    background: rgba(255,193,7,0.10);
+    color: #ffc107;
+    border-color: #ffc107;
+}
+.messages-container .alert-info {
+    background: rgba(85,180,247,0.10);
+    color: #55b4f7;
+    border-color: #55b4f7;
+}
+
+@media (max-width: 768px) {
+    .dashboard-header .alert {
+        font-size: 0.95rem;
+        padding: 12px 10px;
+    }
+    .messages-container .alert {
+        font-size: 0.93rem;
+        padding: 10px 8px;
+    }
+}
 /* ==========================================================================
    1. CONFIGURAÇÕES GLOBAIS E VARIÁVEIS
    ========================================================================== */
