@@ -1,0 +1,39 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Baixando seu Vídeo - LUNDERON{% endblock %}
+
+{% block content %}
+<section class="status-section">
+    <div class="status-box">
+        <div class="status-icon success">
+            <i class="fas fa-cloud-download-alt"></i>
+        </div>
+        <h2 class="status-title">Seu download vai começar!</h2>
+        <p class="status-message">
+            O download do seu vídeo foi iniciado. Por favor, verifique a barra de downloads do seu navegador.
+        </p>
+        <div class="status-actions">
+            <a href="{% url 'delete_video_file' video.id %}" class="btn btn-primary">
+                Voltar para Meus Vídeos (e apagar o arquivo)
+            </a>
+        </div>
+        <p class="status-redirect" style="margin-top: 15px;">
+            Se o download não começar, <a href="{{ download_url }}">clique aqui para baixar manualmente</a>.
+        </p>
+    </div>
+</section>
+
+<script>
+    // Este script inicia o download assim que a página carrega
+    document.addEventListener("DOMContentLoaded", function() {
+        // Criamos um link invisível e clicamos nele para iniciar o download
+        const link = document.createElement('a');
+        link.href = "{{ download_url }}";
+        link.setAttribute('download', ''); // Força o download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+</script>
+{% endblock %}

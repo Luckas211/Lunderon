@@ -25,44 +25,41 @@
             <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">+ Gerar Novo Vídeo</a>
             <hr>
             <div class="alert alert-warning" role="alert" style="margin-bottom: 20px;">
-                <strong>Atenção:</strong> Os vídeos gerados ficam disponíveis para download por <b>5 horas</b> após a criação. Após esse prazo, eles são excluídos automaticamente do servidor.<br>
-                Baixe seus vídeos o quanto antes para não perder o acesso!
+                <strong>Atenção:</strong> Os vídeos gerados ficam disponíveis para download por <strong>1 hora</strong>. Após esse prazo, o link expira e o arquivo é removido.
             </div>
-                {% if messages %}
-                    <div class="alert alert-danger" role="alert" style="margin-bottom: 20px;">
-                        {% for message in messages %}
-                            {{ message }}
-                        {% endfor %}
-                    </div>
-                {% endif %}
-        </header>
-
-        {% if messages %}
-            <div class="messages-container">
+            {% if messages %}
+                <div class="messages-container" style="margin-bottom: 20px;">
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        {{ message }}
-                    </div>
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
                 {% endfor %}
-            </div>
-        {% endif %}
+                </div>
+            {% endif %}
+        </header>
 
         {% if videos %}
             <div class="video-grid">
                 {% for video in videos %}
-                    <div class="video-card">
+                    <div class="video-card" id="video-card-{{ video.id }}">
                         <div class="video-preview">
-                            {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
-                                {% with video_path='/media/'|add:video.arquivo_final %}
-                                    <video src="{{ video_path }}" controls muted loop preload="metadata"></video>
-                                {% endwith %}
-                            {% else %}
-                                <div class="video-placeholder">
+                            <div class="video-placeholder">
+                                {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
+                                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                                    <span>Pronto para Download</span>
+                                    <small>Expira em 1 hora após a criação.</small>
+                                {% elif video.status == 'CONCLUIDO' and not video.arquivo_final %}
+                                    <i class="fas fa-history"></i>
+                                    <span>Expirado ou Baixado</span>
+                                    <small>O arquivo não está mais disponível.</small>
+                                {% elif video.status == 'ERRO' %}
+                                    <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                                    <span>Erro na Geração</span>
+                                    <small>Por favor, tente gerar novamente.</small>
+                                {% else %}
                                     <i class="fas fa-hourglass-half"></i>
                                     <span>Status: {{ video.get_status_display }}</span>
-                                    <small>O preview estará disponível em breve.</small>
-                                </div>
-                            {% endif %}
+                                    <small>Aguardando processamento...</small>
+                                {% endif %}
+                            </div>
                         </div>
                         <div class="card-body">
                             <div class="card-header">
@@ -71,15 +68,9 @@
                             </div>
                             <p class="video-card-info">
                                 <strong>Texto:</strong>
-                                {% if video.narrador_texto %}
-                                    "{{ video.narrador_texto|truncatechars:80 }}"
-                                {% elif video.texto_overlay %}
-                                    "{{ video.texto_overlay|truncatechars:80 }}"
-                                {% elif video.texto_tela_final %}
-                                    "{{ video.texto_tela_final|truncatechars:80 }}"
-                                {% else %}
-                                    N/A
-                                {% endif %}
+                                {% if video.narrador_texto %}"{{ video.narrador_texto|truncatechars:80 }}"
+                                {% elif video.texto_overlay %}"{{ video.texto_overlay|truncatechars:80 }}"
+                                {% else %}N/A{% endif %}
                             </p>
                         </div>
                         {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
@@ -99,10 +90,10 @@
                 </div>
                 <h2 class="status-title">Nenhum vídeo foi gerado ainda</h2>
                 <p class="status-message">
-                    Parece que você ainda não criou nenhum vídeo. Clique no botão abaixo para começar a usar o gerador.
+                    Clique no botão abaixo para começar a usar o gerador.
                 </p>
                 <div class="status-actions">
-                     <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">Começar a Criar Agora</a>
+                    <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">Começar a Criar Agora</a>
                 </div>
             </div>
         {% endif %}

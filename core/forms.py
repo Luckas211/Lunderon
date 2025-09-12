@@ -142,7 +142,6 @@ TONS_VOZ = [(2.0, 'Agudo'), (0.0, 'Normal'), (-2.0, 'Grave')]
 PLANO_DE_FUNDO_CHOICES = [('normal', 'Normal / Escuro'), ('claro', 'Claro')]
 
 FONTES_TEXTO = [
-    ('cunia', 'Cunia (Decorativa)'),
     ('arial', 'Arial'),
     ('times', 'Times New Roman'),
     ('courier', 'Courier New'),
@@ -230,12 +229,6 @@ class GeradorForm(forms.Form):
         required=False,
         label="Velocidade da Narração"
     )
-    narrador_tom = forms.ChoiceField(
-        choices=TONS_VOZ,
-        initial=0.0,
-        required=False,
-        label="Tom da Voz"
-    )
 
     # 4. MÍDIA DE FUNDO E DURAÇÃO
     categoria_video = forms.ModelChoiceField(
@@ -309,4 +302,4 @@ class GeradorForm(forms.Form):
         return cleaned_data
 
 # Cria o FormSet a partir do formulário
-GeradorFormSet = formset_factory(GeradorForm, extra=1, max_num=3)
+#GeradorFormSet = formset_factory(GeradorForm, extra=1, max_num=3)

@@ -1,41 +1,43 @@
-/* ===================== ALERTAS E MENSAGENS - MEUS VÍDEOS ===================== */
-.dashboard-header .alert {
-    border-radius: 10px;
-    padding: 18px 24px;
-    font-size: 1rem;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 12px rgba(138,85,247,0.07);
+/* Existing full content of core/static/core/css/style.css (unchanged) */
+
+/* Estilos para os cards da seção features-preview na home */
+.feature-preview-item {
+    background-color: var(--color-surface);
     border: 1px solid var(--color-border);
-    background: rgba(138,85,247,0.08);
-    color: var(--color-primary);
-    font-weight: 500;
+    border-radius: var(--border-radius);
+    padding: 30px 25px;
+    transition: all var(--transition-speed) ease;
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
 }
-.dashboard-header .alert strong {
+
+.feature-preview-item:hover {
+    transform: translateY(-5px);
+    border-color: var(--color-primary);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.feature-preview-item i {
+    font-size: 2.2rem;
     color: var(--color-primary);
-    margin-right: 8px;
 }
-.dashboard-header .alert-danger {
-    background: rgba(220,53,69,0.08);
-    color: #dc3545;
-    border-color: #dc3545;
+
+.feature-preview-item h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--color-text-primary);
 }
-.dashboard-header .alert-warning {
-    background: rgba(255,193,7,0.10);
-    color: #ffc107;
-    border-color: #ffc107;
+
+.feature-preview-item p {
+    color: var(--color-text-secondary);
+    font-size: 0.95rem;
+    margin: 0;
 }
-.messages-container {
-    margin-bottom: 18px;
-}
-.messages-container .alert {
-    border-radius: 8px;
-    padding: 14px 20px;
-    font-size: 0.98rem;
-    margin-bottom: 10px;
-    background: rgba(138,85,247,0.07);
+
+.feature-preview-item a {
     color: var(--color-primary);
     border: 1px solid var(--color-border);
 }
@@ -1625,68 +1627,7 @@ textarea.form-input {
     gap: 6px;
 }
 
-/* Tabs de vídeo */
-.video-tabs-container {
-    margin-bottom: 30px;
-}
 
-.tabs-scroll {
-    display: flex;
-    gap: 15px;
-    overflow-x: auto;
-    padding-bottom: 10px;
-}
-
-.video-tab {
-    background: var(--color-surface);
-    border: 2px solid var(--color-border);
-    border-radius: 15px;
-    padding: 20px;
-    min-width: 150px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.video-tab.active {
-    border-color: var(--color-primary);
-    background: rgba(138, 85, 247, 0.1);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(138, 85, 247, 0.2);
-}
-
-.tab-icon {
-    width: 40px;
-    height: 40px;
-    background: var(--color-primary);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.2rem;
-}
-
-.tab-content {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.tab-title {
-    font-weight: 600;
-    color: var(--color-text-primary);
-}
-
-.tab-badge {
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-    background: rgba(255, 255, 255, 0.1);
-    padding: 2px 8px;
-    border-radius: 10px;
-}
 
 /* Painel principal */
 .video-panel {
@@ -2524,4 +2465,496 @@ textarea.form-input {
     flex-direction: column;
     align-items: center;
     text-align: center;
+}
+
+/* ==========================================================================
+   26. PÁGINA: Como Funciona - Novas Seções
+   ========================================================================== */
+
+/* Seção principal "Como Funciona" */
+.how-it-works-section {
+    padding: 80px 0;
+    background-color: var(--color-background);
+}
+
+.how-it-works-intro {
+    margin-bottom: 60px;
+    text-align: center;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.how-it-works-intro h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.how-it-works-intro p {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    line-height: 1.7;
+    margin-bottom: 15px;
+}
+
+/* Seção do Workflow */
+.workflow-section {
+    margin-bottom: 80px;
+}
+
+.workflow-section h3 {
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 50px;
+    color: var(--color-text-primary);
+}
+
+.workflow-steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.step {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 15px;
+    padding: 30px 25px;
+    text-align: center;
+    transition: all var(--transition-speed) ease;
+    position: relative;
+}
+
+.step:hover {
+    transform: translateY(-5px);
+    border-color: var(--color-primary);
+    box-shadow: 0 10px 30px rgba(138, 85, 247, 0.1);
+}
+
+.step-number {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #7c4de8 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 auto 20px;
+    box-shadow: 0 5px 15px rgba(138, 85, 247, 0.3);
+}
+
+.step-content h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--color-text-primary);
+}
+
+.step-content p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* Seção de Benefícios */
+.benefits-section {
+    margin-bottom: 80px;
+}
+
+.benefits-section h3 {
+    font-size: 2rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 50px;
+    color: var(--color-text-primary);
+}
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.benefit-item {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 15px;
+    padding: 30px 25px;
+    text-align: center;
+    transition: all var(--transition-speed) ease;
+}
+
+.benefit-item:hover {
+    transform: translateY(-5px);
+    border-color: var(--color-primary);
+    box-shadow: 0 10px 30px rgba(138, 85, 247, 0.1);
+}
+
+.benefit-icon {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, rgba(138, 85, 247, 0.1) 0%, rgba(138, 85, 247, 0.2) 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    font-size: 1.8rem;
+    margin: 0 auto 20px;
+    border: 2px solid rgba(138, 85, 247, 0.2);
+}
+
+.benefit-item h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--color-text-primary);
+}
+
+.benefit-item p {
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* Seção CTA */
+.cta-section {
+    background: linear-gradient(135deg, rgba(138, 85, 247, 0.1) 0%, rgba(30, 33, 37, 0.8) 100%);
+    padding: 80px 0;
+    text-align: center;
+    border-radius: 20px;
+    margin: 0 20px;
+    border: 1px solid var(--color-border);
+}
+
+.cta-section h3 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--color-text-primary);
+}
+
+.cta-section p {
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    margin-bottom: 30px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE PARA NOVAS SEÇÕES
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .how-it-works-intro h2 {
+        font-size: 2rem;
+    }
+
+    .workflow-steps {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .benefits-grid {
+        grid-template-columns: 1fr;
+        gap: 25px;
+    }
+
+    .benefit-item {
+        padding: 25px 20px;
+    }
+
+    .step {
+        padding: 25px 20px;
+    }
+
+    .cta-section {
+        margin: 0 15px;
+        padding: 60px 0;
+    }
+
+    .cta-section h3 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .how-it-works-section {
+        padding: 60px 0;
+    }
+
+    .how-it-works-intro h2 {
+        font-size: 1.8rem;
+    }
+
+    .workflow-section h3,
+    .benefits-section h3 {
+        font-size: 1.6rem;
+    }
+
+    .step-number {
+        width: 50px;
+        height: 50px;
+        font-size: 1.3rem;
+    }
+
+    .benefit-icon {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .cta-section h3 {
+        font-size: 1.6rem;
+    }
+}
+
+
+
+/* ==========================================================================
+   27. ESTILOS CUSTOMIZADOS PARA INPUTS (UPLOAD E CHECKBOX)
+   ========================================================================== */
+
+/* --- Estilo para o Campo de Upload de Arquivo --- */
+.custom-file-upload {
+    border: 2px dashed var(--color-border);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-speed) ease;
+    background-color: var(--color-background);
+}
+
+.custom-file-upload:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-surface);
+}
+
+.custom-file-upload .upload-icon {
+    font-size: 2.5rem;
+    color: var(--color-primary);
+    margin-bottom: 15px;
+}
+
+.custom-file-upload .upload-text {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin-bottom: 5px;
+}
+
+.custom-file-upload .upload-hint {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+}
+
+/* Esconde o input de arquivo original */
+.custom-file-upload input[type="file"] {
+    display: none;
+}
+
+/* --- Estilo para Checkboxes Customizados (Negrito/Sublinhado) --- */
+.checkbox-group {
+    display: grid; /* Alterado para grid */
+    grid-template-columns: 1fr 1fr; /* Duas colunas */
+    gap: 20px; /* Espaço entre elas */
+}
+
+.checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 15px;
+    background: var(--color-background);
+    border: 2px solid var(--color-border);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.checkbox-option:hover {
+    border-color: var(--color-primary);
+}
+
+/* Esconde o checkbox padrão */
+.checkbox-option input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-box {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--color-border);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.checkbox-box .checkmark {
+    font-size: 14px;
+    color: white;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s ease;
+}
+
+/* Estilos quando o checkbox está marcado */
+.checkbox-option input[type="checkbox"]:checked + .checkbox-box {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.checkbox-option input[type="checkbox"]:checked + .checkbox-box .checkmark {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.option-content .option-title {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+}
+/* --- Estilo para Radio Buttons Customizados (Posição do Texto) --- */
+.radio-group {
+    display: grid;
+    grid-template-columns: 1fr; /* Coluna única */
+    gap: 15px; /* Espaço entre as opções */
+}
+
+/* O estilo .radio-option é o mesmo do checkbox, mas garantimos que ele exista */
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 15px;
+    background: var(--color-background);
+    border: 2px solid var(--color-border);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.radio-option:hover {
+    border-color: var(--color-primary);
+}
+
+/* Esconde o radio button padrão */
+.radio-option input[type="radio"] {
+    display: none;
+}
+
+/* Círculo externo customizado */
+.custom-radio {
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--color-border);
+    border-radius: 50%; /* Faz ser um círculo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+/* Círculo interno (o ponto) */
+.custom-radio .inner-circle {
+    width: 10px;
+    height: 10px;
+    background-color: var(--color-primary);
+    border-radius: 50%;
+    transform: scale(0); /* Começa invisível */
+    transition: all 0.3s ease;
+}
+
+/* Estilos quando o radio está marcado */
+.radio-option input[type="radio"]:checked + .custom-radio {
+    border-color: var(--color-primary);
+}
+
+.radio-option input[type="radio"]:checked + .custom-radio .inner-circle {
+    transform: scale(1); /* Fica visível */
+}
+
+.option-label {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+}
+/* --- Estilo para Checkbox Grande (Toggle Switch) --- */
+.checkbox-option.large {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    padding: 20px;
+    background: var(--color-background);
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+}
+
+.checkbox-option.large:hover {
+    border-color: var(--color-primary);
+}
+
+/* Esconde o checkbox original */
+.checkbox-option.large input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-switch {
+    position: relative;
+    width: 44px; /* Largura do interruptor */
+    height: 24px; /* Altura do interruptor */
+    background-color: var(--color-border);
+    border-radius: 20px;
+    transition: background-color 0.3s ease;
+    flex-shrink: 0; /* Impede que o interruptor encolha */
+}
+
+.toggle-switch::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px; /* Largura do círculo */
+    height: 20px; /* Altura do círculo */
+    background-color: #8E96A4; /* Cinza claro quando desligado */
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+/* Estilo quando o checkbox está MARCADO */
+.checkbox-option.large input[type="checkbox"]:checked ~ .toggle-switch {
+    background-color: var(--color-primary);
+}
+
+.checkbox-option.large input[type="checkbox"]:checked ~ .toggle-switch::before {
+    transform: translateX(20px); /* Move o círculo para a direita */
+    background-color: #FFFFFF;
+}
+
+.option-content .option-title {
+    font-weight: 600;
+    color: var(--color-text-primary);
+    font-size: 0.95rem;
+}
+
+.option-content .option-desc {
+    font-size: 0.85rem;
+    color: var(--color-text-secondary);
+    margin-top: 4px; /* Adiciona um pequeno espaço */
 }

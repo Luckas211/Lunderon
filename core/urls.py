@@ -9,25 +9,30 @@ urlpatterns = [
     # PÁGINAS PÚBLICAS E DE AUTENTICAÇÃO
     # ========================================
     path('', views.index, name='index'),
-    path('gerador/', views.pagina_gerador, name='pagina_gerador'),
-    path('meus-videos/', views.meus_videos, name='meus_videos'),
     path('como-funciona/', views.como_funciona, name='como_funciona'),
     path('planos/', views.planos, name='planos'),
     path('suporte/', views.suporte, name='suporte'),
-    
-    # Autenticação
+    path('termos-de-servico/', views.termos_de_servico, name='termos_de_servico'),
+    path('politica-de-privacidade/', views.politica_de_privacidade, name='politica_de_privacidade'),
     path('cadastre-se/', views.cadastre_se, name='cadastre_se'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
-    path('validate-otp/', views.validate_otp_view, name='validate_otp'), # <-- LINHA ADICIONADA AQUI
+    path('validate-otp/', views.validate_otp_view, name='validate_otp'),
 
     # ========================================
-    # PERFIL E ASSINATURA DO USUÁRIO
+    # PÁGINAS DO USUÁRIO LOGADO
     # ========================================
+    path('gerador/', views.pagina_gerador, name='pagina_gerador'),
+    path('meus-videos/', views.meus_videos, name='meus_videos'),
     path('perfil/', views.meu_perfil, name='meu_perfil'),
     path('perfil/editar/', views.editar_perfil, name='editar_perfil'),
-    path('assinatura/gerenciar/', views.gerenciar_assinatura_redirect, name='gerenciar_assinatura'),
     
+    # ========================================
+    # FLUXO DE DOWNLOAD E DELEÇÃO DE VÍDEO (CORRIGIDO)
+    # ========================================
+    path('download-video/<int:video_id>/', views.download_video_direto, name='download_video_direto'),
+    #path('delete-video-file/<int:video_id>/', views.delete_video_file, name='delete_video_file'),
+
     # ========================================
     # PROCESSAMENTO DE PAGAMENTOS (STRIPE)
     # ========================================
@@ -35,11 +40,11 @@ urlpatterns = [
     path('pagamento/sucesso/', views.pagamento_sucesso, name='pagamento_sucesso'),
     path('pagamento/falha/', views.pagamento_falho, name='pagamento_falho'),
     path('stripe-webhook/', views.stripe_webhook, name='stripe-webhook'),
+    path('assinatura/gerenciar/', views.gerenciar_assinatura_redirect, name='gerenciar_assinatura'),
 
     # ========================================
     # PAINEL DE ADMIN CUSTOMIZADO (/painel/)
     # ========================================
-    # ... (o resto do seu painel de admin continua aqui igual) ...
     path('painel/usuarios/', views.admin_usuarios, name='admin_usuarios'),
     path('painel/usuarios/editar/<int:user_id>/', views.editar_usuario, name='editar_usuario'),
     path('painel/usuarios/deletar/<int:user_id>/', views.deletar_usuario, name='deletar_usuario'),
@@ -61,22 +66,13 @@ urlpatterns = [
     path('painel/relatorios/', views.admin_relatorios, name='admin_relatorios'),
 
     # ========================================
-    # OUTRAS FUNCIONALIDADES
+    # OUTRAS FUNCIONALIDADES (API/HELPERS)
     # ========================================
     path('preview-voz/<str:nome_da_voz>/', views.preview_voz, name='preview_voz'),
     path('estimativa-narracao/', views.estimativa_narracao, name='estimativa_narracao'),
-    path('download-video/<int:video_id>/', views.download_video_direto, name='download_video_direto'),
-     path('gerador/', views.pagina_gerador, name='pagina_gerador'),
-    path('meus-videos/', views.meus_videos, name='meus_videos'),
-    path('download-video/<int:video_id>/', views.download_video_direto, name='download_video_direto'),
-    # ... outras URLs existentes
-
-
-
-    
 
     # ========================================
-    # URLS PARA RESET DE SENHA (NOVAS)
+    # URLS PARA RESET DE SENHA
     # ========================================
     path('reset_password/', 
          auth_views.PasswordResetView.as_view(template_name="core/password_reset/password_reset_form.html"), 
