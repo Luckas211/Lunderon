@@ -27,88 +27,86 @@
 
         <div class="kpi-grid">
             <div class="kpi-card">
-                <span class="kpi-value">{{ total_assinantes_ativos }}</span>
+                <span class="kpi-value"><i class="fas fa-users" style="font-size: 1.8rem; color: var(--color-primary); margin-right: 10px;"></i> {{ total_assinantes_ativos }}</span>
                 <span class="kpi-title">Assinantes Ativos</span>
             </div>
             <div class="kpi-card">
-                <span class="kpi-value">R$ {{ receita_total|floatformat:2 }}</span>
-                <span class="kpi-title">Receita Total</span>
+                <span class="kpi-value"><i class="fas fa-dollar-sign" style="font-size: 1.8rem; color: var(--color-primary); margin-right: 10px;"></i> R$ {{ receita_total|floatformat:2 }}</span>
+                <span class="kpi-title">Receita Total (Aprovada)</span>
             </div>
             <div class="kpi-card">
-                <span class="kpi-value">{{ novos_assinantes }}</span>
+                <span class="kpi-value"><i class="fas fa-user-plus" style="font-size: 1.8rem; color: var(--color-primary); margin-right: 10px;"></i> {{ novos_assinantes }}</span>
                 <span class="kpi-title">Novos Assinantes (30d)</span>
             </div>
             <div class="kpi-card">
-                <span class="kpi-value">{{ total_videos_gerados }}</span>
-                <span class="kpi-title">Vídeos Gerados</span>
+                <span class="kpi-value"><i class="fas fa-video" style="font-size: 1.8rem; color: var(--color-primary); margin-right: 10px;"></i> {{ total_videos_gerados }}</span>
+                <span class="kpi-title">Vídeos Gerados na Plataforma</span>
             </div>
         </div>
 
-        <div class="dashboard-card">
-            <div class="card-header">
-                <h2 class="card-title">Últimas Assinaturas</h2>
+        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; align-items: flex-start; gap: 30px;">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">Últimas 5 Assinaturas</h2>
+                </div>
+                <div class="card-body full-bleed">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Plano</th>
+                                <th>Status</th>
+                                <th>Início</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for ass in assinaturas|slice:":5" %}
+                            <tr>
+                                <td data-label="Usuário">{{ ass.usuario.username }}</td>
+                                <td data-label="Plano">{{ ass.plano.nome }}</td>
+                                <td data-label="Status">
+                                    <span class="status-badge status-{{ ass.status|lower }}">{{ ass.get_status_display }}</span>
+                                </td>
+                                <td data-label="Início">{{ ass.data_inicio|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center">Nenhuma assinatura encontrada.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
-            <div class="card-body full-bleed">
-                <table class="dashboard-table">
-                    <thead>
-                        <tr>
-                            <th>Usuário</th>
-                            <th>Plano</th>
-                            <th>Status</th>
-                            <th>Início</th>
-                            <th>Expiração</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for ass in assinaturas %}
-                        <tr>
-                            <td>{{ ass.usuario.username }}</td>
-                            <td>{{ ass.plano.nome }}</td>
-                            <td>
-                                <span class="status-badge status-{{ ass.status|lower }}">{{ ass.get_status_display }}</span>
-                            </td>
-                            <td>{{ ass.data_inicio|date:"d/m/Y" }}</td>
-                            <td>{% if ass.data_expiracao %}{{ ass.data_expiracao|date:"d/m/Y" }}{% else %}-{% endif %}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="5" class="text-center">Nenhuma assinatura encontrada.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
-        <div class="dashboard-card" style="margin-top: 30px;">
-            <div class="card-header">
-                <h2 class="card-title">Últimos Pagamentos</h2>
-            </div>
-             <div class="card-body full-bleed">
-                <table class="dashboard-table">
-                    <thead>
-                        <tr>
-                            <th>Usuário</th>
-                            <th>Plano</th>
-                            <th>Valor</th>
-                            <th>Status</th>
-                            <th>Data</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for pagamento in pagamentos %}
-                        <tr>
-                            <td>{{ pagamento.usuario.username }}</td>
-                            <td>{{ pagamento.plano.nome }}</td>
-                            <td>R$ {{ pagamento.valor|floatformat:2 }}</td>
-                            <td>
-                                <span class="status-badge status-{{ pagamento.status|lower }}">{{ pagamento.get_status_display }}</span>
-                            </td>
-                            <td>{{ pagamento.data_pagamento|date:"d/m/Y H:i" }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="5" class="text-center">Nenhum pagamento encontrado.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title">Últimos 5 Pagamentos</h2>
+                </div>
+                 <div class="card-body full-bleed">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Usuário</th>
+                                <th>Valor</th>
+                                <th>Status</th>
+                                <th>Data</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pagamento in pagamentos|slice:":5" %}
+                            <tr>
+                                <td data-label="Usuário">{{ pagamento.usuario.username }}</td>
+                                <td data-label="Valor">R$ {{ pagamento.valor|floatformat:2 }}</td>
+                                <td data-label="Status">
+                                    <span class="status-badge status-{{ pagamento.status|lower }}">{{ pagamento.get_status_display }}</span>
+                                </td>
+                                <td data-label="Data">{{ pagamento.data_pagamento|date:"d/m/Y" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr><td colspan="4" class="text-center">Nenhum pagamento encontrado.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>

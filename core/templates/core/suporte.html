@@ -25,7 +25,7 @@
                             <i class="fas fa-chevron-down"></i>
                         </summary>
                         <div class="faq-answer">
-                            <p>Nosso processo é rápido e seguro. Crie sua conta, escolha o plano e realize o pagamento. Seu acesso é liberado imediatamente após a confirmação.</p>
+                            <p>Nosso processo é rápido e seguro. Crie sua conta, escolha o plano "Criador Pro" e realize o pagamento via cartão de crédito. Seu acesso a todos os recursos da plataforma é liberado imediatamente após a confirmação.</p>
                         </div>
                     </details>
 
@@ -35,17 +35,17 @@
                             <i class="fas fa-chevron-down"></i>
                         </summary>
                         <div class="faq-answer">
-                            <p>É simples: escolha o tipo de conteúdo (narração ou texto), escreva seu roteiro, personalize o estilo, escolha a mídia de fundo e gere até 3 vídeos de uma só vez. Eles aparecerão na sua área "Meus Vídeos" prontos para baixar.</p>
+                            <p>É simples: escolha um dos três modos (Narração, Texto ou Vendedor), escreva seu roteiro, personalize o estilo (cores, fontes, etc.), escolha a mídia de fundo e gere seu vídeo. Ele aparecerá na sua área "Meus Vídeos" pronto para baixar.</p>
                         </div>
                     </details>
 
                     <details class="faq-item">
                         <summary class="faq-question">
-                            <span>Quais métodos de pagamento são aceitos?</span>
+                            <span>Por quanto tempo meus vídeos ficam disponíveis?</span>
                             <i class="fas fa-chevron-down"></i>
                         </summary>
                         <div class="faq-answer">
-                            <p>Aceitamos os principais cartões de crédito, como Visa, MasterCard e American Express, através da nossa parceria com a Stripe, uma plataforma 100% segura.</p>
+                            <p>Para garantir sua privacidade e otimizar nosso armazenamento, seus vídeos gerados ficam disponíveis para download por <strong>1 hora</strong>. Após esse período, o link expira e o arquivo é permanentemente excluído dos nossos servidores.</p>
                         </div>
                     </details>
                     
@@ -55,7 +55,7 @@
                             <i class="fas fa-chevron-down"></i>
                         </summary>
                         <div class="faq-answer">
-                            <p>Sim. Você pode gerenciar e cancelar sua assinatura a qualquer momento através do seu perfil. Seu acesso permanecerá ativo até o final do período já pago.</p>
+                            <p>Sim. Você pode gerenciar e cancelar sua assinatura a qualquer momento através do seu painel de perfil. Seu acesso permanecerá ativo até o final do período que já foi pago.</p>
                         </div>
                     </details>
                 </div>
@@ -67,7 +67,7 @@
                         {% csrf_token %}
                         <div class="form-header">
                             <h2>Ainda precisa de ajuda?</h2>
-                            <p>Envie sua mensagem e responderemos em breve.</p>
+                            <p>Envie sua mensagem e nossa equipe responderá em até 24 horas úteis.</p>
                         </div>
 
                         {% if messages %}
@@ -104,3 +104,13 @@
 </section>
 
 {% endblock %}
+```eof
+
+### O que foi Melhorado?
+
+1.  [cite_start]**Informação Precisa no FAQ:** A pergunta "Como funciona o Gerador de Vídeos?" foi atualizada para remover a menção de "gere até 3 vídeos de uma só vez"[cite: 1], alinhando-a com a funcionalidade atual de gerar um vídeo por vez.
+2.  [cite_start]**Nova Pergunta Relevante no FAQ:** Foi adicionada uma nova pergunta crucial: **"Por quanto tempo meus vídeos ficam disponíveis?"**[cite: 1]. A resposta explica claramente a regra de 1 hora para download e a exclusão automática, gerenciando as expectativas do usuário e evitando futuras dúvidas no suporte.
+3.  **Clareza na Assinatura:** A primeira pergunta foi levemente ajustada para mencionar o nome do plano ("Criador Pro"), criando consistência com a página de Planos.
+4.  **Expectativa de Resposta:** No formulário de contato, a frase "responderemos em breve" foi trocada por "nossa equipe responderá em até 24 horas úteis", o que transmite mais profissionalismo e define uma expectativa clara para o usuário.
+
+Com estas alterações, sua página de Suporte se torna uma ferramenta mais eficaz, respondendo proativamente às dúvidas mais prováveis dos usuários com base no funcionamento real do seu sistema.

@@ -4,31 +4,18 @@
 {% block title %}Editar Perfil - LUNDERON{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
-        </div>
-        <nav class="sidebar-nav">
-            <ul>
-                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
-                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
-                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
-            </ul>
-        </nav>
-    </aside>
-
-    <main class="dashboard-content">
+<main class="dashboard-content" style="padding: 40px 20px;">
+    <div class="container" style="max-width: 800px;">
         <header class="dashboard-header">
             <h1>Editar Meu Perfil</h1>
         </header>
 
-        <div class="dashboard-card" style="max-width: 800px;">
+        <div class="dashboard-card">
             <form method="POST">
                 {% csrf_token %}
                 <div class="card-body">
                     {% if form.non_field_errors %}
-                        <div class="form-errors">
+                        <div class="form-errors" style="margin-bottom: 20px;">
                             {% for error in form.non_field_errors %}
                                 <p>{{ error }}</p>
                             {% endfor %}
@@ -39,34 +26,34 @@
                         <div class="form-group">
                             <label for="{{ form.first_name.id_for_label }}" class="form-label">Nome</label>
                             {{ form.first_name }}
-                             {% for error in form.first_name.errors %}
-                                <div class="field-error">{{ error }}</div>
-                            {% endfor %}
+                             {% if form.first_name.errors %}
+                                <div class="field-error">{{ form.first_name.errors.as_text }}</div>
+                            {% endif %}
                         </div>
                         <div class="form-group">
                             <label for="{{ form.last_name.id_for_label }}" class="form-label">Sobrenome</label>
                             {{ form.last_name }}
-                            {% for error in form.last_name.errors %}
-                                <div class="field-error">{{ error }}</div>
-                            {% endfor %}
+                            {% if form.last_name.errors %}
+                                <div class="field-error">{{ form.last_name.errors.as_text }}</div>
+                            {% endif %}
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
                         {{ form.email }}
-                        {% for error in form.email.errors %}
-                            <div class="field-error">{{ error }}</div>
-                        {% endfor %}
+                        {% if form.email.errors %}
+                            <div class="field-error">{{ form.email.errors.as_text }}</div>
+                        {% endif %}
                     </div>
                     
                     <div class="form-group">
                         <label for="{{ form.data_nascimento.id_for_label }}" class="form-label">Data de Nascimento</label>
                         {{ form.data_nascimento }}
-                        {% for error in form.data_nascimento.errors %}
-                            <div class="field-error">{{ error }}</div>
-                        {% endfor %}
-                        <small class="form-help-text">Formato: DD/MM/AAAA</small>
+                        {% if form.data_nascimento.errors %}
+                            <div class="field-error">{{ form.data_nascimento.errors.as_text }}</div>
+                        {% endif %}
+                        <small class="form-help-text">Use o formato AAAA-MM-DD.</small>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -77,8 +64,8 @@
                 </div>
             </form>
         </div>
-    </main>
-</div>
+    </div>
+</main>
 
 <script>
     // Script para adicionar a classe 'form-input' aos campos do formulário Django
@@ -89,10 +76,6 @@
             const element = document.getElementById(id);
             if (element) {
                 element.classList.add('form-input');
-                // Adiciona o placeholder para o campo de data, se for o caso
-                if (id === 'id_data_nascimento') {
-                    element.placeholder = 'Ex: 25/12/1990';
-                }
             }
         });
     });

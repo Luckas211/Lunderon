@@ -5,23 +5,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}LUNDERON{% endblock %}</title>
+
+    <meta name="description" content="Crie vídeos virais com narração de IA em minutos. Transforme texto em conteúdo para TikTok, Instagram e YouTube com a LUNDERON.">
+    <meta name="keywords" content="gerador de vídeo, IA, inteligência artificial, vídeos automáticos, marketing de vídeo, conteúdo digital">
+    
+    <meta property="og:title" content="LUNDERON - Crie Vídeos com Inteligência Artificial">
+    <meta property="og:description" content="Transforme texto em vídeos virais com narração de IA, legendas dinâmicas e uma vasta biblioteca de mídia.">
+    <meta property="og:image" content="{% static 'core/img/social_share_image.jpg' %}"> <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+
+    <link rel="icon" href="{% static 'core/img/favicon.ico' %}" type="image/x-icon">
+
+    <title>{% block title %}LUNDERON - Crie Vídeos com IA{% endblock %}</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
 </head>
 <body>
-
+    {% block header %}
     <header class="header">
         <div class="container header-container">
             <a href="{% url 'index' %}" class="logo">LUNDERON</a>
             
-            <nav class="main-nav">
+            <nav class="main-nav" aria-label="Navegação principal">
                 <ul>
                     <li><a href="{% url 'como_funciona' %}">Como Funciona</a></li>
                     <li><a href="{% url 'planos' %}">Plano</a></li>
@@ -38,8 +49,13 @@
                     <a href="{% url 'cadastre_se' %}" class="btn btn-primary">Cadastre-se</a>
                 {% endif %}
             </div>
+            
+            <button class="mobile-nav-toggle" aria-label="Abrir menu de navegação" aria-expanded="false">
+                <i class="fas fa-bars"></i>
+            </button>
         </div>
     </header>
+    {% endblock header %}
 
     <main id="main-content">
         {% block content %}
@@ -78,7 +94,7 @@
                     <h4>Social</h4>
                      <ul class="social-links">
                         <li><a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a></li>
-                        <li><a href="#" aria-label="X (Twitter)"><i class="fab fa-twitter"></i></a></li>
+                        <li><a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a></li>
                         <li><a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a></li>
                     </ul>
                 </div>
@@ -89,5 +105,7 @@
         </div>
     </footer>
     
+    {% block scripts %}
+    {% endblock scripts %}
 </body>
 </html>

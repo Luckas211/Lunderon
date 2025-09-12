@@ -22,43 +22,61 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <h1>Gerenciamento de Configurações</h1>
-            <a href="{% url 'adicionar_configuracao' %}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nova Configuração
-            </a>
+            <div class="dashboard-header-content">
+                <h1>Gerenciamento de Configurações</h1>
+                <a href="{% url 'adicionar_configuracao' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Nova Configuração
+                </a>
+            </div>
         </header>
+
+        <div class="alert alert-info" style="margin-bottom: 30px; text-align: left;">
+            <strong>Importante:</strong> Esta seção controla variáveis críticas do sistema. A "Nome da Chave" deve ser exata (em maiúsculas) para que o sistema a reconheça. Alterações aqui podem impactar diretamente as regras de negócio do site.
+        </div>
 
         <div class="dashboard-card">
             <div class="card-body full-bleed">
-                <table class="dashboard-table">
-                    <thead>
-                        <tr>
-                            <th>Nome da Chave</th>
-                            <th>Valor</th>
-                            <th class="text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for config in configuracoes %}
-                        <tr>
-                            <td>
-                                <code class="code-badge">{{ config.nome }}</code>
-                            </td>
-                            <td>{{ config.valor }}</td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="{% url 'editar_configuracao' config.id %}" class="btn btn-secondary btn-sm">Editar</a>
-                                    <a href="{% url 'deletar_configuracao' config.id %}" class="btn btn-danger btn-sm">Deletar</a>
-                                </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center">Nenhuma configuração encontrada.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <div class="table-responsive-wrapper">
+                    <table class="dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Nome da Chave</th>
+                                <th>Valor Atual</th>
+                                <th>Descrição da Funcionalidade</th>
+                                <th class="text-right">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for config in configuracoes %}
+                            <tr>
+                                <td data-label="Chave">
+                                    <code class="code-badge">{{ config.nome }}</code>
+                                </td>
+                                <td data-label="Valor">{{ config.valor }}</td>
+                                <td data-label="Descrição" class="text-muted">
+                                    {% if config.nome == 'LIMITE_VIDEOS_MES' %}
+                                        Define quantos vídeos um assinante pode gerar por mês.
+                                    {% elif config.nome == 'DURACAO_ASSINATURA_DIAS' %}
+                                        Define a duração padrão de uma assinatura em dias (ex: 30).
+                                    {% else %}
+                                        Configuração personalizada do sistema.
+                                    {% endif %}
+                                </td>
+                                <td data-label="Ações">
+                                    <div class="action-buttons">
+                                        <a href="{% url 'editar_configuracao' config.id %}" class="btn btn-secondary btn-sm">Editar</a>
+                                        <a href="{% url 'deletar_configuracao' config.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Atenção! Excluir uma configuração pode causar erros no site. Tem certeza?');">Deletar</a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">Nenhuma configuração encontrada.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </main>

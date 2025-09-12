@@ -423,10 +423,18 @@ def meus_videos(request):
         criado_em__gte=trinta_dias_atras
     ).count()
 
+    # --- LÓGICA DO CÁLCULO DA PORCENTAGEM ADICIONADA AQUI ---
+    uso_percentual = 0
+    if limite_videos_mes > 0:
+        # Calcula a porcentagem de uso
+        uso_percentual = (videos_criados_no_mes / limite_videos_mes) * 100
+    # --- FIM DA LÓGICA DO CÁLCULO ---
+
     context = {
         'videos': videos,
         'videos_criados_no_mes': videos_criados_no_mes,
         'limite_videos_mes': limite_videos_mes,
+        'uso_percentual': uso_percentual, # <-- Nova variável enviada para o template
     }
     return render(request, 'core/meus_videos.html', context)
 
@@ -1426,30 +1434,46 @@ def admin_assinaturas(request):
 
 def planos(request):
     """
-    CORRIGIDO: Permite que usuários anônimos vejam os planos.
-    Se o usuário estiver logado e já tiver um plano ativo, 
-    redireciona para a página de gerenciamento do plano.
+    Exibe a página de Planos para usuários anônimos ou sem assinatura.
+    Para usuários com assinatura ativa, exibe a página de status do plano.
     """
-    # Primeiro, verifica se o usuário está autenticado
-    if request.user.is_authenticated:
-        # Se estiver autenticado, verifica se ele tem um plano ativo
-        if request.user.plano_ativo:
-            # Busca a assinatura ativa para exibir os detalhes
-            assinatura_ativa = Assinatura.objects.filter(
-                usuario=request.user, 
-                status='ativo'
-            ).order_by('-data_inicio').first()
-            
-            context = {
-                'assinatura': assinatura_ativa
-            }
-            # Renderiza a página que mostra o plano já ativo
-            return render(request, 'core/planos/plano_ativo.html', context)
+    # Verifica se o usuário está logado e se sua assinatura está ativa
+    if request.user.is_authenticated and request.user.plano_ativo:
+        assinatura_ativa = Assinatura.objects.filter(usuario=request.user, status='ativo').first()
+        
+        # Se, por alguma razão, não encontrar a assinatura, envia para a página de planos
+        if not assinatura_ativa:
+            return render(request, 'core/planos/planos.html')
+
+        # Lógica para buscar o uso de vídeos (igual à do meu_perfil)
+        try:
+            limite_videos_mes = int(Configuracao.objects.get(nome='LIMITE_VIDEOS_MES').valor)
+        except (Configuracao.DoesNotExist, ValueError):
+            limite_videos_mes = 100
+
+        trinta_dias_atras = timezone.now() - timedelta(days=30)
+        videos_criados_no_mes = VideoGerado.objects.filter(
+            usuario=request.user, 
+            criado_em__gte=trinta_dias_atras
+        ).count()
+
+        uso_percentual = 0
+        if limite_videos_mes > 0:
+            uso_percentual = (videos_criados_no_mes / limite_videos_mes) * 100
+        
+        context = {
+            'assinatura': assinatura_ativa,
+            'videos_criados_no_mes': videos_criados_no_mes,
+            'limite_videos_mes': limite_videos_mes,
+            'uso_percentual': uso_percentual,
+        }
+        # Renderiza a página que mostra o plano já ativo
+        return render(request, 'core/planos/plano_ativo.html', context)
     
     # Se o usuário não estiver logado OU não tiver um plano ativo,
     # mostra a página normal de planos para assinar.
     context = {
-        'stripe_publishable_key': os.getenv("STRIPE_PUBLISHABLE_KEY")
+        'stripe_publishable_key': settings.STRIPE_PUBLISHABLE_KEY
     }
     return render(request, 'core/planos/planos.html', context)
 
