@@ -23,7 +23,37 @@ VELOCIDADE_NARRACAO = [
     (120, 'Rápida (120%)'),
 ]
 
+CONFIG_CHOICES = [
+    ('LIMITE_VIDEOS_MES', 'Limite de Vídeos por Mês'),
+    ('DURACAO_ASSINATURA_DIAS', 'Duração da Assinatura (em dias)'),
+]
+
+class ConfiguracaoForm(forms.ModelForm):
+    """
+    Formulário para ADICIONAR uma nova configuração.
+    O campo 'nome' é um dropdown para evitar erros de digitação.
+    """
+    nome = forms.ChoiceField(
+        choices=CONFIG_CHOICES,
+        label="Nome da Chave de Configuração",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    class Meta:
+        model = Configuracao
+        fields = ['nome', 'valor']
+        labels = {
+            'valor': 'Valor',
+        }
+        widgets = {
+            'valor': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Ex: 100'}),
+        }
+
 class EditarConfiguracaoForm(forms.ModelForm):
+    """
+    Formulário para EDITAR uma configuração existente.
+    O campo 'nome' é somente leitura para impedir a alteração da chave.
+    """
     class Meta:
         model = Configuracao
         fields = ['nome', 'valor']
@@ -32,23 +62,10 @@ class EditarConfiguracaoForm(forms.ModelForm):
             'valor': 'Valor da Configuração',
         }
         widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control'}),
-            'valor': forms.TextInput(attrs={'class': 'form-control'}),
+            # Torna o campo 'nome' não editável
+            'nome': forms.TextInput(attrs={'class': 'form-input', 'readonly': True}),
+            'valor': forms.TextInput(attrs={'class': 'form-input'}),
         }
-
-class ConfiguracaoForm(forms.ModelForm):
-    class Meta:
-        model = Configuracao
-        fields = ['nome', 'valor']
-        labels = {
-            'nome': 'Nome da Chave (ex: DURACAO_ASSINATURA_DIAS)',
-            'valor': 'Valor',
-        }
-        widgets = {
-            'nome': forms.TextInput(attrs={'class': 'form-control'}),
-            'valor': forms.TextInput(attrs={'class': 'form-control'}),
-        }
-
 class CadastroUsuarioForm(UserCreationForm):
     email = forms.EmailField(required=True)
     class Meta(UserCreationForm.Meta):
@@ -214,10 +231,16 @@ class GeradorForm(forms.Form):
 
     # 3. OPÇÕES DE NARRAÇÃO
     legenda_sincronizada = forms.BooleanField(
-        label='Ativar Legenda Sincronizada Estimada',
+        label='Ativar Legenda Sincronizada',
         required=False,
-        help_text='A sincronização é estimada e pode não ser perfeita.'
+        help_text=(
+            "Aumente o engajamento exibindo o que está sendo narrado. "
+            "Ativada: O vídeo terá a narração e também legendas dinâmicas na tela. "
+            "Desativada: O vídeo terá apenas a narração, sem texto. "
+            "Atenção: A sincronia da legenda com a voz é uma estimativa."
+        )
     )
+
     narrador_voz = forms.ChoiceField(
         choices=VOZES_KOKORO,
         required=False,

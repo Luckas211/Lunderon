@@ -2344,36 +2344,57 @@ textarea.form-input {
 }
 
 
-/*------------------------------------------------Página de MEUS VÍDEOS
+
+
 /* ==========================================================================
-   25. PÁGINA: Meus Vídeos
+   25. PÁGINA: Meus Vídeos (Design Final)
    ========================================================================== */
 
-/* Ações no cabeçalho */
-.header-actions {
+/* Layout do cabeçalho da página */
+.dashboard-header-content {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-.usage-stats {
-    font-size: 0.9rem;
-    color: var(--color-text-secondary);
+/* Card de Status/Avisos que fica no topo */
+.status-card {
+    margin-top: 25px;
+    margin-bottom: 30px;
+    background: #15171a; /* Cor de fundo para destaque */
+    border-radius: var(--border-radius);
+    border: 1px solid var(--color-border);
 }
 
-.usage-stats span {
-    font-weight: 600;
-    color: var(--color-text-primary);
+.status-card .alert {
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    text-align: left; /* Alinha o texto do aviso à esquerda */
+}
+.status-card .alert strong {
+    color: var(--color-primary);
 }
 
-/* Grid de Vídeos */
+/* Divisor dentro dos cards */
+.card-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--color-border);
+    margin: 20px 0;
+}
+
+/* Grid onde os vídeos são exibidos */
 .video-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 30px;
-    margin-top: 30px;
 }
 
+/* Card individual de cada vídeo */
 .video-card {
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -2387,20 +2408,13 @@ textarea.form-input {
 .video-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    border-color: var(--color-border);
 }
 
-/* Preview do Vídeo */
+/* Área de preview (placeholder) */
 .video-preview {
     width: 100%;
     height: 450px;
     background-color: var(--color-background);
-}
-
-.video-preview video {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
 }
 
 .video-placeholder {
@@ -2428,9 +2442,9 @@ textarea.form-input {
     font-size: 0.8rem;
 }
 
-/* Conteúdo do Card de Vídeo */
+/* Corpo do card com informações */
 .video-card .card-body {
-    flex-grow: 1; /* Garante que o corpo do card cresça */
+    flex-grow: 1; 
 }
 .video-card .card-header {
     padding-bottom: 15px;
@@ -2438,7 +2452,7 @@ textarea.form-input {
 }
 
 .video-card-title {
-    font-size: 1rem;
+    font-size: 0.9rem; /* Ajustado para não tomar muito espaço */
     font-weight: 500;
     color: var(--color-text-secondary);
 }
@@ -2452,9 +2466,8 @@ textarea.form-input {
     color: var(--color-text-primary);
 }
 
-/* Estado de "Página Vazia" */
+/* Card para quando não há vídeos */
 .empty-state-card {
-    /* Reutiliza o estilo de .status-box mas com mais padding */
     margin-top: 40px;
     width: 100%;
     background-color: var(--color-surface);
@@ -2957,4 +2970,106 @@ textarea.form-input {
     font-size: 0.85rem;
     color: var(--color-text-secondary);
     margin-top: 4px; /* Adiciona um pequeno espaço */
+}
+
+/* ==========================================================================
+   28. ESTILOS PARA PÁGINAS LEGAIS (PRIVACIDADE, TERMOS)
+   ========================================================================== */
+
+.legal-content {
+    padding: 80px 0;
+}
+
+/* O CARD PRINCIPAL QUE ENVOLVE O TEXTO */
+.legal-card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 40px 50px;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+}
+
+.legal-card h1 {
+    font-size: 2.2rem;
+    text-align: center;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.last-updated {
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+}
+
+.legal-card h2 {
+    font-size: 1.5rem;
+    margin-top: 10px; /* Reduzido pois o divisor cria espaço */
+    margin-bottom: 20px;
+    color: var(--color-text-primary);
+}
+
+.legal-card h3 {
+    font-size: 1.1rem;
+    margin-top: 25px;
+    margin-bottom: 15px;
+    color: var(--color-text-secondary);
+    font-weight: 600;
+}
+
+.legal-card p,
+.legal-card li {
+    font-size: 0.95rem;
+    color: var(--color-text-secondary);
+    line-height: 1.8;
+    margin-bottom: 15px;
+}
+
+.legal-card ul {
+    list-style: none; /* Removemos o marcador padrão */
+    padding-left: 0;
+}
+
+.legal-card ul li {
+    padding-left: 25px;
+    position: relative;
+}
+
+/* Criamos um marcador customizado */
+.legal-card ul li::before {
+    content: '•';
+    color: var(--color-primary);
+    font-size: 1.2rem;
+    position: absolute;
+    left: 0;
+    top: -1px;
+}
+
+.legal-card strong {
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+/* O DIVISOR ENTRE AS SEÇÕES */
+.section-divider {
+    border: none;
+    height: 1px;
+    background-color: var(--color-border);
+    margin: 40px 0;
+}
+
+/* Ajustes para telas menores */
+@media (max-width: 768px) {
+    .legal-card {
+        padding: 30px 25px;
+    }
+    .legal-card h1 {
+        font-size: 1.8rem;
+    }
+    .legal-card h2 {
+        font-size: 1.3rem;
+    }
 }

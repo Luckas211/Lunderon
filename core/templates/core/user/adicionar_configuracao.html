@@ -29,29 +29,25 @@
             <form method="POST">
                 {% csrf_token %}
                 <div class="card-body">
-                    {% if form.non_field_errors %}
-                        <div class="form-errors">
-                            {% for error in form.non_field_errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <div class="alert alert-info" style="text-align: left;">
+                        Selecione a chave que deseja configurar. O sistema só permite criar configurações que ele já conhece para evitar erros.
+                    </div>
 
-                    <div class="form-group">
+                    <div class="form-group" style="margin-top: 20px;">
                         <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
                         {{ form.nome }}
-                        {% for error in form.nome.errors %}
-                            <div class="field-error">{{ error }}</div>
-                        {% endfor %}
-                        <small class="form-help-text">Use nomes-chave sem espaços, ex: LIMITE_VIDEOS</small>
+                        {% if form.nome.errors %}
+                            <div class="field-error">{{ form.nome.errors.as_text }}</div>
+                        {% endif %}
                     </div>
 
                     <div class="form-group">
                         <label for="{{ form.valor.id_for_label }}" class="form-label">{{ form.valor.label }}</label>
                         {{ form.valor }}
-                        {% for error in form.valor.errors %}
-                            <div class="field-error">{{ error }}</div>
-                        {% endfor %}
+                        {% if form.valor.errors %}
+                            <div class="field-error">{{ form.valor.errors.as_text }}</div>
+                        {% endif %}
+                        <small class="form-help-text">Para limites, use apenas números (ex: 100). Para durações, use dias (ex: 30).</small>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -65,16 +61,4 @@
     </main>
 </div>
 
-<script>
-    // Adiciona a classe 'form-input' aos campos do formulário Django
-    document.addEventListener("DOMContentLoaded", function() {
-        const fieldIds = ['id_nome', 'id_valor'];
-        fieldIds.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.classList.add('form-input');
-            }
-        });
-    });
-</script>
 {% endblock %}

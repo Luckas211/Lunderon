@@ -20,26 +20,42 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <h2>Meus Videos</h2>
-            <div class="usage-info">Uso no ciclo: {{ videos_criados_no_mes }} / {{ limite_videos_mes }}</div>
-            <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">+ Gerar Novo Vídeo</a>
-            <hr>
-            <div class="alert alert-warning" role="alert" style="margin-bottom: 20px;">
-                <strong>Atenção:</strong> Os vídeos gerados ficam disponíveis para download por <strong>1 hora</strong>. Após esse prazo, o link expira e o arquivo é removido.
+            <div class="dashboard-header-content">
+                <h1>Meus Vídeos</h1>
+                <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">+ Gerar Novo Vídeo</a>
             </div>
-            {% if messages %}
-                <div class="messages-container" style="margin-bottom: 20px;">
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-                {% endfor %}
-                </div>
-            {% endif %}
         </header>
+
+        <div class="status-card">
+            <div class="card-body">
+                <div class="usage-meter">
+                    <div class="info-item">
+                        <span class="info-label">Uso do Ciclo Mensal</span>
+                        <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"> </div>
+                    </div>
+                </div>
+                <hr class="card-divider">
+                <div class="alert alert-warning">
+                    <strong>Atenção:</strong> Os vídeos gerados ficam disponíveis para download por <strong>1 hora</strong>. Após esse prazo, o link expira e o arquivo é removido.
+                </div>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div class="messages-container" style="margin-bottom: 30px;">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+            </div>
+        {% endif %}
 
         {% if videos %}
             <div class="video-grid">
                 {% for video in videos %}
-                    <div class="video-card" id="video-card-{{ video.id }}">
+                    <div class="video-card">
                         <div class="video-preview">
                             <div class="video-placeholder">
                                 {% if video.status == 'CONCLUIDO' and video.arquivo_final %}

@@ -4,23 +4,8 @@
 {% block title %}Admin | Editar Usuário{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2 class="sidebar-user">Painel Admin</h2>
-        </div>
-        <nav class="sidebar-nav">
-            <ul>
-                <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
-                <li class="active"><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
-                <li><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
-                <li><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
-                <li><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
-            </ul>
-        </nav>
-    </aside>
-
-    <main class="dashboard-content">
+<main class="dashboard-content" style="padding: 40px 20px;">
+    <div class="container" style="max-width: 800px;">
         <header class="dashboard-header">
             <h1>Editar Usuário: {{ usuario_editando.username }}</h1>
         </header>
@@ -30,7 +15,7 @@
                 {% csrf_token %}
                 <div class="card-body">
                     {% if form.non_field_errors %}
-                        <div class="form-errors">
+                        <div class="form-errors" style="margin-bottom: 20px;">
                             {% for error in form.non_field_errors %}
                                 <p>{{ error }}</p>
                             {% endfor %}
@@ -75,8 +60,8 @@
                 </div>
             </form>
         </div>
-    </main>
-</div>
+    </div>
+</main>
 
 <script>
     document.addEventListener("DOMContentLoaded", function() {

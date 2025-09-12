@@ -22,35 +22,32 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <h1>Editar Configuração: <code class="code-badge">{{ config.nome }}</code></h1>
+            <h1>Editar Configuração</h1>
         </header>
 
         <div class="dashboard-card" style="max-width: 700px;">
             <form method="POST">
                 {% csrf_token %}
                 <div class="card-body">
-                    {% if form.non_field_errors %}
-                        <div class="form-errors">
-                            {% for error in form.non_field_errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
                     <div class="form-group">
-                        <label for="{{ form.nome.id_for_label }}" class="form-label">{{ form.nome.label }}</label>
-                        {{ form.nome }}
-                        {% for error in form.nome.errors %}
-                            <div class="field-error">{{ error }}</div>
-                        {% endfor %}
+                        <label class="form-label">Nome da Chave</label>
+                        <input type="text" class="form-input" value="{{ form.instance.nome }}" disabled>
+                        <small class="form-help-text">O nome da chave não pode ser alterado após a criação.</small>
                     </div>
 
                     <div class="form-group">
                         <label for="{{ form.valor.id_for_label }}" class="form-label">{{ form.valor.label }}</label>
                         {{ form.valor }}
-                        {% for error in form.valor.errors %}
-                            <div class="field-error">{{ error }}</div>
-                        {% endfor %}
+                        {% if form.valor.errors %}
+                            <div class="field-error">{{ form.valor.errors.as_text }}</div>
+                        {% endif %}
+                        <small class="form-help-text">
+                            {% if form.instance.nome == 'LIMITE_VIDEOS_MES' %}
+                                Este valor define quantos vídeos um assinante pode gerar por mês.
+                            {% elif form.instance.nome == 'DURACAO_ASSINATURA_DIAS' %}
+                                Este valor define a duração padrão de uma assinatura em dias (ex: 30).
+                            {% endif %}
+                        </small>
                     </div>
                 </div>
                 <div class="card-footer">
@@ -65,15 +62,13 @@
 </div>
 
 <script>
-    // Adiciona a classe 'form-input' aos campos do formulário Django
+    // Adiciona a classe 'form-input' apenas ao campo de valor,
+    // pois o campo 'nome' agora é renderizado manualmente.
     document.addEventListener("DOMContentLoaded", function() {
-        const fieldIds = ['id_nome', 'id_valor'];
-        fieldIds.forEach(id => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.classList.add('form-input');
-            }
-        });
+        const valorField = document.getElementById('id_valor');
+        if (valorField) {
+            valorField.classList.add('form-input');
+        }
     });
 </script>
 {% endblock %}

@@ -4,107 +4,110 @@
 {% block title %}Meu Painel - LUNDERON{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
-        </div>
-        <nav class="sidebar-nav">
-            <ul>
-                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
-                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
-                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
-            </ul>
-        </nav>
-        <div class="sidebar-footer">
-            <h3 class="sidebar-section-title">Siga-nos</h3>
-            <ul>
-                <li><a href="https://www.tiktok.com/" target="_blank"><i class="fab fa-tiktok fa-fw"></i> TikTok</a></li>
-                <li><a href="https://www.instagram.com/reels/" target="_blank"><i class="fab fa-instagram fa-fw"></i> Instagram</a></li>
-            </ul>
-        </div>
-    </aside>
-
-    <main class="dashboard-content">
+<main class="dashboard-content" style="padding: 40px 20px;">
+    <div class="container">
         <header class="dashboard-header">
             <h1>Meu Painel</h1>
+            <p style="color: var(--color-text-secondary); font-size: 1.1rem;">Bem-vindo de volta, {{ user.username }}!</p>
         </header>
+        
+        {% if messages %}
+            <div class="messages-container" style="margin-bottom: 30px;">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+            </div>
+        {% endif %}
 
-        <div class="dashboard-grid">
-            <div class="dashboard-card">
-                <div class="card-header">
-                    <h2 class="card-title"><i class="fas fa-star"></i> Minha Assinatura</h2>
-                </div>
-                <div class="card-body">
+        <div class="dashboard-grid" style="grid-template-columns: 2fr 1fr; align-items: flex-start;">
+            
+            <div style="display: flex; flex-direction: column; gap: 30px;">
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-star"></i> Minha Assinatura</h2>
+                    </div>
+                    <div class="card-body">
+                        {% if assinatura %}
+                            <ul class="info-list">
+                                <li class="info-item">
+                                    <span class="info-label">Plano Contratado</span>
+                                    <span class="info-value">{{ assinatura.plano.nome }}</span>
+                                </li>
+                                <li class="info-item">
+                                    <span class="info-label">Status</span>
+                                    <span class="status-badge status-{{ assinatura.status|lower }}">{{ assinatura.get_status_display }}</span>
+                                </li>
+                                {% if assinatura.data_expiracao %}
+                                <li class="info-item">
+                                    <span class="info-label">Próxima Cobrança</span>
+                                    <span class="info-value">{{ assinatura.data_expiracao|date:"d/m/Y" }}</span>
+                                </li>
+                                {% endif %}
+                            </ul>
+                            <div class="usage-meter">
+                                <div class="info-item">
+                                    <span class="info-label">Uso no ciclo atual</span>
+                                    <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }}</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"> </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <p>Você ainda não possui uma assinatura ativa.</p>
+                                <a href="{% url 'planos' %}" class="btn btn-primary">Ver Planos</a>
+                            </div>
+                        {% endif %}
+                    </div>
                     {% if assinatura %}
-                        <ul class="info-list">
-                            <li class="info-item">
-                                <span class="info-label">Plano Contratado</span>
-                                <span class="info-value">{{ assinatura.plano.nome }}</span>
-                            </li>
-                            <li class="info-item">
-                                <span class="info-label">Status</span>
-                                <span class="status-badge status-{{ assinatura.status|lower }}">{{ assinatura.get_status_display }}</span>
-                            </li>
-                            {% if assinatura.data_expiracao %}
-                            <li class="info-item">
-                                <span class="info-label">Acesso até</span>
-                                <span class="info-value">{{ assinatura.data_expiracao|date:"d/m/Y" }}</span>
-                            </li>
-                            {% endif %}
-                        </ul>
-                        <div class="usage-meter">
-                            <div class="info-item">
-                                <span class="info-label">Uso no ciclo atual</span>
-                                <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }}</span>
-                            </div>
-                            <div class="progress-bar">
-                                <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes }} / {{ limite_videos_mes }} * 100%);"></div>
-                            </div>
-                        </div>
-                        <div class="card-footer">
-                             <a href="{% url 'gerenciar_assinatura' %}" class="btn btn-secondary btn-full">Gerenciar Assinatura</a>
-                        </div>
-                    {% else %}
-                        <div class="empty-state">
-                            <p>Você ainda não possui uma assinatura ativa.</p>
-                            <a href="{% url 'planos' %}" class="btn btn-primary">Ver Planos</a>
-                        </div>
+                    <div class="card-footer" style="background-color: #15171a;">
+                        <a href="{% url 'gerenciar_assinatura' %}" class="btn btn-secondary btn-full">Gerenciar Assinatura e Pagamentos</a>
+                    </div>
                     {% endif %}
                 </div>
+
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-id-card"></i> Minhas Informações</h2>
+                        <a href="{% url 'editar_perfil' %}" class="btn btn-secondary btn-sm">Editar Perfil</a>
+                    </div>
+                    <div class="card-body">
+                         <ul class="info-list">
+                            <li class="info-item">
+                                <span class="info-label">Nome Completo</span>
+                                <span class="info-value">{% firstof user.get_full_name 'Não informado' %}</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">Nome de Usuário</span>
+                                <span class="info-value">{{ user.username }}</span>
+                            </li>
+                             <li class="info-item">
+                                <span class="info-label">Email de Acesso</span>
+                                <span class="info-value">{{ user.email }}</span>
+                            </li>
+                             <li class="info-item">
+                                <span class="info-label">Membro desde</span>
+                                <span class="info-value">{{ user.date_joined|date:"d/m/Y" }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <div class="dashboard-card">
                 <div class="card-header">
-                    <h2 class="card-title"><i class="fas fa-id-card"></i> Minhas Informações</h2>
-                    <a href="{% url 'editar_perfil' %}" class="btn btn-secondary btn-sm">Editar</a>
+                    <h2 class="card-title"><i class="fas fa-bolt"></i> Ações Rápidas</h2>
                 </div>
-                <div class="card-body">
-                     <ul class="info-list">
-                        <li class="info-item">
-                            <span class="info-label">Nome Completo</span>
-                            <span class="info-value">{% firstof user.get_full_name 'Não informado' %}</span>
-                        </li>
-                        <li class="info-item">
-                            <span class="info-label">Nome de Usuário</span>
-                            <span class="info-value">{{ user.username }}</span>
-                        </li>
-                         <li class="info-item">
-                            <span class="info-label">Email</span>
-                            <span class="info-value">{{ user.email }}</span>
-                        </li>
-                         <li class="info-item">
-                            <span class="info-label">Data de Nascimento</span>
-                            <span class="info-value">{% if user.data_nascimento %}{{ user.data_nascimento|date:"d/m/Y" }}{% else %}Não informada{% endif %}</span>
-                        </li>
-                         <li class="info-item">
-                            <span class="info-label">Membro desde</span>
-                            <span class="info-value">{{ user.date_joined|date:"d/m/Y" }}</span>
-                        </li>
-                    </ul>
+                <div class="card-body" style="display: flex; flex-direction: column; gap: 15px;">
+                    <a href="{% url 'pagina_gerador' %}" class="btn btn-primary btn-full"><i class="fas fa-plus"></i> Gerar Novo Vídeo</a>
+                    <a href="{% url 'meus_videos' %}" class="btn btn-secondary btn-full"><i class="fas fa-video"></i> Ver Meus Vídeos</a>
+                    <a href="{% url 'suporte' %}" class="btn btn-secondary btn-full"><i class="fas fa-headset"></i> Pedir Suporte</a>
                 </div>
             </div>
+
         </div>
-    </main>
-</div>
+    </div>
+</main>
 {% endblock %}
+

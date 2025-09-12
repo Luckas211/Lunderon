@@ -30,17 +30,18 @@
                 <div class="status-icon error" style="margin-bottom: 20px;">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
-                <p style="font-size: 1.2rem; color: var(--color-text-primary); margin-bottom: 10px;">
-                    Você tem certeza que deseja excluir a configuração: <br>
-                    <code class="code-badge" style="font-size: 1rem; margin-top: 10px;">{{ item.nome }}</code>?
+                <h2 class="status-title" style="font-size: 1.5rem;">Atenção!</h2>
+                <p class="status-message" style="font-size: 1.1rem; color: var(--color-text-primary);">
+                    Você tem certeza que deseja excluir permanentemente o item: <br>
+                    <code class="code-badge" style="font-size: 1rem; margin-top: 15px; display: inline-block;">{{ item.nome | default:"item selecionado" }}</code>?
                 </p>
-                <p class="text-muted">Esta ação não pode ser desfeita.</p>
+                <p class="text-muted"><strong>Esta ação não pode ser desfeita.</strong></p>
             </div>
             <div class="card-footer">
                 <form method="POST" class="form-actions" style="justify-content: center;">
                     {% csrf_token %}
-                    <a href="{{ request.META.HTTP_REFERER|default:'admin_configuracoes' }}" class="btn btn-secondary">Cancelar</a>
-                    <button type="submit" class="btn btn-danger">Sim, Excluir</button>
+                    <a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="btn btn-secondary">Cancelar e Voltar</a>
+                    <button type="submit" class="btn btn-danger">Sim, Excluir Permanentemente</button>
                 </form>
             </div>
         </div>

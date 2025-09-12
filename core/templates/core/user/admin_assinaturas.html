@@ -22,8 +22,18 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <h1>Gerenciamento de Assinaturas</h1>
+            <div class="dashboard-header-content">
+                <h1>Gerenciamento de Assinaturas</h1>
+            </div>
         </header>
+
+        {% if messages %}
+            <div class="messages-container" style="margin-bottom: 30px;">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+            {% endfor %}
+            </div>
+        {% endif %}
 
         <div class="dashboard-card">
             <div class="card-body full-bleed">
@@ -32,19 +42,19 @@
                         <thead>
                             <tr>
                                 <th>Usuário</th>
-                                <th>Email</th>
                                 <th>Plano</th>
                                 <th>Status</th>
                                 <th>Início</th>
                                 <th>Expira em</th>
-                                <th>Ações</th>
+                                <th class="text-right">Ações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for ass in assinaturas %}
                             <tr>
-                                <td data-label="Usuário">{{ ass.usuario.username }}</td>
-                                <td data-label="Email">{{ ass.usuario.email }}</td>
+                                <td data-label="Usuário">
+                                    <a href="{% url 'editar_usuario' ass.usuario.id %}" title="Editar este usuário">{{ ass.usuario.username }}</a>
+                                </td>
                                 <td data-label="Plano">{{ ass.plano.nome }}</td>
                                 <td data-label="Status">
                                     <span class="status-badge status-{{ ass.status|lower }}">{{ ass.get_status_display }}</span>
@@ -53,16 +63,20 @@
                                 <td data-label="Expira em">{% if ass.data_expiracao %}{{ ass.data_expiracao|date:"d/m/Y" }}{% else %}-{% endif %}</td>
                                 <td data-label="Ações">
                                     <div class="action-buttons">
-                                        <a href="{% url 'ativar_assinatura' ass.id %}" class="btn btn-success btn-sm">Ativar</a>
-                                        <a href="{% url 'cancelar_assinatura' ass.id %}" class="btn btn-warning btn-sm">Cancelar</a>
+                                        {% if ass.status != 'ativo' %}
+                                            <a href="{% url 'ativar_assinatura' ass.id %}" class="btn btn-success btn-sm">Ativar</a>
+                                        {% endif %}
+                                        {% if ass.status == 'ativo' %}
+                                            <a href="{% url 'cancelar_assinatura' ass.id %}" class="btn btn-warning btn-sm">Cancelar</a>
+                                        {% endif %}
                                         <a href="{% url 'editar_assinatura' ass.id %}" class="btn btn-secondary btn-sm">Editar</a>
-                                        <a href="{% url 'excluir_assinatura' ass.id %}" class="btn btn-danger btn-sm">Excluir</a>
+                                        <a href="{% url 'excluir_assinatura' ass.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir esta assinatura?');">Excluir</a>
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="7" class="text-center">Nenhuma assinatura encontrada.</td>
+                                <td colspan="6" class="text-center">Nenhuma assinatura encontrada.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
