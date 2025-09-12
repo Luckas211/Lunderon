@@ -3073,3 +3073,55 @@ textarea.form-input {
         font-size: 1.3rem;
     }
 }
+
+
+/* ==========================================================================
+   30. COMPONENTE: TELA DE LOADING (OVERLAY)
+   ========================================================================== */
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(13, 15, 18, 0.9); /* Fundo escuro semi-transparente */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: none; /* Começa escondido */
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 9999; /* Garante que fique acima de tudo */
+    color: var(--color-text-primary);
+    text-align: center;
+    padding: 20px;
+}
+
+/* Classe para mostrar o overlay via JavaScript */
+.loading-overlay.visible {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+.loading-spinner {
+    border: 6px solid var(--color-border);
+    border-top: 6px solid var(--color-primary);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 25px;
+}
+
+.loading-text {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.loading-overlay small {
+    font-size: 1rem;
+    color: var(--color-text-secondary);
+    max-width: 400px;
+}

@@ -18,7 +18,15 @@
         </nav>
     </aside>
 
+    
     <main class="dashboard-content">
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Gerando seu vídeo...</p>
+            <small>Este processo pode levar alguns instantes. Por favor, não feche esta página.</small>
+        </div>
+        <div class="generator-container">
+        
         <div class="generator-container">
             <header class="generator-header">
                 <div class="header-content">
@@ -206,6 +214,21 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // --- INÍCIO DO CÓDIGO NOVO PARA O LOADING ---
+    const videoForm = document.querySelector('.video-form');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const submitButton = videoForm.querySelector('button[type="submit"]');
+
+    if (videoForm && loadingOverlay && submitButton) {
+        videoForm.addEventListener('submit', function() {
+            // Mostra a tela de loading ao enviar o formulário
+            loadingOverlay.classList.add('visible');
+
+            // Desabilita o botão e muda o texto para dar feedback visual
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando, por favor aguarde...';
+        });
+    }
     
     // Seleciona o único painel do formulário
     const panel = document.querySelector('.video-panel');
@@ -364,6 +387,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    
     // ***** FIM DO NOVO CÓDIGO *****
 
     // Estado Inicial
@@ -374,6 +399,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     updateAvailableSteps();
     goToStep(0);
+
+
+    
 });
 </script>
 {% endblock %}
