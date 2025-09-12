@@ -15,10 +15,6 @@ db.sqlite3
 __pycache__/
 *.pyc
 
-# Mídia do Usuário
-# Pasta para onde vão os vídeos gerados e outros uploads. Pode ficar muito grande.
-/media/
-/videos_gerados/
 
 # Arquivos estáticos coletados (boa prática)
 # Pasta para onde o comando `collectstatic` envia os arquivos em produção.
