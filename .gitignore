@@ -14,6 +14,8 @@ db.sqlite3
 # Arquivos gerados automaticamente pelo Python para otimização.
 __pycache__/
 *.pyc
+# Ignorar modelos grandes
+media/kokoro_models/*.onnx
 
 /media/
 
