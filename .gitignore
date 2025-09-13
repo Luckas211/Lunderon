@@ -15,6 +15,7 @@ db.sqlite3
 __pycache__/
 *.pyc
 
+/media/
 
 # Arquivos estáticos coletados (boa prática)
 # Pasta para onde o comando `collectstatic` envia os arquivos em produção.

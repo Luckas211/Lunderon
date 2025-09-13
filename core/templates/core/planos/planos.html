@@ -5,6 +5,27 @@
 
 {% block content %}
 
+<!-- Card de Promoção -->
+<section class="promo-section">
+    <div class="container">
+        <div class="promo-card card-animated">
+            <div class="promo-badge">
+                <i class="fas fa-gift"></i>
+                <span>PROMOÇÃO</span>
+            </div>
+            <div class="promo-content">
+                <h2 class="promo-title">🎉 Oferta Especial de Lançamento!</h2>
+                <p class="promo-description">Aproveite nosso preço promocional por tempo limitado. Economize 50% no primeiro mês e tenha acesso total a todas as funcionalidades.</p>
+                <div class="promo-features">
+                    <span class="promo-feature"><i class="fas fa-check"></i> 50% de desconto no primeiro mês</span>
+                    <span class="promo-feature"><i class="fas fa-check"></i> Cancele quando quiser</span>
+                    <span class="promo-feature"><i class="fas fa-check"></i> Sem taxas escondidas</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="page-header">
     <div class="container">
         <h1 class="page-header-title">Acesso Total. Sem Limites Criativos.</h1>
@@ -15,7 +36,7 @@
 <section class="pricing-section">
     <div class="pricing-card-wrapper">
 
-        <div class="pricing-card">
+        <div class="pricing-card card-animated">
             <div class="pricing-card-header">
                 <h2 class="plan-name">Plano Criador Pro</h2>
                 <p class="plan-description">Acesso ilimitado a todas as funcionalidades da plataforma.</p>
@@ -35,7 +56,7 @@
                 <li><i class="fas fa-check-circle"></i> <strong>Suporte Prioritário</strong> via e-mail.</li>
             </ul>
 
-            <a href="{% url 'criar_checkout' %}" class="btn btn-primary btn-full">Quero Assinar Agora</a>
+            <a href="{% url 'criar_checkout' %}" class="btn btn-primary btn-full btn-shimmer">Quero Assinar Agora</a>
         </div>
 
     </div>

@@ -6,12 +6,15 @@
 {% block content %}
 <section class="form-section">
     <div class="form-wrapper">
-        <form action="{% url 'login' %}" method="POST" class="form-content">
+        <form action="{% url 'login' %}" method="POST" class="form-content card card-animated">
             {% csrf_token %}
             
             <div class="form-header">
+                <div class="form-icon">
+                    <i class="fas fa-user-circle"></i>
+                </div>
                 <h2>Acesse Sua Conta</h2>
-                <p>Bem-vindo de volta!</p>
+                <p>Bem-vindo de volta ao LUNDERON!</p>
             </div>
 
             {% if form.non_field_errors %}
@@ -36,10 +39,23 @@
                 <a href="{% url 'password_reset' %}">Esqueceu a senha?</a>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+            <button type="submit" class="btn btn-primary btn-full btn-shimmer">
+                <i class="fas fa-sign-in-alt"></i>
+                Entrar na Plataforma
+            </button>
+
+            <div class="form-divider">
+                <span>ou</span>
+            </div>
 
             <div class="form-footer">
-                <p>Não tem uma conta? <a href="{% url 'cadastre_se' %}">Cadastre-se</a></p>
+                <p>Não tem uma conta? <a href="{% url 'cadastre_se' %}" class="link-primary">Cadastre-se gratuitamente</a></p>
+                <div class="form-trust">
+                    <p class="trust-text">
+                        <i class="fas fa-shield-alt"></i>
+                        Seus dados estão seguros conosco
+                    </p>
+                </div>
             </div>
         </form>
     </div>

@@ -26,7 +26,7 @@
             </div>
         </header>
 
-        <div class="status-card">
+        <div class="status-card card card-animated">
             <div class="card-body">
                 <div class="usage-meter">
                     <div class="info-item">
@@ -34,11 +34,12 @@
                         <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"> </div>
+                        <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"></div>
                     </div>
                 </div>
                 <hr class="card-divider">
                 <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
                     <strong>Atenção:</strong> Os vídeos gerados ficam disponíveis para download por <strong>1 hora</strong>. Após esse prazo, o link expira e o arquivo é removido.
                 </div>
             </div>
@@ -59,7 +60,7 @@
                         <div class="video-preview">
                             <div class="video-placeholder">
                                 {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
-                                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                                    <i class="fas fa-check-circle"></i>
                                     <span>Pronto para Download</span>
                                     <small>Expira em 1 hora após a criação.</small>
                                 {% elif video.status == 'CONCLUIDO' and not video.arquivo_final %}
@@ -67,7 +68,7 @@
                                     <span>Expirado ou Baixado</span>
                                     <small>O arquivo não está mais disponível.</small>
                                 {% elif video.status == 'ERRO' %}
-                                    <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                                    <i class="fas fa-exclamation-triangle"></i>
                                     <span>Erro na Geração</span>
                                     <small>Por favor, tente gerar novamente.</small>
                                 {% else %}
@@ -100,8 +101,8 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="empty-state-card">
-                <div class="status-icon info">
+            <div class="empty-state-card card card-animated">
+                <div class="status-icon">
                     <i class="fas fa-video-slash"></i>
                 </div>
                 <h2 class="status-title">Nenhum vídeo foi gerado ainda</h2>
@@ -109,7 +110,7 @@
                     Clique no botão abaixo para começar a usar o gerador.
                 </p>
                 <div class="status-actions">
-                    <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">Começar a Criar Agora</a>
+                    <a href="{% url 'pagina_gerador' %}" class="btn btn-primary btn-shimmer">Começar a Criar Agora</a>
                 </div>
             </div>
         {% endif %}

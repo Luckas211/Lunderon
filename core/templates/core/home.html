@@ -6,17 +6,39 @@
 {% block content %}
 <section class="hero">
     <div class="hero-glow"></div>
+    <div class="hero-particles"></div>
     <div class="container">
         <div class="hero-content">
+            <div class="hero-badge">
+                <i class="fas fa-rocket"></i>
+                <span>Nova Tecnologia IA</span>
+            </div>
             <h1 class="hero-title">
-                Crie Vídeos Profissionais com IA em Minutos
+                Crie Vídeos Profissionais com IA em <span class="gradient-text">Minutos</span>
             </h1>
             <p class="hero-subtitle">
                 Gere vídeos automaticamente com narração em português brasileiro, legendas sincronizadas, fundos dinâmicos e músicas royalty-free. Escolha entre modo Narrador, Texto Estático ou Vendedor para criar conteúdo viral em escala.
             </p>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-number">100+</div>
+                    <div class="stat-label">Vídeos por Mês</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">3</div>
+                    <div class="stat-label">Modos de Criação</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">1000+</div>
+                    <div class="stat-label">Músicas & Vídeos</div>
+                </div>
+            </div>
             <div class="hero-actions">
-                <a href="{% url 'cadastre_se' %}" class="btn btn-primary">Começar Agora (Grátis)</a>
-                <a href="{% url 'como_funciona' %}" class="btn btn-secondary">Ver Como Funciona</a>
+                <a href="{% url 'cadastre_se' %}" class="btn btn-primary btn-shimmer btn-lg">Começar Agora (Grátis)</a>
+                <a href="{% url 'como_funciona' %}" class="btn btn-secondary btn-lg">Ver Como Funciona</a>
+            </div>
+            <div class="hero-trust">
+                <p class="trust-text">✅ Sem cartão de crédito • ✅ Cancele quando quiser • ✅ Suporte 24/7</p>
             </div>
         </div>
     </div>
@@ -24,26 +46,118 @@
 
 <section class="features-preview">
     <div class="container">
-        <div class="features-preview-grid">
-            <div class="feature-preview-item">
+        <div class="features-preview-grid grid grid-auto-fit">
+            <div class="feature-preview-item card card-animated">
                 <i class="fas fa-microphone"></i>
                 <h3>Narração com IA</h3>
                 <p>Transforme texto em voz realista em português brasileiro usando tecnologia Kokoro.</p>
             </div>
-            <div class="feature-preview-item">
+            <div class="feature-preview-item card card-animated">
                 <i class="fas fa-closed-captioning"></i>
                 <h3>Legendas Karaokê</h3>
                 <p>Adicione legendas sincronizadas automaticamente para aumentar o engajamento.</p>
             </div>
-            <div class="feature-preview-item">
+            <div class="feature-preview-item card card-animated">
                 <i class="fas fa-video"></i>
                 <h3>3 Modos de Criação</h3>
                 <p>Narrador, Texto Estático ou Vendedor - adapte-se ao seu estilo de conteúdo.</p>
             </div>
-            <div class="feature-preview-item">
+            <div class="feature-preview-item card card-animated">
                 <i class="fas fa-music"></i>
                 <h3>Biblioteca de Mídia</h3>
                 <p>Milhares de vídeos de fundo e músicas categorizadas, sem preocupações com direitos autorais.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Seção de Como Funciona -->
+<section class="how-it-works">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Como Funciona</h2>
+            <p class="section-subtitle">Crie vídeos profissionais em apenas 3 passos simples</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step-item card card-animated">
+                <div class="step-number">1</div>
+                <div class="step-icon">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h3 class="step-title">Escreva seu Roteiro</h3>
+                <p class="step-description">Digite o texto que será narrado no seu vídeo. Nossa IA transformará em voz natural.</p>
+            </div>
+            <div class="step-item card card-animated">
+                <div class="step-number">2</div>
+                <div class="step-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <h3 class="step-title">Escolha o Modo</h3>
+                <p class="step-description">Selecione entre Narrador, Texto Estático ou Vendedor para o estilo do seu vídeo.</p>
+            </div>
+            <div class="step-item card card-animated">
+                <div class="step-number">3</div>
+                <div class="step-icon">
+                    <i class="fas fa-download"></i>
+                </div>
+                <h3 class="step-title">Baixe seu Vídeo</h3>
+                <p class="step-description">Receba seu vídeo pronto com narração, legendas e música em poucos minutos.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Seção de Benefícios -->
+<section class="benefits">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Por que Escolher o LUNDERON?</h2>
+            <p class="section-subtitle">A plataforma mais completa para criação de vídeos com IA</p>
+        </div>
+        <div class="benefits-grid">
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3>Economia de Tempo</h3>
+                <p>Crie vídeos em minutos, não em horas. Automatize sua produção de conteúdo.</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+                <h3>Custo-Benefício</h3>
+                <p>Economize milhares em equipamentos e profissionais. Tudo em uma plataforma.</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3>Escalabilidade</h3>
+                <p>Produza 100 vídeos por mês sem aumentar sua equipe ou custos.</p>
+            </div>
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Segurança Total</h3>
+                <p>Seus vídeos são excluídos após 1 hora. Privacidade e segurança garantidas.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Seção de CTA Final -->
+<section class="cta-section">
+    <div class="container">
+        <div class="cta-card card-animated">
+            <div class="cta-content">
+                <h2 class="cta-title">Pronto para Revolucionar sua Produção de Vídeos?</h2>
+                <p class="cta-subtitle">Junte-se a milhares de criadores que já estão usando IA para produzir conteúdo em escala.</p>
+                <div class="cta-actions">
+                    <a href="{% url 'cadastre_se' %}" class="btn btn-primary btn-shimmer btn-xl">Começar Agora - É Grátis</a>
+                    <a href="{% url 'planos' %}" class="btn btn-outline btn-lg">Ver Planos</a>
+                </div>
             </div>
         </div>
     </div>

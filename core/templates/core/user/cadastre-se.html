@@ -6,12 +6,15 @@
 {% block content %}
 <section class="form-section">
     <div class="form-wrapper">
-        <form action="{% url 'cadastre_se' %}" method="POST" class="form-content">
+        <form action="{% url 'cadastre_se' %}" method="POST" class="form-content card card-animated">
             {% csrf_token %}
             
             <div class="form-header">
+                <div class="form-icon">
+                    <i class="fas fa-user-plus"></i>
+                </div>
                 <h2>Crie Sua Conta</h2>
-                <p>Comece sua jornada conosco hoje mesmo.</p>
+                <p>Comece sua jornada no LUNDERON hoje mesmo!</p>
             </div>
 
             {% if form.non_field_errors %}
@@ -54,10 +57,31 @@
                 {% endfor %}
             </div>
 
-            <button type="submit" class="btn btn-primary btn-full">Criar Conta</button>
+            <button type="submit" class="btn btn-primary btn-full btn-shimmer">
+                <i class="fas fa-rocket"></i>
+                Criar Conta e Começar
+            </button>
+
+            <div class="form-divider">
+                <span>ou</span>
+            </div>
 
             <div class="form-footer">
-                <p>Já tem uma conta? <a href="{% url 'login' %}">Faça Login</a></p>
+                <p>Já tem uma conta? <a href="{% url 'login' %}" class="link-primary">Faça Login</a></p>
+                <div class="form-benefits">
+                    <div class="benefit-item">
+                        <i class="fas fa-check"></i>
+                        <span>100% Gratuito para começar</span>
+                    </div>
+                    <div class="benefit-item">
+                        <i class="fas fa-check"></i>
+                        <span>Sem cartão de crédito</span>
+                    </div>
+                    <div class="benefit-item">
+                        <i class="fas fa-check"></i>
+                        <span>Cancele quando quiser</span>
+                    </div>
+                </div>
             </div>
         </form>
     </div>
