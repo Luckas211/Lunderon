@@ -1126,29 +1126,38 @@ def cadastre_se(request):
         if form.is_valid():
             user = form.save()
             
-            # --- INÍCIO DO CÓDIGO CORRIGIDO ---
-            # Este bloco estava faltando. Ele envia o e-mail de boas-vindas.
             try:
+                # --- MENSAGEM DE E-MAIL APRIMORADA ---
+                mensagem_email = f"""
+Olá, {user.username}!
+
+Seja muito bem-vindo(a) à LUNDERON!
+
+Estamos muito felizes em confirmar que sua conta foi criada com sucesso. Você agora faz parte de uma comunidade de criadores prontos para transformar ideias em vídeos incríveis de forma rápida e automatizada.
+
+Para começar, acesse seu painel e explore o nosso gerador de vídeos.
+
+Se tiver qualquer dúvida, nossa Central de Ajuda está à sua disposição.
+
+Atenciosamente,
+Equipe LUNDERON
+"""
                 send_mail(
-                    subject='Bem-vindo à LUNDERON!',
-                    message=f'Olá, {user.username}!\n\nSua conta foi criada com sucesso. Estamos felizes em ter você conosco.\n\nAcesse nosso site e comece a criar vídeos incríveis agora mesmo.\n\nAtenciosamente,\nEquipe LUNDERON',
+                    subject='Sua jornada na LUNDERON começa agora!',
+                    message=mensagem_email,
                     from_email=settings.EMAIL_HOST_USER,
                     recipient_list=[user.email],
                     fail_silently=False,
                 )
             except Exception as e:
-                # Se o e-mail falhar, o cadastro não é desfeito,
-                # mas você verá um erro no seu terminal para investigar.
                 print(f"ERRO AO ENVIAR E-MAIL DE BOAS-VINDAS: {e}")
-            # --- FIM DO CÓDIGO CORRIGIDO ---
-
+            
             login(request, user)
             messages.success(request, "Cadastro realizado com sucesso!")
             return redirect("pagina_gerador")
     else:
         form = CadastroUsuarioForm()
     return render(request, "core/user/cadastre-se.html", {"form": form})
-
 def validate_otp_view(request):
     #
     # ATENÇÃO: Este é um código temporário para o site não quebrar.
