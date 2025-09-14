@@ -15,26 +15,26 @@
                 {% csrf_token %}
                 <div class="card-body">
                     {% if form.non_field_errors %}
-                        <div class="form-errors" style="margin-bottom: 20px;">
-                            {% for error in form.non_field_errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
+                    <div class="form-errors" style="margin-bottom: 20px;">
+                        {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
                     {% endif %}
 
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="{{ form.first_name.id_for_label }}" class="form-label">Nome</label>
                             {{ form.first_name }}
-                             {% if form.first_name.errors %}
-                                <div class="field-error">{{ form.first_name.errors.as_text }}</div>
+                            {% if form.first_name.errors %}
+                            <div class="field-error">{{ form.first_name.errors.as_text }}</div>
                             {% endif %}
                         </div>
                         <div class="form-group">
                             <label for="{{ form.last_name.id_for_label }}" class="form-label">Sobrenome</label>
                             {{ form.last_name }}
                             {% if form.last_name.errors %}
-                                <div class="field-error">{{ form.last_name.errors.as_text }}</div>
+                            <div class="field-error">{{ form.last_name.errors.as_text }}</div>
                             {% endif %}
                         </div>
                     </div>
@@ -43,15 +43,16 @@
                         <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
                         {{ form.email }}
                         {% if form.email.errors %}
-                            <div class="field-error">{{ form.email.errors.as_text }}</div>
+                        <div class="field-error">{{ form.email.errors.as_text }}</div>
                         {% endif %}
                     </div>
-                    
+
                     <div class="form-group">
-                        <label for="{{ form.data_nascimento.id_for_label }}" class="form-label">Data de Nascimento</label>
+                        <label for="{{ form.data_nascimento.id_for_label }}" class="form-label">Data de
+                            Nascimento</label>
                         {{ form.data_nascimento }}
                         {% if form.data_nascimento.errors %}
-                            <div class="field-error">{{ form.data_nascimento.errors.as_text }}</div>
+                        <div class="field-error">{{ form.data_nascimento.errors.as_text }}</div>
                         {% endif %}
                         <small class="form-help-text">Use o formato AAAA-MM-DD.</small>
                     </div>
@@ -69,9 +70,9 @@
 
 <script>
     // Script para adicionar a classe 'form-input' aos campos do formulário Django
-    document.addEventListener("DOMContentLoaded", function() {
+    document.addEventListener("DOMContentLoaded", function () {
         const fieldIds = ['id_first_name', 'id_last_name', 'id_email', 'id_data_nascimento'];
-        
+
         fieldIds.forEach(id => {
             const element = document.getElementById(id);
             if (element) {

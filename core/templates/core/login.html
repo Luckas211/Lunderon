@@ -8,18 +8,18 @@
     <div class="form-wrapper">
         <form action="{% url 'login' %}" method="POST" class="form-content">
             {% csrf_token %}
-            
+
             <div class="form-header">
                 <h2>Acesse Sua Conta</h2>
                 <p>Bem-vindo de volta!</p>
             </div>
 
             {% if form.non_field_errors %}
-                <div class="form-errors">
-                    {% for error in form.non_field_errors %}
-                        <p>{{ error }}</p>
-                    {% endfor %}
-                </div>
+            <div class="form-errors">
+                {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
             {% endif %}
 
             <div class="form-group">
@@ -29,9 +29,10 @@
 
             <div class="form-group">
                 <label for="password" class="form-label">Senha</label>
-                <input type="password" id="password" name="password" class="form-input" placeholder="Sua senha" required>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Sua senha"
+                    required>
             </div>
-            
+
             <div class="form-options">
                 <a href="{% url 'password_reset' %}">Esqueceu a senha?</a>
             </div>
