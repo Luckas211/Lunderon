@@ -4,74 +4,41 @@
 {% block title %}LUNDERON - Crie Vídeos com Inteligência Artificial{% endblock %}
 
 {% block content %}
+
 <section class="hero">
-    <div class="hero-glow"></div>
+    <div class="hero-background-shapes">
+        <div class="shape-blur shape-1"></div>
+        <div class="shape-blur shape-2"></div>
+    </div>
+
     <div class="container">
         <div class="hero-content">
             <h1 class="hero-title">
-                Transforme Texto em Vídeos Virais com IA
+                Transforme Texto em Vídeos Virais com <span class="gradient-text">Inteligência Artificial</span>
             </h1>
             <p class="hero-subtitle">
-                Nossa IA gera narrações realistas em português, adiciona legendas dinâmicas e combina tudo com uma vasta biblioteca de vídeos e músicas. Personalize fontes, cores e estilos para criar conteúdo único em minutos.
+                Nossa IA gera narrações realistas, adiciona legendas dinâmicas e combina tudo com uma vasta biblioteca de vídeos e músicas para criar conteúdo único em minutos.
             </p>
             <div class="hero-actions">
-                <a href="{% url 'cadastre_se' %}" class="btn btn-primary">Começar a Criar (Grátis)</a>
-                <a href="{% url 'como_funciona' %}" class="btn btn-secondary">Ver Como Funciona</a>
+                <a href="{% url 'cadastre_se' %}" class="btn btn-primary btn-lg">Começar a Criar (Grátis)</a>
+                <a href="{% url 'como_funciona' %}" class="btn btn-secondary btn-lg">Ver Como Funciona</a>
             </div>
-        </div>
-    </div>
-</section>
-
-<section class="features-preview">
-    <div class="container">
-        <div class="features-preview-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
-            <div class="feature-preview-item">
-                <i class="fas fa-microphone-alt"></i>
-                <h3>Narração Realista com IA</h3>
-                <p>Escolha entre vozes masculinas e femininas e ajuste a velocidade para criar a narração perfeita para seu roteiro, usando a tecnologia Kokoro.</p>
-            </div>
-            <div class="feature-preview-item">
-                <i class="fas fa-closed-captioning"></i>
-                <h3>Legendas Dinâmicas</h3>
-                <p>Adicione legendas automáticas estilo karaokê. Personalize a cor e a fonte para maximizar o engajamento e a acessibilidade do seu vídeo.</p>
-            </div>
-            <div class="feature-preview-item">
-                <i class="fas fa-rocket"></i>
-                <h3>3 Modos Versáteis</h3>
-                <p>Use o modo Narrador para conteúdo falado, Texto para mensagens rápidas ou Vendedor para adicionar uma locução profissional ao seu próprio vídeo de produto.</p>
-            </div>
-            <div class="feature-preview-item">
-                <i class="fas fa-photo-video"></i>
-                <h3>Biblioteca Royalty-Free</h3>
-                <p>Acesse milhares de vídeos de fundo e músicas de alta qualidade, organizados por categorias, para usar livremente sem se preocupar com direitos autorais.</p>
-            </div>
-            <div class="feature-preview-item">
-                <i class="fas fa-palette"></i>
-                <h3>Estilização Completa</h3>
-                <p>Tenha total controle criativo. Altere fontes, tamanhos, cores, negrito, sublinhado e a posição do texto na tela para combinar com a sua marca.</p>
-            </div>
-            <div class="feature-preview-item">
-                <i class="fas fa-shield-alt"></i>
-                <h3>Privacidade Garantida</h3>
-                <p>Seus vídeos, suas regras. Seus arquivos finais são armazenados de forma segura por 1 hora para download e depois permanentemente excluídos de nossos servidores.</p>
+            <div class="hero-mockup-wrapper">
+                <div class="hero-mockup">
+                    <img src="https://via.placeholder.com/800x450/E9E7FC/655BE2?text=LUNDERON+em+Ação" alt="Mockup da plataforma LUNDERON mostrando a criação de um vídeo" class="mockup-img">
+                </div>
+                <div class="floating-shape shape-1">
+                    <i class="fas fa-play-circle"></i>
+                </div>
+                <div class="floating-shape shape-2">
+                    <i class="fas fa-magic"></i>
+                </div>
+                <div class="floating-shape shape-3">
+                    <i class="fas fa-rocket"></i>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
 {% endblock %}
-```eof
-
-### O que foi Melhorado?
-
-* **Títulos e Textos Mais Atraentes:** A chamada principal foi atualizada para "Transforme Texto em Vídeos Virais com IA", que é mais direta e focada no benefício final para o criador de conteúdo.
-* **Descrição Precisa dos Recursos:**
-    * **Narração:** Agora menciona a escolha de vozes e o ajuste de velocidade, que são funcionalidades confirmadas.
-    * **Legendas:** Destaca a personalização de **cor e fonte**, que foi um dos ajustes que fizemos.
-    * **Modos:** O título "3 Modos Versáteis" é mais interessante que "3 Modos de Criação".
-* **Novos Itens de Destaque:**
-    * **Estilização Completa:** Foi adicionado um card específico para ressaltar todas as opções de personalização de texto que o usuário tem (fontes, cores, tamanho, etc.), o que é um grande diferencial.
-    * **Privacidade Garantida:** Adicionamos um card para explicar a lógica de armazenamento e exclusão de 1 hora. Isso transforma uma limitação técnica em um benefício de **segurança e privacidade**, o que é excelente para a confiança do usuário.
-* **Pequeno Ajuste de Estilo:** Adicionei um `style` inline no grid para garantir que ele se adapte bem a 3 colunas em telas maiores e 2 ou 1 em telas menores, acomodando os 6 itens de forma elegante.
-
-Para aplicar as melhorias, basta substituir todo o conteúdo do seu arquivo `templates/core/home.html` pelo código acima.

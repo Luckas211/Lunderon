@@ -1,11 +1,19 @@
-{% extends "core/base.html" %}
+{% extends 'core/base.html' %}
+{% load static %}
 
 {% block title %}Termos de Serviço - LUNDERON{% endblock %}
 
 {% block content %}
+
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-title">Termos de Serviço</h1>
+        <p class="page-subtitle">Leia os termos que regem o uso da nossa plataforma.</p>
+    </div>
+</section>
+
 <section class="legal-content">
-    <div class="container" style="max-width: 850px;">
-        
+    <div class="container">
         <div class="legal-card">
             <h1>Termos de Serviço da LUNDERON</h1>
             <p class="last-updated">Última atualização: {% now "d/m/Y" %}</p>
@@ -70,19 +78,6 @@
             <h2>11. Contato</h2>
             <p>Para dúvidas sobre estes Termos de Serviço, entre em contato através do nosso e-mail de suporte: <strong>lunderon.sac@gmail.com</strong>.</p>
         </div>
-
     </div>
 </section>
 {% endblock %}
-```eof
-
-### O que foi Melhorado?
-
-1.  **Design Consistente:** O HTML foi reestruturado para usar as classes `legal-content`, `legal-card` e `section-divider`. Isso aplicará instantaneamente o mesmo design profissional da página de Política de Privacidade, com o conteúdo dentro de um card elegante e seções separadas por divisores.
-2.  **Texto Mais Preciso e Profissional:** O conteúdo foi revisado para ser mais específico e alinhado com o funcionamento atual do sistema:
-    * Menciona o limite de **100 vídeos por mês**.
-    * Esclarece a política de **exclusão de vídeos após 1 hora**.
-    * Usa termos como "software como serviço (SaaS)" e "biblioteca de mídia licenciada", que transmitem mais profissionalismo.
-3.  **Clareza para o Usuário:** As seções foram reescritas para serem mais diretas e fáceis de entender, cobrindo os pontos mais importantes para o usuário, como pagamentos, cancelamento e propriedade do conteúdo.
-
-Ao salvar este arquivo, sua página de Termos de Serviço ficará com um visual idêntico ao da Política de Privacidade, criando uma experiência coesa e profissional para o usuário em todas as páginas do seu site.

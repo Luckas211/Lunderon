@@ -4,7 +4,7 @@
 {% block title %}Admin | Gerenciar Assinaturas{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="dashboard-layout admin-panel">
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2 class="sidebar-user">Painel Admin</h2>
@@ -22,17 +22,18 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <div class="dashboard-header-content">
+            <div class="header-main-content">
                 <h1>Gerenciamento de Assinaturas</h1>
+                <p>Visualize e administre todas as assinaturas ativas e passadas.</p>
             </div>
         </header>
 
         {% if messages %}
-            <div class="messages-container" style="margin-bottom: 30px;">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-            </div>
+        <div class="messages-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        </div>
         {% endif %}
 
         <div class="dashboard-card">
@@ -53,7 +54,7 @@
                             {% for ass in assinaturas %}
                             <tr>
                                 <td data-label="Usuário">
-                                    <a href="{% url 'editar_usuario' ass.usuario.id %}" title="Editar este usuário">{{ ass.usuario.username }}</a>
+                                    <a href="{% url 'editar_usuario' ass.usuario.id %}" class="table-link" title="Editar este usuário">{{ ass.usuario.username }}</a>
                                 </td>
                                 <td data-label="Plano">{{ ass.plano.nome }}</td>
                                 <td data-label="Status">
@@ -61,7 +62,7 @@
                                 </td>
                                 <td data-label="Início">{{ ass.data_inicio|date:"d/m/Y" }}</td>
                                 <td data-label="Expira em">{% if ass.data_expiracao %}{{ ass.data_expiracao|date:"d/m/Y" }}{% else %}-{% endif %}</td>
-                                <td data-label="Ações">
+                                <td data-label="Ações" class="text-right">
                                     <div class="action-buttons">
                                         {% if ass.status != 'ativo' %}
                                             <a href="{% url 'ativar_assinatura' ass.id %}" class="btn btn-success btn-sm">Ativar</a>

@@ -13,20 +13,21 @@
             <ul>
                 <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
                 <li class="active"><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
-                <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
+                <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
             </ul>
         </nav>
     </aside>
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <div class="dashboard-header-content">
+            <div class="header-main-content">
                 <h1>Meus Vídeos</h1>
-                <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">+ Gerar Novo Vídeo</a>
+                <p>Aqui estão todos os vídeos que você gerou. Lembre-se que eles expiram em 1 hora.</p>
             </div>
+            <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">+ Gerar Novo Vídeo</a>
         </header>
 
-        <div class="status-card">
+        <div class="dashboard-card status-card">
             <div class="card-body">
                 <div class="usage-meter">
                     <div class="info-item">
@@ -34,51 +35,52 @@
                         <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"> </div>
+                        <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"></div>
                     </div>
                 </div>
                 <hr class="card-divider">
                 <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
                     <strong>Atenção:</strong> Os vídeos gerados ficam disponíveis para download por <strong>1 hora</strong>. Após esse prazo, o link expira e o arquivo é removido.
                 </div>
             </div>
         </div>
 
         {% if messages %}
-            <div class="messages-container" style="margin-bottom: 30px;">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-            </div>
+        <div class="messages-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        </div>
         {% endif %}
 
         {% if videos %}
             <div class="video-grid">
                 {% for video in videos %}
-                    <div class="video-card">
+                    <div class="dashboard-card video-card">
                         <div class="video-preview">
                             <div class="video-placeholder">
                                 {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
-                                    <i class="fas fa-check-circle" style="color: #28a745;"></i>
+                                    <div class="status-icon success"><i class="fas fa-check-circle"></i></div>
                                     <span>Pronto para Download</span>
                                     <small>Expira em 1 hora após a criação.</small>
                                 {% elif video.status == 'CONCLUIDO' and not video.arquivo_final %}
-                                    <i class="fas fa-history"></i>
-                                    <span>Expirado ou Baixado</span>
+                                    <div class="status-icon muted"><i class="fas fa-history"></i></div>
+                                    <span>Expirado</span>
                                     <small>O arquivo não está mais disponível.</small>
                                 {% elif video.status == 'ERRO' %}
-                                    <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
+                                    <div class="status-icon error"><i class="fas fa-exclamation-triangle"></i></div>
                                     <span>Erro na Geração</span>
                                     <small>Por favor, tente gerar novamente.</small>
                                 {% else %}
-                                    <i class="fas fa-hourglass-half"></i>
+                                    <div class="status-icon pending"><i class="fas fa-hourglass-half"></i></div>
                                     <span>Status: {{ video.get_status_display }}</span>
                                     <small>Aguardando processamento...</small>
                                 {% endif %}
                             </div>
                         </div>
                         <div class="card-body">
-                            <div class="card-header">
+                            <div class="video-card-header">
                                 <h3 class="video-card-title">{{ video.criado_em|date:"d/m/Y H:i" }}</h3>
                                 <span class="status-badge status-{{ video.status|lower }}">{{ video.get_status_display }}</span>
                             </div>
@@ -91,7 +93,7 @@
                         </div>
                         {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
                         <div class="card-footer">
-                            <a href="{% url 'download_video_direto' video.id %}" class="btn btn-secondary btn-full">
+                            <a href="{% url 'download_video_direto' video.id %}" class="btn btn-secondary btn-full btn-lg">
                                 <i class="fas fa-download"></i> Baixar Vídeo (MP4)
                             </a>
                         </div>
@@ -100,16 +102,16 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="empty-state-card">
-                <div class="status-icon info">
-                    <i class="fas fa-video-slash"></i>
-                </div>
-                <h2 class="status-title">Nenhum vídeo foi gerado ainda</h2>
-                <p class="status-message">
-                    Clique no botão abaixo para começar a usar o gerador.
-                </p>
-                <div class="status-actions">
-                    <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">Começar a Criar Agora</a>
+            <div class="dashboard-card empty-state-card">
+                <div class="card-body">
+                    <div class="status-icon info"><i class="fas fa-video-slash"></i></div>
+                    <h2 class="status-title">Nenhum vídeo foi gerado ainda</h2>
+                    <p class="status-message">
+                        Clique no botão abaixo para começar a usar o gerador.
+                    </p>
+                    <div class="status-actions">
+                        <a href="{% url 'pagina_gerador' %}" class="btn btn-primary btn-lg">Começar a Criar Agora</a>
+                    </div>
                 </div>
             </div>
         {% endif %}

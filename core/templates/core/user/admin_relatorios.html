@@ -4,7 +4,7 @@
 {% block title %}Admin | Relatórios{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="dashboard-layout admin-panel">
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2 class="sidebar-user">Painel Admin</h2>
@@ -22,90 +22,99 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <h1>Relatórios do Sistema</h1>
+            <div class="header-main-content">
+                <h1>Relatórios do Sistema</h1>
+                <p>Uma visão geral dos principais indicadores da plataforma.</p>
+            </div>
         </header>
 
         <div class="kpi-grid">
             <div class="kpi-card">
-                <span class="kpi-value"><i class="fas fa-users" style="font-size: 1.8rem; color: var(--color-primary); margin-right: 10px;"></i> {{ total_assinantes_ativos }}</span>
-                <span class="kpi-title">Assinantes Ativos</span>
+                <div class="kpi-icon"><i class="fas fa-users"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-value">{{ total_assinantes_ativos }}</span>
+                    <span class="kpi-title">Assinantes Ativos</span>
+                </div>
             </div>
             <div class="kpi-card">
-                <span class="kpi-value"><i class="fas fa-dollar-sign" style="font-size: 1.8rem; color: var(--color-primary); margin-right: 10px;"></i> R$ {{ receita_total|floatformat:2 }}</span>
-                <span class="kpi-title">Receita Total (Aprovada)</span>
+                <div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-value">R$ {{ receita_total|floatformat:2 }}</span>
+                    <span class="kpi-title">Receita Total (Aprovada)</span>
+                </div>
             </div>
             <div class="kpi-card">
-                <span class="kpi-value"><i class="fas fa-user-plus" style="font-size: 1.8rem; color: var(--color-primary); margin-right: 10px;"></i> {{ novos_assinantes }}</span>
-                <span class="kpi-title">Novos Assinantes (30d)</span>
+                <div class="kpi-icon"><i class="fas fa-user-plus"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-value">{{ novos_assinantes }}</span>
+                    <span class="kpi-title">Novos Assinantes (30d)</span>
+                </div>
             </div>
             <div class="kpi-card">
-                <span class="kpi-value"><i class="fas fa-video" style="font-size: 1.8rem; color: var(--color-primary); margin-right: 10px;"></i> {{ total_videos_gerados }}</span>
-                <span class="kpi-title">Vídeos Gerados na Plataforma</span>
+                <div class="kpi-icon"><i class="fas fa-video"></i></div>
+                <div class="kpi-content">
+                    <span class="kpi-value">{{ total_videos_gerados }}</span>
+                    <span class="kpi-title">Vídeos Gerados</span>
+                </div>
             </div>
         </div>
 
-        <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; align-items: flex-start; gap: 30px;">
+        <div class="dashboard-grid dashboard-grid-reports">
             <div class="dashboard-card">
                 <div class="card-header">
-                    <h2 class="card-title">Últimas 5 Assinaturas</h2>
+                    <h2 class="card-title"><i class="fas fa-clipboard-list"></i> Últimas 5 Assinaturas</h2>
                 </div>
                 <div class="card-body full-bleed">
-                    <table class="dashboard-table">
-                        <thead>
-                            <tr>
-                                <th>Usuário</th>
-                                <th>Plano</th>
-                                <th>Status</th>
-                                <th>Início</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for ass in assinaturas|slice:":5" %}
-                            <tr>
-                                <td data-label="Usuário">{{ ass.usuario.username }}</td>
-                                <td data-label="Plano">{{ ass.plano.nome }}</td>
-                                <td data-label="Status">
-                                    <span class="status-badge status-{{ ass.status|lower }}">{{ ass.get_status_display }}</span>
-                                </td>
-                                <td data-label="Início">{{ ass.data_inicio|date:"d/m/Y" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="4" class="text-center">Nenhuma assinatura encontrada.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive-wrapper">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th><th>Plano</th><th>Status</th><th>Início</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for ass in assinaturas|slice:":5" %}
+                                <tr>
+                                    <td data-label="Usuário">{{ ass.usuario.username }}</td>
+                                    <td data-label="Plano">{{ ass.plano.nome }}</td>
+                                    <td data-label="Status"><span class="status-badge status-{{ ass.status|lower }}">{{ ass.get_status_display }}</span></td>
+                                    <td data-label="Início">{{ ass.data_inicio|date:"d/m/Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center">Nenhuma assinatura encontrada.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
             <div class="dashboard-card">
                 <div class="card-header">
-                    <h2 class="card-title">Últimos 5 Pagamentos</h2>
+                    <h2 class="card-title"><i class="fas fa-credit-card"></i> Últimos 5 Pagamentos</h2>
                 </div>
                  <div class="card-body full-bleed">
-                    <table class="dashboard-table">
-                        <thead>
-                            <tr>
-                                <th>Usuário</th>
-                                <th>Valor</th>
-                                <th>Status</th>
-                                <th>Data</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for pagamento in pagamentos|slice:":5" %}
-                            <tr>
-                                <td data-label="Usuário">{{ pagamento.usuario.username }}</td>
-                                <td data-label="Valor">R$ {{ pagamento.valor|floatformat:2 }}</td>
-                                <td data-label="Status">
-                                    <span class="status-badge status-{{ pagamento.status|lower }}">{{ pagamento.get_status_display }}</span>
-                                </td>
-                                <td data-label="Data">{{ pagamento.data_pagamento|date:"d/m/Y" }}</td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="4" class="text-center">Nenhum pagamento encontrado.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                    <div class="table-responsive-wrapper">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th><th>Valor</th><th>Status</th><th>Data</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for pagamento in pagamentos|slice:":5" %}
+                                <tr>
+                                    <td data-label="Usuário">{{ pagamento.usuario.username }}</td>
+                                    <td data-label="Valor">R$ {{ pagamento.valor|floatformat:2 }}</td>
+                                    <td data-label="Status"><span class="status-badge status-{{ pagamento.status|lower }}">{{ pagamento.get_status_display }}</span></td>
+                                    <td data-label="Data">{{ pagamento.data_pagamento|date:"d/m/Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center">Nenhum pagamento encontrado.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>

@@ -4,7 +4,7 @@
 {% block title %}Admin | Configurações{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="dashboard-layout admin-panel">
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2 class="sidebar-user">Painel Admin</h2>
@@ -22,16 +22,19 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <div class="dashboard-header-content">
+            <div class="header-main-content">
                 <h1>Gerenciamento de Configurações</h1>
+                <p>Controle as variáveis e regras de negócio do sistema.</p>
+            </div>
+            <div class="header-actions">
                 <a href="{% url 'adicionar_configuracao' %}" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Nova Configuração
                 </a>
             </div>
         </header>
 
-        <div class="alert alert-info" style="margin-bottom: 30px; text-align: left;">
-            <strong>Importante:</strong> Esta seção controla variáveis críticas do sistema. A "Nome da Chave" deve ser exata (em maiúsculas) para que o sistema a reconheça. Alterações aqui podem impactar diretamente as regras de negócio do site.
+        <div class="alert alert-info">
+            <strong>Importante:</strong> Esta seção controla variáveis críticas do sistema. A "Nome da Chave" deve ser exata (em maiúsculas) para que o sistema a reconheça. Alterações aqui podem impactar diretamente o funcionamento do site.
         </div>
 
         <div class="dashboard-card">
@@ -62,7 +65,7 @@
                                         Configuração personalizada do sistema.
                                     {% endif %}
                                 </td>
-                                <td data-label="Ações">
+                                <td data-label="Ações" class="text-right">
                                     <div class="action-buttons">
                                         <a href="{% url 'editar_configuracao' config.id %}" class="btn btn-secondary btn-sm">Editar</a>
                                         <a href="{% url 'deletar_configuracao' config.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Atenção! Excluir uma configuração pode causar erros no site. Tem certeza?');">Deletar</a>

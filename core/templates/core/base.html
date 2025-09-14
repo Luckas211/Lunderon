@@ -25,7 +25,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
         integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ=="
@@ -35,42 +35,44 @@
 </head>
 
 <body>
+    <ul class="background-bubbles">
+        <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+    </ul>
+    
     {% block header %}
     <header class="header">
         <div class="container header-container">
             <a href="{% url 'index' %}" class="logo">LUNDERON</a>
+            
+            <div class="nav-wrapper" id="nav-wrapper">
+                <nav class="main-nav" aria-label="Navegação principal">
+                    <ul>
+                        <li><a href="{% url 'como_funciona' %}">Como Funciona</a></li>
+                        <li><a href="{% url 'planos' %}">Planos</a></li>
+                        <li><a href="{% url 'suporte' %}">Suporte</a></li>
+                    </ul>
+                </nav>
 
-            <nav class="main-nav" aria-label="Navegação principal">
-                <ul>
-                    <li><a href="{% url 'como_funciona' %}">Como Funciona</a></li>
-                    <li><a href="{% url 'planos' %}">Plano</a></li>
-                    <li><a href="{% url 'suporte' %}">Suporte</a></li>
-                </ul>
-            </nav>
-
-            <div class="nav-actions">
-                {% if user.is_authenticated %}
-                <a href="{% url 'meu_perfil' %}" class="btn btn-secondary">Meu Painel</a>
-                <a href="{% url 'logout' %}" class="btn btn-primary">Sair</a>
-                {% else %}
-                <a href="{% url 'login' %}" class="btn btn-secondary">Login</a>
-                <a href="{% url 'cadastre_se' %}" class="btn btn-primary">Cadastre-se</a>
-                {% endif %}
+                <div class="nav-actions">
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'meu_perfil' %}" class="btn btn-secondary">Meu Painel</a>
+                    <a href="{% url 'logout' %}" class="btn btn-primary">Sair</a>
+                    {% else %}
+                    <a href="{% url 'login' %}" class="btn btn-secondary">Login</a>
+                    <a href="{% url 'cadastre_se' %}" class="btn btn-primary">Começar Grátis</a>
+                    {% endif %}
+                </div>
             </div>
-
-            <button class="mobile-nav-toggle" aria-label="Abrir menu de navegação" aria-expanded="false">
+            
+            <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Abrir menu de navegação" aria-expanded="false">
                 <i class="fas fa-bars"></i>
+                <i class="fas fa-times"></i>
             </button>
         </div>
     </header>
     {% endblock header %}
 
     <main id="main-content">
-        <!-- Elementos flutuantes decorativos -->
-        <div class="floating-element" style="font-size: 2rem; color: var(--color-primary);">✨</div>
-        <div class="floating-element" style="font-size: 1.5rem; color: var(--color-primary);">🎨</div>
-        <div class="floating-element" style="font-size: 1.8rem; color: var(--color-primary);">⚡</div>
-
         {% block content %}
         {% endblock %}
     </main>
@@ -119,7 +121,23 @@
     </footer>
 
     {% block scripts %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Script para o menu mobile
+        const toggleBtn = document.getElementById('mobile-nav-toggle');
+        const body = document.querySelector('body');
+        
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                body.classList.toggle('nav-open');
+                const isExpanded = body.classList.contains('nav-open');
+                this.setAttribute('aria-expanded', isExpanded);
+            });
+        }
+    });
+    </script>
     {% endblock scripts %}
+
 </body>
 
 </html>

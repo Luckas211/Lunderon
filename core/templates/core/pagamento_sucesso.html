@@ -4,25 +4,32 @@
 {% block title %}Pagamento Aprovado - LUNDERON{% endblock %}
 
 {% block content %}
-<section class="status-section">
-    <div class="status-box">
-        <div class="status-icon success">
-            <i class="fas fa-check-circle"></i>
+<section class="status-page-section">
+    <div class="container">
+        <div class="status-card">
+            <div class="status-icon success">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h1 class="status-title">Pagamento Aprovado!</h1>
+            <p class="status-message">
+                Sua assinatura foi ativada com sucesso! Você já pode começar a criar. Obrigado por se juntar a nós!
+            </p>
+            <div class="status-actions">
+                <a href="{% url 'pagina_gerador' %}" class="btn btn-primary btn-lg">Começar a Criar Vídeos</a>
+                <p class="status-redirect">
+                    Você será redirecionado em 5 segundos...
+                </p>
+            </div>
         </div>
-        <h1 class="status-title">Pagamento Aprovado!</h1>
-        <p class="status-message">
-            Sua assinatura foi ativada com sucesso! Você já pode começar a criar. Obrigado por se juntar a nós!
-        </p>
-        <a href="{% url 'pagina_gerador' %}" class="btn btn-primary">Começar a Criar Vídeos</a>
-        <p class="status-redirect">
-            Você será redirecionado em 5 segundos...
-        </p>
     </div>
 </section>
+{% endblock %}
 
+{% block scripts %}
+{{ block.super }} {# Mantém scripts do base.html, se houver #}
 <script>
     setTimeout(function() {
         window.location.href = "{% url 'pagina_gerador' %}";
     }, 5000); // 5000 milissegundos = 5 segundos
 </script>
-{% endblock %}
+{% endblock scripts %}

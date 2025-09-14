@@ -4,58 +4,73 @@
 {% block title %}Seu Plano Ativo - LUNDERON{% endblock %}
 
 {% block content %}
-<main class="dashboard-content" style="padding: 40px 20px;">
-    <div class="container" style="max-width: 800px;">
-        <header class="dashboard-header" style="text-align: center;">
-            <div class="status-icon success" style="font-size: 3rem; margin-bottom: 15px;">
-                <i class="fas fa-check-circle"></i>
-            </div>
-            <h1>Você já tem uma assinatura!</h1>
-            <p style="color: var(--color-text-secondary); font-size: 1.1rem; max-width: 500px; margin: 10px auto 0;">
-                Abaixo estão os detalhes do seu plano. Para criar vídeos, utilize o menu de navegação.
-            </p>
-        </header>
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
+                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
+            </ul>
+        </nav>
+    </aside>
 
-        <div class="dashboard-card" style="margin-top: 30px;">
-            <div class="card-header">
-                <h2 class="card-title"><i class="fas fa-star"></i> Detalhes da sua Assinatura</h2>
-            </div>
-            <div class="card-body">
-                {% if assinatura %}
-                    <ul class="info-list">
-                        <li class="info-item">
-                            <span class="info-label">Plano Contratado</span>
-                            <span class="info-value">{{ assinatura.plano.nome }}</span>
-                        </li>
-                        <li class="info-item">
-                            <span class="info-label">Status</span>
-                            <span class="status-badge status-{{ assinatura.status|lower }}">{{ assinatura.get_status_display }}</span>
-                        </li>
-                        {% if assinatura.data_expiracao %}
-                        <li class="info-item">
-                            <span class="info-label">Próxima Cobrança</span>
-                            <span class="info-value">{{ assinatura.data_expiracao|date:"d/m/Y" }}</span>
-                        </li>
-                        {% endif %}
-                    </ul>
-                    <div class="usage-meter">
-                        <div class="info-item">
-                            <span class="info-label">Uso no ciclo atual</span>
-                            <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
+    <main class="dashboard-content">
+        <div class="container-slim">
+            <header class="dashboard-header text-center">
+                <div class="status-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h1>Você já tem uma assinatura!</h1>
+                <p>Abaixo estão os detalhes do seu plano. Para criar vídeos, utilize o menu de navegação.</p>
+            </header>
+
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-star"></i> Detalhes da sua Assinatura</h2>
+                </div>
+                <div class="card-body">
+                    {% if assinatura %}
+                        <ul class="info-list">
+                            <li class="info-item">
+                                <span class="info-label">Plano Contratado</span>
+                                <span class="info-value">{{ assinatura.plano.nome }}</span>
+                            </li>
+                            <li class="info-item">
+                                <span class="info-label">Status</span>
+                                <span class="info-value">
+                                    <span class="status-badge status-{{ assinatura.status|lower }}">{{ assinatura.get_status_display }}</span>
+                                </span>
+                            </li>
+                            {% if assinatura.data_expiracao %}
+                            <li class="info-item">
+                                <span class="info-label">Próxima Cobrança</span>
+                                <span class="info-value">{{ assinatura.data_expiracao|date:"d/m/Y" }}</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                        <div class="usage-meter">
+                            <div class="info-item">
+                                <span class="info-label">Uso no ciclo atual</span>
+                                <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"></div>
+                            </div>
                         </div>
-                        <div class="progress-bar">
-                            <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"> </div>
-                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="form-actions space-between">
+                        <a href="{% url 'meu_perfil' %}" class="btn btn-secondary">Voltar ao Painel</a>
+                        <a href="{% url 'gerenciar_assinatura' %}" class="btn btn-primary">Gerenciar Assinatura</a>
                     </div>
-                {% endif %}
-            </div>
-            <div class="card-footer">
-                <div class="form-actions" style="justify-content: space-between;">
-                    <a href="{% url 'meu_perfil' %}" class="btn btn-secondary">Voltar ao Painel</a>
-                    <a href="{% url 'gerenciar_assinatura' %}" class="btn btn-primary">Gerenciar Assinatura e Pagamentos</a>
                 </div>
             </div>
         </div>
-    </div>
-</main>
+    </main>
+</div>
 {% endblock %}

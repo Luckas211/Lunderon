@@ -7,76 +7,77 @@
 
 <section class="page-header">
     <div class="container">
-        <h1 class="page-header-title">Acesso Total. Sem Limites Criativos.</h1>
-        <p class="page-header-subtitle">Um único plano com todas as ferramentas que você precisa para produzir conteúdo em escala, sem complicações ou taxas escondidas.</p>
+        <h1 class="page-title">Acesso Total. Sem Limites Criativos.</h1>
+        <p class="page-subtitle">Um único plano com todas as ferramentas que você precisa para produzir conteúdo em escala, sem complicações.</p>
     </div>
 </section>
 
 <section class="pricing-section">
-    <div class="pricing-card-wrapper">
+    <div class="container">
+        <div class="pricing-card-wrapper">
+            <div class="pricing-card">
+                <div class="plan-badge">Mais Popular</div>
+                <div class="pricing-card-header">
+                    <h2 class="plan-name">Plano Criador Pro</h2>
+                    <p class="plan-description">Acesso ilimitado a todas as funcionalidades da plataforma.</p>
+                </div>
 
-        <div class="pricing-card">
-            <div class="pricing-card-header">
-                <h2 class="plan-name">Plano Criador Pro</h2>
-                <p class="plan-description">Acesso ilimitado a todas as funcionalidades da plataforma.</p>
+                <div class="plan-price">
+                    R$ 49,90<span class="plan-period">/mês</span>
+                </div>
+
+                <ul class="plan-features">
+                    <li><i class="fas fa-check-circle"></i> <strong>100 Vídeos por Mês:</strong> Produza conteúdo diariamente.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Narração com IA:</strong> Vozes realistas para seus roteiros.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Legendas Dinâmicas:</strong> Aumente a retenção com legendas customizadas.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>3 Modos de Criação:</strong> Narrador, Texto Estático e Vendedor.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Biblioteca Royalty-Free:</strong> Milhares de vídeos e músicas.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Privacidade Total:</strong> Vídeos excluídos após 1 hora.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Suporte Prioritário</strong> via e-mail.</li>
+                </ul>
+
+                <a href="{% url 'criar_checkout' %}" class="btn btn-primary btn-full btn-lg">Quero Assinar Agora</a>
             </div>
-
-            <div class="plan-price">
-                R$ 49,90<span class="plan-period">/mês</span>
-            </div>
-
-            <ul class="plan-features">
-                <li><i class="fas fa-check-circle"></i> <strong>100 Vídeos por Mês:</strong> Produza conteúdo diariamente sem se preocupar.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Narração com IA:</strong> Vozes realistas (masculinas e femininas) para seus roteiros.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Legendas Dinâmicas:</strong> Aumente a retenção com legendas coloridas e customizadas.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>3 Modos de Criação:</strong> Narrador, Texto Estático e Vendedor.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Biblioteca Royalty-Free:</strong> Milhares de vídeos e músicas para uso comercial.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Privacidade Total:</strong> Seus vídeos são excluídos após 1 hora do download.</li>
-                <li><i class="fas fa-check-circle"></i> <strong>Suporte Prioritário</strong> via e-mail.</li>
-            </ul>
-
-            <a href="{% url 'criar_checkout' %}" class="btn btn-primary btn-full">Quero Assinar Agora</a>
         </div>
-
     </div>
 </section>
 
 <section class="faq-section">
     <div class="container">
         <div class="section-header">
-            <h2>Dúvidas Comuns</h2>
-            <p>Respostas rápidas para as perguntas mais importantes.</p>
+            <h2 class="section-title">Dúvidas Comuns</h2>
+            <p class="section-subtitle">Respostas rápidas para as perguntas mais importantes.</p>
         </div>
-        <div class="faq-grid">
-            <div class="faq-item">
-                <h4>Posso cancelar a qualquer momento?</h4>
-                <p>Sim! Você pode gerenciar e cancelar sua assinatura quando quiser, sem burocracia. Seu acesso continuará ativo até o final do período já pago.</p>
-            </div>
-            <div class="faq-item">
-                <h4>Quais métodos de pagamento são aceitos?</h4>
-                <p>Aceitamos os principais cartões de crédito (Visa, MasterCard, Amex) através da nossa parceria com a Stripe, uma das plataformas de pagamento mais seguras do mundo.</p>
-            </div>
-            <div class="faq-item">
-                <h4>O que exatamente eu recebo ao assinar?</h4>
-                <p>Você ganha acesso total à plataforma para gerar até 100 vídeos por mês, utilizando todos os recursos: narração com IA, todos os modos de criação, biblioteca de mídia completa e suporte.</p>
-            </div>
+        <div class="faq-accordion">
+            <details class="faq-item">
+                <summary class="faq-question">
+                    <span>Posso cancelar a qualquer momento?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </summary>
+                <div class="faq-answer">
+                    <p>Sim! Você pode gerenciar e cancelar sua assinatura quando quiser, sem burocracia. Seu acesso continuará ativo até o final do período já pago.</p>
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary class="faq-question">
+                    <span>Quais métodos de pagamento são aceitos?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </summary>
+                <div class="faq-answer">
+                    <p>Aceitamos os principais cartões de crédito (Visa, MasterCard, Amex) através da nossa parceria com a Stripe, uma das plataformas de pagamento mais seguras do mundo.</p>
+                </div>
+            </details>
+            <details class="faq-item">
+                <summary class="faq-question">
+                    <span>O que exatamente eu recebo ao assinar?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </summary>
+                <div class="faq-answer">
+                    <p>Você ganha acesso total à plataforma para gerar até 100 vídeos por mês, utilizando todos os recursos: narração com IA, todos os modos de criação, biblioteca de mídia completa e suporte.</p>
+                </div>
+            </details>
         </div>
     </div>
 </section>
 
 {% endblock %}
-```eof
-
-### O que foi Melhorado?
-
-1.  **Remoção da "Geração em Lote"**: O item `Geração em Lote: Crie até 3 vídeos de uma só vez.` foi **removido e substituído** pelo benefício real e atualizado: `100 Vídeos por Mês`. Isso alinha a página com o funcionamento atual do código.
-2.  **Título e Chamada (Headline):** O título foi alterado para "Acesso Total. Sem Limites Criativos.", que é mais impactante e focado no valor entregue.
-3.  **Nome do Plano:** O nome "Plano Completo" foi alterado para **"Plano Criador Pro"**, um nome mais profissional e atraente para o público-alvo (criadores de conteúdo).
-4.  **Lista de Benefícios (Features):**
-    * A lista foi reescrita para ser mais detalhada e vender melhor cada funcionalidade. Por exemplo, em vez de apenas "Narração com IA", agora temos "Narração com IA: Vozes realistas (masculinas e femininas) para seus roteiros."
-    * Adicionamos o benefício da **Privacidade Total**, explicando a exclusão dos vídeos, o que agrega valor e confiança.
-    * Incluímos os **3 Modos de Criação** como um benefício explícito no plano.
-5.  **Botão de Ação (CTA):** O texto do botão foi alterado para "Quero Assinar Agora", que é uma chamada para ação mais direta e pessoal.
-6.  **FAQ Atualizado:** Uma das perguntas do FAQ foi reescrita para ser mais clara sobre o que o usuário recebe na assinatura, reforçando o limite de 100 vídeos.
-
-Com essas alterações, sua página de planos agora está 100% correta, mais profissional e muito mais persuasiva.

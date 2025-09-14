@@ -4,22 +4,42 @@
 {% block title %}Admin | Editar Usuário{% endblock %}
 
 {% block content %}
-<main class="dashboard-content" style="padding: 40px 20px;">
-    <div class="container" style="max-width: 800px;">
+<div class="dashboard-layout admin-panel">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">Painel Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
+                <li class="active"><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
         <header class="dashboard-header">
-            <h1>Editar Usuário: {{ usuario_editando.username }}</h1>
+            <div class="header-main-content">
+                <h1>Editar Usuário</h1>
+                <p>Modifique os dados e a assinatura de: {{ usuario_editando.username }}</p>
+            </div>
         </header>
 
-        <div class="dashboard-card">
+        <div class="dashboard-card form-card-container">
             <form method="POST">
                 {% csrf_token %}
                 <div class="card-body">
                     {% if form.non_field_errors %}
-                        <div class="form-errors" style="margin-bottom: 20px;">
-                            {% for error in form.non_field_errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
+                    <div class="form-messages">
+                        <div class="alert alert-error">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
                         </div>
+                    </div>
                     {% endif %}
 
                     <fieldset class="form-fieldset">
@@ -60,9 +80,13 @@
                 </div>
             </form>
         </div>
-    </div>
-</main>
+    </main>
+</div>
+{% endblock %}
 
+
+{% block scripts %}
+{{ block.super }}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         // Adiciona classes aos inputs de texto
@@ -82,4 +106,4 @@
         if (checkbox) checkbox.classList.add('form-check-input');
     });
 </script>
-{% endblock %}
+{% endblock scripts %}

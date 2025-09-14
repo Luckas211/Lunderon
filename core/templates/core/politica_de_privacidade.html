@@ -1,11 +1,19 @@
 {% extends "core/base.html" %}
+{% load static %}
 
 {% block title %}Política de Privacidade - LUNDERON{% endblock %}
 
 {% block content %}
+
+<section class="page-header">
+    <div class="container">
+        <h1 class="page-title">Política de Privacidade</h1>
+        <p class="page-subtitle">Entenda como coletamos, usamos e protegemos seus dados.</p>
+    </div>
+</section>
+
 <section class="legal-content">
-    <div class="container" style="max-width: 850px;">
-        
+    <div class="container">
         <div class="legal-card">
             <h1>Política de Privacidade da LUNDERON</h1>
             <p class="last-updated">Última atualização: {% now "d/m/Y" %}</p>
@@ -81,7 +89,6 @@
             <p>Para dúvidas sobre esta política ou para exercer seus direitos, entre em contato:</p>
             <p><strong>Email:</strong> lunderon.sac@gmail.com</p>
         </div>
-
     </div>
 </section>
 {% endblock %}

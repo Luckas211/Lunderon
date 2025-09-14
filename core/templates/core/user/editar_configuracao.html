@@ -4,7 +4,7 @@
 {% block title %}Admin | Editar Configuração{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="dashboard-layout admin-panel">
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2 class="sidebar-user">Painel Admin</h2>
@@ -22,10 +22,13 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <h1>Editar Configuração</h1>
+            <div class="header-main-content">
+                <h1>Editar Configuração</h1>
+                <p>Chave: <code class="code-badge">{{ form.instance.nome }}</code></p>
+            </div>
         </header>
 
-        <div class="dashboard-card" style="max-width: 700px;">
+        <div class="dashboard-card form-card-container">
             <form method="POST">
                 {% csrf_token %}
                 <div class="card-body">
@@ -60,7 +63,10 @@
         </div>
     </main>
 </div>
+{% endblock %}
 
+{% block scripts %}
+{{ block.super }}
 <script>
     // Adiciona a classe 'form-input' apenas ao campo de valor,
     // pois o campo 'nome' agora é renderizado manualmente.
@@ -71,4 +77,4 @@
         }
     });
 </script>
-{% endblock %}
+{% endblock scripts %}

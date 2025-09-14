@@ -4,21 +4,39 @@
 {% block title %}Editar Perfil - LUNDERON{% endblock %}
 
 {% block content %}
-<main class="dashboard-content" style="padding: 40px 20px;">
-    <div class="container" style="max-width: 800px;">
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
+                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <main class="dashboard-content">
         <header class="dashboard-header">
-            <h1>Editar Meu Perfil</h1>
+            <div class="header-main-content">
+                <h1>Editar Meu Perfil</h1>
+                <p>Mantenha suas informações pessoais atualizadas.</p>
+            </div>
         </header>
 
-        <div class="dashboard-card">
+        <div class="dashboard-card form-card-container">
             <form method="POST">
                 {% csrf_token %}
                 <div class="card-body">
                     {% if form.non_field_errors %}
-                    <div class="form-errors" style="margin-bottom: 20px;">
-                        {% for error in form.non_field_errors %}
-                        <p>{{ error }}</p>
-                        {% endfor %}
+                    <div class="form-messages">
+                        <div class="alert alert-error">
+                            {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
                     </div>
                     {% endif %}
 
@@ -46,10 +64,9 @@
                         <div class="field-error">{{ form.email.errors.as_text }}</div>
                         {% endif %}
                     </div>
-
+                    
                     <div class="form-group">
-                        <label for="{{ form.data_nascimento.id_for_label }}" class="form-label">Data de
-                            Nascimento</label>
+                        <label for="{{ form.data_nascimento.id_for_label }}" class="form-label">Data de Nascimento</label>
                         {{ form.data_nascimento }}
                         {% if form.data_nascimento.errors %}
                         <div class="field-error">{{ form.data_nascimento.errors.as_text }}</div>
@@ -65,14 +82,17 @@
                 </div>
             </form>
         </div>
-    </div>
-</main>
+    </main>
+</div>
+{% endblock %}
 
+
+{% block scripts %}
+{{ block.super }}
 <script>
     // Script para adicionar a classe 'form-input' aos campos do formulário Django
     document.addEventListener("DOMContentLoaded", function () {
         const fieldIds = ['id_first_name', 'id_last_name', 'id_email', 'id_data_nascimento'];
-
         fieldIds.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
@@ -81,4 +101,4 @@
         });
     });
 </script>
-{% endblock %}
+{% endblock scripts %}

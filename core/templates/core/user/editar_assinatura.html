@@ -4,7 +4,7 @@
 {% block title %}Admin | Editar Assinatura{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="dashboard-layout admin-panel">
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2 class="sidebar-user">Painel Admin</h2>
@@ -22,19 +22,24 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <h1>Editar Assinatura de: {{ assinatura.usuario.username }}</h1>
+            <div class="header-main-content">
+                <h1>Editar Assinatura</h1>
+                <p>Usuário: {{ assinatura.usuario.username }}</p>
+            </div>
         </header>
 
-        <div class="dashboard-card" style="max-width: 700px;">
+        <div class="dashboard-card form-card-container">
             <form method="POST">
                 {% csrf_token %}
                 <div class="card-body">
                     {% if form.non_field_errors %}
-                        <div class="form-errors" style="margin-bottom: 20px;">
-                            {% for error in form.non_field_errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
+                    <div class="form-messages">
+                        <div class="alert alert-error">
+                        {% for error in form.non_field_errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
                         </div>
+                    </div>
                     {% endif %}
 
                     <div class="form-group">
@@ -63,7 +68,10 @@
         </div>
     </main>
 </div>
+{% endblock %}
 
+{% block scripts %}
+{{ block.super }}
 <script>
     // Adiciona a classe 'form-select' aos campos de seleção do Django
     document.addEventListener("DOMContentLoaded", function() {
@@ -76,4 +84,4 @@
         });
     });
 </script>
-{% endblock %}
+{% endblock scripts %}

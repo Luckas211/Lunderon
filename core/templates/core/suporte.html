@@ -7,8 +7,8 @@
 
 <section class="page-header">
     <div class="container">
-        <h1 class="page-header-title">Central de Ajuda</h1>
-        <p class="page-header-subtitle">Encontre respostas rápidas para suas dúvidas ou entre em contato com nossa equipe.</p>
+        <h1 class="page-title">Central de Ajuda</h1>
+        <p class="page-subtitle">Encontre respostas rápidas para suas dúvidas ou entre em contato com nossa equipe.</p>
     </div>
 </section>
 
@@ -17,7 +17,7 @@
         <div class="support-grid">
 
             <div class="faq-column">
-                <h2 class="section-title">Perguntas Frequentes</h2>
+                <h2 class="section-title" style="text-align: left; margin-bottom: 40px;">Perguntas Frequentes</h2>
                 <div class="faq-accordion">
                     <details class="faq-item" open>
                         <summary class="faq-question">
@@ -62,8 +62,8 @@
             </div>
 
             <div class="contact-column">
-                <div class="form-wrapper">
-                    <form action="{% url 'suporte' %}" method="POST" class="form-content">
+                <div class="form-wrapper-card">
+                    <form action="{% url 'suporte' %}" method="POST">
                         {% csrf_token %}
                         <div class="form-header">
                             <h2>Ainda precisa de ajuda?</h2>
@@ -94,7 +94,7 @@
                             <label for="message" class="form-label">Mensagem</label>
                             <textarea id="message" name="message" class="form-input" rows="5" placeholder="Descreva seu problema ou dúvida aqui..." required></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-full">Enviar Mensagem</button>
+                        <button type="submit" class="btn btn-primary btn-full btn-lg">Enviar Mensagem</button>
                     </form>
                 </div>
             </div>
@@ -104,13 +104,3 @@
 </section>
 
 {% endblock %}
-```eof
-
-### O que foi Melhorado?
-
-1.  [cite_start]**Informação Precisa no FAQ:** A pergunta "Como funciona o Gerador de Vídeos?" foi atualizada para remover a menção de "gere até 3 vídeos de uma só vez"[cite: 1], alinhando-a com a funcionalidade atual de gerar um vídeo por vez.
-2.  [cite_start]**Nova Pergunta Relevante no FAQ:** Foi adicionada uma nova pergunta crucial: **"Por quanto tempo meus vídeos ficam disponíveis?"**[cite: 1]. A resposta explica claramente a regra de 1 hora para download e a exclusão automática, gerenciando as expectativas do usuário e evitando futuras dúvidas no suporte.
-3.  **Clareza na Assinatura:** A primeira pergunta foi levemente ajustada para mencionar o nome do plano ("Criador Pro"), criando consistência com a página de Planos.
-4.  **Expectativa de Resposta:** No formulário de contato, a frase "responderemos em breve" foi trocada por "nossa equipe responderá em até 24 horas úteis", o que transmite mais profissionalismo e define uma expectativa clara para o usuário.
-
-Com estas alterações, sua página de Suporte se torna uma ferramenta mais eficaz, respondendo proativamente às dúvidas mais prováveis dos usuários com base no funcionamento real do seu sistema.

@@ -4,7 +4,7 @@
 {% block title %}Admin | Gerenciar Pagamentos{% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
+<div class="dashboard-layout admin-panel">
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2 class="sidebar-user">Painel Admin</h2>
@@ -22,17 +22,18 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <div class="dashboard-header-content">
+            <div class="header-main-content">
                 <h1>Gerenciamento de Pagamentos</h1>
-                </div>
+                <p>Acompanhe todas as transações realizadas na plataforma.</p>
+            </div>
         </header>
 
         {% if messages %}
-            <div class="messages-container" style="margin-bottom: 30px;">
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">{{ message }}</div>
-            {% endfor %}
-            </div>
+        <div class="messages-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+        </div>
         {% endif %}
 
         <div class="dashboard-card">
@@ -59,7 +60,7 @@
                                     <span class="status-badge status-{{ pagamento.status|lower }}">{{ pagamento.get_status_display }}</span>
                                 </td>
                                 <td data-label="Data">{{ pagamento.data_pagamento|date:"d/m/Y H:i" }}</td>
-                                <td data-label="Ações">
+                                <td data-label="Ações" class="text-right">
                                     <div class="action-buttons">
                                         {% if pagamento.status == 'pendente' %}
                                         <a href="{% url 'aprovar_pagamento' pagamento.id %}" class="btn btn-success btn-sm">Aprovar</a>
