@@ -130,9 +130,34 @@
     {% block scripts %}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Dark mode functionality
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            const body = document.body;
+
+            if (darkModeToggle) {
+                // Check for saved theme preference or respect OS preference
+                const savedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+                // Set initial theme
+                if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+                    body.setAttribute('data-theme', 'dark');
+                }
+
+                // Toggle theme on button click
+                darkModeToggle.addEventListener('click', function () {
+                    if (body.getAttribute('data-theme') === 'dark') {
+                        body.removeAttribute('data-theme');
+                        localStorage.setItem('theme', 'light');
+                    } else {
+                        body.setAttribute('data-theme', 'dark');
+                        localStorage.setItem('theme', 'dark');
+                    }
+                });
+            }
+
             // Script para o menu mobile
             const toggleBtn = document.getElementById('mobile-nav-toggle');
-            const body = document.querySelector('body');
 
             if (toggleBtn) {
                 toggleBtn.addEventListener('click', function () {
@@ -270,34 +295,6 @@
                     animate();
                 });
             }
-
-            // Dark mode functionality - simplified and independent
-            document.addEventListener('DOMContentLoaded', function () {
-                const darkModeToggle = document.getElementById('dark-mode-toggle');
-                const body = document.body;
-
-                if (darkModeToggle) {
-                    // Check for saved theme preference or respect OS preference
-                    const savedTheme = localStorage.getItem('theme');
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-                    // Set initial theme
-                    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-                        body.setAttribute('data-theme', 'dark');
-                    }
-
-                    // Toggle theme on button click
-                    darkModeToggle.addEventListener('click', function () {
-                        if (body.getAttribute('data-theme') === 'dark') {
-                            body.removeAttribute('data-theme');
-                            localStorage.setItem('theme', 'light');
-                        } else {
-                            body.setAttribute('data-theme', 'dark');
-                            localStorage.setItem('theme', 'dark');
-                        }
-                    });
-                }
-            });
         });
     </script>
     {% endblock scripts %}

@@ -1,29 +1,55 @@
 /* ==========================================================================
-   1. Variáveis e Configurações Globais
+   1. Variáveis e Configurações Globais - Dark Mode Aprimorado
    ========================================================================== */
 
 :root {
     --color-primary: #655BE2;
     --color-primary-dark: #4F46C3;
+    --color-primary-light: #8A84E9;
     --color-secondary: #E9E7FC;
     --color-secondary-dark: #D4D0F8;
     --color-accent-pink: #FF39A7;
     --color-accent-cyan: #39D3FF;
+    --color-accent-green: #39FFA0;
     --color-background: #FFFFFF;
+    --color-background-alt: #F9FAFB;
     --color-background-dark: #0F172A;
+    --color-background-darker: #0A101C;
+    --color-background-alt-dark: #1E293B;
     --color-text-dark: #111827;
     --color-text-light: #4B5563;
     --color-text-light-dark: #E2E8F0;
+    --color-text-lighter-dark: #CBD5E1;
     --color-border: #E5E7EB;
     --color-border-dark: #334155;
+    --color-border-darker: #1E293B;
     --font-family-base: 'Inter', sans-serif;
     --header-height: 80px;
+    
+    /* Novas variáveis para efeitos 3D */
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    --shadow-primary: 0 10px 30px -10px rgba(101, 91, 226, 0.4);
+    --shadow-primary-dark: 0 10px 30px -10px rgba(79, 70, 195, 0.5);
+    --shadow-accent-pink: 0 10px 30px -10px rgba(255, 57, 167, 0.4);
+    --shadow-accent-cyan: 0 10px 30px -10px rgba(57, 211, 255, 0.4);
+    
+    /* Gradientes */
+    --gradient-primary: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    --gradient-accent: linear-gradient(135deg, var(--color-accent-pink) 0%, var(--color-accent-cyan) 100%);
+    --gradient-card: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.95) 100%);
+    --gradient-card-dark: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(30, 41, 59, 0.95) 100%);
 }
 
-/* Dark mode variables */
+/* Dark mode variables - Aprimorado */
 [data-theme="dark"] {
     --color-background: var(--color-background-dark);
+    --color-background-alt: var(--color-background-darker);
     --color-text-dark: var(--color-text-light-dark);
+    --color-text-light: var(--color-text-lighter-dark);
     --color-border: var(--color-border-dark);
 }
 
@@ -47,6 +73,7 @@ body {
     line-height: 1.6;
     overflow-x: hidden;
     position: relative;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -59,7 +86,7 @@ body {
 }
 
 /* ==========================================================================
-   2.5. Fundo 3D de Partículas
+   2.5. Fundo 3D de Partículas - Aprimorado
    ========================================================================== */
 
 .depth-layer {
@@ -73,6 +100,14 @@ body {
         radial-gradient(circle at 20% 30%, rgba(101, 91, 226, 0.1) 0%, transparent 40%),
         radial-gradient(circle at 80% 70%, rgba(255, 57, 167, 0.08) 0%, transparent 40%),
         radial-gradient(circle at 40% 80%, rgba(57, 211, 255, 0.05) 0%, transparent 40%);
+    transition: all 0.5s ease;
+}
+
+[data-theme="dark"] .depth-layer {
+    background:
+        radial-gradient(circle at 20% 30%, rgba(101, 91, 226, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(255, 57, 167, 0.12) 0%, transparent 40%),
+        radial-gradient(circle at 40% 80%, rgba(57, 211, 255, 0.1) 0%, transparent 40%);
 }
 
 .floating-shapes {
@@ -85,25 +120,74 @@ body {
     pointer-events: none;
 }
 
+.floating-shape {
+    position: absolute;
+    background: var(--gradient-primary);
+    color: white;
+    padding: 15px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-primary);
+    animation: float3d 8s ease-in-out infinite;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: 600;
+    transition: all 0.5s ease;
+}
 
+[data-theme="dark"] .floating-shape {
+    background: var(--gradient-accent);
+    box-shadow: var(--shadow-accent-pink);
+}
 
-@keyframes float {
+.floating-shape.shape-1 {
+    font-size: 1.5rem;
+    top: 15%;
+    left: 10%;
+    animation-delay: 0s;
+    width: 70px;
+    height: 70px;
+}
 
-    0%,
-    100% {
-        transform: translate(0, 0) rotate(0deg);
+.floating-shape.shape-2 {
+    font-size: 2rem;
+    top: 60%;
+    right: 10%;
+    animation-delay: 1.5s;
+    width: 80px;
+    height: 80px;
+}
+
+.floating-shape.shape-3 {
+    font-size: 1.2rem;
+    bottom: 20%;
+    left: 20%;
+    animation-delay: 3s;
+    width: 60px;
+    height: 60px;
+}
+
+.floating-shape.shape-4 {
+    font-size: 1.8rem;
+    top: 25%;
+    right: 25%;
+    animation-delay: 4.5s;
+    width: 75px;
+    height: 75px;
+}
+
+@keyframes float3d {
+    0%, 100% {
+        transform: translate3d(0, 0, 0) rotate3d(1, 1, 1, 0deg);
     }
-
     25% {
-        transform: translate(50px, 50px) rotate(5deg);
+        transform: translate3d(20px, 30px, 10px) rotate3d(1, 0, 0, 5deg);
     }
-
     50% {
-        transform: translate(0, 100px) rotate(0deg);
+        transform: translate3d(-15px, 40px, -5px) rotate3d(0, 1, 0, -5deg);
     }
-
     75% {
-        transform: translate(-50px, 50px) rotate(-5deg);
+        transform: translate3d(-25px, 20px, 5px) rotate3d(0, 0, 1, 3deg);
     }
 }
 
@@ -125,7 +209,7 @@ main,
 }
 
 /* ==========================================================================
-   3. Header e Navegação (AJUSTADO)
+   3. Header e Navegação (AJUSTADO) - Dark Mode
    ========================================================================== */
 
 .header {
@@ -141,6 +225,19 @@ main,
     transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
+[data-theme="dark"] .header {
+    background: rgba(15, 23, 42, 0.7);
+    border-bottom-color: var(--color-border-dark);
+}
+
+.header.scrolled {
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme="dark"] .header.scrolled {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
 .header-container {
     display: flex;
     justify-content: space-between;
@@ -154,14 +251,13 @@ main,
     color: var(--color-text-dark);
     text-decoration: none;
     letter-spacing: -1px;
+    transition: color 0.3s ease;
 }
 
 .nav-wrapper {
-    /* Novo wrapper para agrupar navegação e ações no desktop */
     display: flex;
     align-items: center;
     gap: 40px;
-    /* Espaço entre a navegação principal e os botões de ação */
 }
 
 .main-nav ul {
@@ -212,6 +308,7 @@ main,
     font-size: 1.5rem;
     color: var(--color-text-dark);
     z-index: 1001;
+    transition: color 0.3s ease;
 }
 
 .mobile-nav-toggle .fa-times {
@@ -219,7 +316,7 @@ main,
 }
 
 /* ==========================================================================
-   4. Botões (Estilo 3D)
+   4. Botões (Estilo 3D) - Aprimorado com efeito 3D realista
    ========================================================================== */
 
 .btn {
@@ -227,59 +324,132 @@ main,
     font-family: var(--font-family-base);
     font-weight: 600;
     font-size: 1rem;
-    padding: 12px 28px;
-    border-radius: 8px;
+    padding: 14px 32px;
+    border-radius: 12px;
     text-decoration: none;
     cursor: pointer;
     border: none;
     position: relative;
-    top: 0;
-    transition: top 0.1s ease, box-shadow 0.1s ease;
+    transition: all 0.2s ease;
     white-space: nowrap;
+    transform-style: preserve-3d;
+    perspective: 500px;
+    transform: translateZ(0);
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(0, 0, 0, 0.1));
+    border-radius: 12px;
+    z-index: 1;
+    transition: opacity 0.3s ease;
 }
 
 .btn-primary {
-    background-color: var(--color-primary);
+    background: var(--gradient-primary);
     color: white;
-    box-shadow: 0 4px 0 0 var(--color-primary-dark);
+    box-shadow: 0 6px 0 0 var(--color-primary-dark),
+                0 12px 20px rgba(101, 91, 226, 0.3);
+    transform: translateY(0);
 }
 
 .btn-primary:hover {
-    top: 2px;
-    box-shadow: 0 2px 0 0 var(--color-primary-dark);
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 0 var(--color-primary-dark),
+                0 8px 15px rgba(101, 91, 226, 0.4);
 }
 
 .btn-primary:active {
-    top: 4px;
-    box-shadow: 0 0 0 0 var(--color-primary-dark);
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 0 var(--color-primary-dark),
+                0 4px 8px rgba(101, 91, 226, 0.2);
 }
 
 .btn-secondary {
-    background-color: var(--color-secondary);
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
     color: var(--color-primary);
-    box-shadow: 0 4px 0 0 var(--color-secondary-dark);
+    box-shadow: 0 6px 0 0 #C3BEF7,
+                0 12px 20px rgba(233, 231, 252, 0.3);
+    transform: translateY(0);
 }
 
 .btn-secondary:hover {
-    top: 2px;
-    box-shadow: 0 2px 0 0 var(--color-secondary-dark);
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 0 #C3BEF7,
+                0 8px 15px rgba(233, 231, 252, 0.4);
 }
 
 .btn-secondary:active {
-    top: 4px;
-    box-shadow: 0 0 0 0 var(--color-secondary-dark);
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 0 #C3BEF7,
+                0 4px 8px rgba(233, 231, 252, 0.2);
 }
 
+.btn-accent {
+    background: var(--gradient-accent);
+    color: white;
+    box-shadow: 0 6px 0 0 #D10067,
+                0 12px 20px rgba(255, 57, 167, 0.3);
+}
+
+.btn-accent:hover {
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 0 #D10067,
+                0 8px 15px rgba(255, 57, 167, 0.4);
+}
+
+.btn-accent:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 0 #D10067,
+                0 4px 8px rgba(255, 57, 167, 0.2);
+}
+
+.btn-3d {
+    background: linear-gradient(145deg, var(--color-primary-light), var(--color-primary));
+    color: white;
+    border-radius: 12px;
+    box-shadow: 0 8px 0 var(--color-primary-dark),
+                0 15px 25px rgba(101, 91, 226, 0.35),
+                inset 0 -4px 0 rgba(0, 0, 0, 0.15);
+    transform: translateY(0);
+    transition: all 0.2s ease;
+}
+
+.btn-3d:hover {
+    transform: translateY(2px);
+    box-shadow: 0 6px 0 var(--color-primary-dark),
+                0 12px 20px rgba(101, 91, 226, 0.4),
+                inset 0 -4px 0 rgba(0, 0, 0, 0.15);
+}
+
+.btn-3d:active {
+    transform: translateY(6px);
+    box-shadow: 0 2px 0 var(--color-primary-dark),
+                0 4px 10px rgba(101, 91, 226, 0.3),
+                inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+}
 
 /* ==========================================================================
-   5. Footer
+   5. Footer - Dark Mode
    ========================================================================== */
 
 .footer {
-    background-color: #F9FAFB;
+    background-color: var(--color-background-alt);
     padding: 60px 0;
     border-top: 1px solid var(--color-border);
     margin-top: 80px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .footer {
+    background-color: var(--color-background-darker);
+    border-top-color: var(--color-border-dark);
 }
 
 .footer-content {
@@ -296,12 +466,14 @@ main,
 .footer-about {
     color: var(--color-text-light);
     max-width: 300px;
+    transition: color 0.3s ease;
 }
 
 .footer-column h4 {
     margin-bottom: 15px;
     font-size: 1.1rem;
     color: var(--color-text-dark);
+    transition: color 0.3s ease;
 }
 
 .footer-column ul {
@@ -337,6 +509,11 @@ main,
     text-align: center;
     font-size: 0.9rem;
     color: var(--color-text-light);
+    transition: border-color 0.3s ease, color 0.3s ease;
+}
+
+[data-theme="dark"] .footer-bottom {
+    border-top-color: var(--color-border-dark);
 }
 
 /* ==========================================================================
@@ -345,7 +522,6 @@ main,
 
 @media (max-width: 992px) {
     .nav-wrapper {
-        /* Esconder no mobile por padrão */
         display: none;
     }
 
@@ -354,13 +530,12 @@ main,
     }
 
     .nav-wrapper {
-        /* Estilo do menu mobile */
         position: fixed;
         top: 0;
         right: 0;
         width: 300px;
         height: 100vh;
-        background-color: white;
+        background-color: var(--color-background);
         flex-direction: column;
         justify-content: center;
         align-items: center;
@@ -369,7 +544,11 @@ main,
         transition: transform 0.3s ease-in-out;
         box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
         display: flex;
-        /* Mostrar quando nav-open */
+    }
+
+    [data-theme="dark"] .nav-wrapper {
+        background-color: var(--color-background-dark);
+        box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
     }
 
     body.nav-open .nav-wrapper {
@@ -386,7 +565,6 @@ main,
 
     .main-nav {
         display: block;
-        /* Garantir que a nav interna apareça no mobile */
     }
 
     .main-nav ul {
@@ -420,7 +598,7 @@ main,
 }
 
 /* ==========================================================================
-   7. Estilos da Página Home (Adicional)
+   7. Estilos da Página Home (Adicional) - Cards 3D e Animações
    ========================================================================== */
 
 /* --- Seção Hero --- */
@@ -454,27 +632,31 @@ main,
 .hero-mockup {
     max-width: 800px;
     width: 100%;
-    border-radius: 12px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    border: 8px solid white;
+    border-radius: 16px;
+    box-shadow: var(--shadow-2xl);
+    border: 8px solid var(--color-background);
     overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
+    transform: perspective(1000px) rotateX(5deg);
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+}
+
+.hero-mockup:hover {
+    transform: perspective(1000px) rotateX(0deg) translateY(-10px);
+    box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.3);
 }
 
 .mockup-video {
     width: 100%;
     height: auto;
-    border-radius: 12px;
+    border-radius: 8px;
     display: block;
     outline: none;
     cursor: pointer;
     background-color: black;
 }
-
-/* Optional: style for video controls container if needed */
-/* Native controls styling is limited, so rely on browser defaults */
 
 .gradient-text {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent-pink) 100%);
@@ -495,6 +677,7 @@ main,
     color: var(--color-text-light);
     max-width: 650px;
     margin: 0 auto 30px;
+    transition: color 0.3s ease;
 }
 
 .hero-actions {
@@ -504,56 +687,17 @@ main,
     margin-bottom: 40px;
 }
 
-.floating-shape {
-    position: absolute;
-    background-color: white;
-    color: var(--color-primary);
-    padding: 20px;
-    border-radius: 50%;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    animation: float 6s ease-in-out infinite;
-}
-
-.floating-shape.shape-1 {
-    font-size: 1.5rem;
-    top: -80px;
-    left: 10%;
-    animation-delay: 0s;
-}
-
-.floating-shape.shape-2 {
-    font-size: 2rem;
-    top: 50%;
-    right: 0;
-    animation-delay: 1s;
-}
-
-.floating-shape.shape-3 {
-    font-size: 1.2rem;
-    bottom: -20px;
-    left: 20%;
-    animation-delay: 2s;
-}
-
-@keyframes float {
-    0% {
-        transform: translateY(0px);
-    }
-
-    50% {
-        transform: translateY(-20px);
-    }
-
-    100% {
-        transform: translateY(0px);
-    }
-}
-
 /* --- Seção de Prova Social --- */
 .trusted-by {
     padding: 40px 0;
     border-top: 1px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);
+    transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .trusted-by {
+    border-top-color: var(--color-border-dark);
+    border-bottom-color: var(--color-border-dark);
 }
 
 .trusted-title {
@@ -563,6 +707,7 @@ main,
     color: var(--color-text-light);
     letter-spacing: 1px;
     margin-bottom: 30px;
+    transition: color 0.3s ease;
 }
 
 .logos-grid {
@@ -574,6 +719,7 @@ main,
     opacity: 0.7;
     font-size: 1.5rem;
     color: var(--color-text-light);
+    transition: color 0.3s ease;
 }
 
 .logos-grid .fab,
@@ -597,6 +743,7 @@ main,
 .section-subtitle {
     font-size: 1.15rem;
     color: var(--color-text-light);
+    transition: color 0.3s ease;
 }
 
 /* --- Seção de Funcionalidades (AJUSTADO COM ANIMAÇÃO DE LINHA) --- */
@@ -611,67 +758,82 @@ main,
 }
 
 .feature-card {
-    background: #fff;
+    background: var(--gradient-card);
     padding: 30px;
-    border-radius: 12px;
+    border-radius: 20px;
     border: 1px solid var(--color-border);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
     position: relative;
-    /* Necessário para a linha animada */
     overflow: hidden;
-    /* Garante que a linha não vaze */
+    transform-style: preserve-3d;
+    perspective: 1000px;
+    transform: translateY(0) rotateX(0);
+}
+
+[data-theme="dark"] .feature-card {
+    background: var(--gradient-card-dark);
+    border-color: var(--color-border-dark);
 }
 
 .feature-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: translateY(-10px) rotateX(5deg);
+    box-shadow: var(--shadow-xl);
 }
 
-/* Linha animada na borda superior */
+/* Efeito de brilho na borda */
 .feature-card::before {
     content: '';
     position: absolute;
     top: 0;
     left: -100%;
-    /* Começa fora da tela */
     width: 100%;
     height: 3px;
-    /* Espessura da linha */
     background: linear-gradient(to right, transparent, var(--color-primary), transparent);
-    transition: left 0.5s ease-out;
-    /* Anima a entrada da linha */
+    transition: left 0.7s ease-out;
 }
 
 .feature-card:hover::before {
-    left: 0;
-    /* Move a linha para dentro */
+    left: 100%;
+}
+
+/* Efeito de brilho no hover */
+.feature-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+}
+
+.feature-card:hover::after {
+    opacity: 1;
 }
 
 /* ESTILO APRIMORADO DOS ÍCONES DOS CARDS */
 .card-icon,
 .feature-icon {
-    width: 70px;
-    /* Tamanho fixo */
-    height: 70px;
+    width: 80px;
+    height: 80px;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 2.2rem;
-    /* Tamanho do ícone dentro do círculo */
-    border-radius: 18px;
-    /* Borda arredondada suave (mais quadrada que 50%) */
+    font-size: 2.5rem;
+    border-radius: 20px;
     color: white;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     position: relative;
     overflow: hidden;
-    /* Para o pseudo-elemento de brilho */
-    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1), 0 5px 10px rgba(0, 0, 0, 0.05);
-    /* Sombra para 3D */
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+    transform: translateZ(20px);
 }
 
-/* Pseudo-elemento para o efeito de brilho/overlay */
 .card-icon::after,
 .feature-icon::after {
     content: '';
@@ -690,54 +852,60 @@ main,
     opacity: 1;
 }
 
+.card-icon:hover,
+.feature-icon:hover {
+    transform: translateY(-5px) rotate(5deg) translateZ(20px);
+    box-shadow: var(--shadow-lg);
+}
+
 /* Cores de Fundo com Gradientes para os Ícones */
 .icon-color-1 {
     background: linear-gradient(135deg, #6A3FF4, #8E2DE2);
 }
 
-/* Roxo mais vibrante */
 .icon-color-2 {
     background: linear-gradient(135deg, #EF4444, #F47C3B);
 }
 
-/* Vermelho alaranjado */
 .icon-color-3 {
     background: linear-gradient(135deg, #10B981, #34D399);
 }
 
-/* Verde esmeralda */
 .icon-color-4 {
     background: linear-gradient(135deg, #F59E0B, #FBBF24);
 }
 
-/* Laranja dourado */
 .icon-color-5 {
     background: linear-gradient(135deg, #3B82F6, #60A5FA);
 }
 
-/* Azul claro */
 .icon-color-6 {
     background: linear-gradient(135deg, #8B5CF6, #C084FC);
 }
 
-/* Lilás */
-
-
 .feature-card h3 {
     font-size: 1.25rem;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .feature-card p {
     color: var(--color-text-light);
+    transition: color 0.3s ease;
 }
 
 /* --- Seção Como Funciona --- */
 .how-it-works {
     padding: 100px 0;
-    background-color: #F9FAFB;
+    background-color: var(--color-background-alt);
     border-top: 1px solid var(--color-border);
     border-bottom: 1px solid var(--color-border);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .how-it-works {
+    background-color: var(--color-background-darker);
+    border-top-color: var(--color-border-dark);
+    border-bottom-color: var(--color-border-dark);
 }
 
 .steps-grid {
@@ -760,13 +928,18 @@ main,
     width: calc(100% - 70px);
     height: 2px;
     border-top: 2px dashed var(--color-border);
+    transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .step-item:not(:last-child)::after {
+    border-top-color: var(--color-border-dark);
 }
 
 .step-number {
     width: 70px;
     height: 70px;
     border-radius: 50%;
-    background-color: #fff;
+    background-color: var(--color-background);
     border: 2px solid var(--color-border);
     display: flex;
     justify-content: center;
@@ -777,6 +950,12 @@ main,
     margin: 0 auto 20px;
     position: relative;
     z-index: 2;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .step-number {
+    background-color: var(--color-background-dark);
+    border-color: var(--color-border-dark);
 }
 
 .step-content h3 {
@@ -788,6 +967,7 @@ main,
     color: var(--color-text-light);
     max-width: 300px;
     margin: 0 auto;
+    transition: color 0.3s ease;
 }
 
 /* --- Seção CTA Final --- */
@@ -796,36 +976,66 @@ main,
 }
 
 .cta-card {
-    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    background: var(--gradient-accent);
     color: white;
     padding: 60px;
-    border-radius: 20px;
+    border-radius: 24px;
     text-align: center;
+    box-shadow: var(--shadow-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    animation: rotate 15s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .cta-title {
     font-size: 2.2rem;
     margin-bottom: 15px;
+    position: relative;
+    z-index: 1;
 }
 
 .cta-subtitle {
     font-size: 1.1rem;
     opacity: 0.9;
     margin-bottom: 30px;
+    position: relative;
+    z-index: 1;
 }
 
 .cta-card .btn-primary {
     background-color: #fff;
-    color: var(--color-primary);
-    box-shadow: 0 4px 0 0 #ccc;
+    color: #fff;
+    box-shadow: 0 4px 0 0 #e5e7eb;
+    position: relative;
+    z-index: 1;
 }
 
 .cta-card .btn-primary:hover {
-    box-shadow: 0 2px 0 0 #ccc;
+    box-shadow: 0 2px 0 0 #e5e7eb;
 }
 
 .cta-card .btn-primary:active {
-    box-shadow: 0 0 0 0 #ccc;
+    box-shadow: 0 0 0 0 #e5e7eb;
 }
 
 /* --- Media Queries Adicionais para Home --- */
@@ -848,6 +1058,10 @@ main,
         border-top: none;
         border-left: 2px dashed var(--color-border);
     }
+    
+    [data-theme="dark"] .step-item:not(:last-child)::after {
+        border-left-color: var(--color-border-dark);
+    }
 }
 
 @media (max-width: 768px) {
@@ -867,10 +1081,6 @@ main,
     .hero-actions {
         flex-direction: column;
         align-items: center;
-    }
-
-    .floating-shape {
-        display: none;
     }
 
     .features-section,
@@ -900,9 +1110,14 @@ main,
 .page-header {
     padding: 80px 0;
     text-align: center;
-    background-color: #F9FAFB;
-    /* Um fundo suave para diferenciar do Hero da Home */
+    background-color: var(--color-background-alt);
     border-bottom: 1px solid var(--color-border);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .page-header {
+    background-color: var(--color-background-darker);
+    border-bottom-color: var(--color-border-dark);
 }
 
 .page-title {
@@ -918,6 +1133,7 @@ main,
     color: var(--color-text-light);
     max-width: 600px;
     margin: 0 auto;
+    transition: color 0.3s ease;
 }
 
 /* --- Seção de Conteúdo Geral --- */
@@ -929,11 +1145,18 @@ main,
 .intro-card {
     max-width: 800px;
     margin: 0 auto;
-    background-color: #F9FAFB;
+    background-color: var(--color-background-alt);
     border: 1px solid var(--color-border);
     padding: 40px;
-    border-radius: 12px;
+    border-radius: 16px;
     text-align: center;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .intro-card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
 }
 
 .intro-title {
@@ -945,6 +1168,7 @@ main,
     color: var(--color-text-light);
     font-size: 1.1rem;
     line-height: 1.7;
+    transition: color 0.3s ease;
 }
 
 .intro-card p:not(:last-child) {
@@ -959,10 +1183,15 @@ main,
 
 /* --- Seção de Benefícios --- */
 .benefits-section {
-    background-color: #F9FAFB;
+    background-color: var(--color-background-alt);
     border-top: 1px solid var(--color-border);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
+[data-theme="dark"] .benefits-section {
+    background-color: var(--color-background-darker);
+    border-top-color: var(--color-border-dark);
+}
 
 /* --- Media Queries para Páginas Internas --- */
 @media (max-width: 768px) {
@@ -986,7 +1215,7 @@ main,
 }
 
 /* ==========================================================================
-   9. Estilos da Página de Planos
+   9. Estilos da Página de Planos - Cards 3D
    ========================================================================== */
 
 .pricing-section {
@@ -999,18 +1228,29 @@ main,
 }
 
 .pricing-card {
-    background: #fff;
-    border-radius: 16px;
+    background: var(--gradient-card);
+    border-radius: 20px;
     border: 1px solid var(--color-border);
     padding: 40px;
     text-align: center;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+    box-shadow: var(--shadow-xl);
     position: relative;
     overflow: hidden;
+    transition: all 0.3s ease;
+    transform: translateY(0);
+}
+
+[data-theme="dark"] .pricing-card {
+    background: var(--gradient-card-dark);
+    border-color: var(--color-border-dark);
+}
+
+.pricing-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: var(--shadow-2xl);
 }
 
 .pricing-card::before {
-    /* Animação de linha no hover */
     content: '';
     position: absolute;
     top: 0;
@@ -1018,11 +1258,11 @@ main,
     width: 100%;
     height: 4px;
     background: linear-gradient(to right, transparent, var(--color-primary), transparent);
-    transition: left 0.5s ease-out;
+    transition: left 0.7s ease-out;
 }
 
 .pricing-card:hover::before {
-    left: 0;
+    left: 100%;
 }
 
 .plan-badge {
@@ -1032,10 +1272,11 @@ main,
     transform: translateX(-50%);
     background: var(--color-primary);
     color: white;
-    padding: 6px 16px;
+    padding: 8px 20px;
     border-radius: 20px;
     font-size: 0.9rem;
     font-weight: 600;
+    box-shadow: var(--shadow-md);
 }
 
 .plan-name {
@@ -1046,6 +1287,7 @@ main,
 .plan-description {
     color: var(--color-text-light);
     margin-bottom: 30px;
+    transition: color 0.3s ease;
 }
 
 .plan-price {
@@ -1062,6 +1304,7 @@ main,
     font-weight: 500;
     color: var(--color-text-light);
     margin-left: 8px;
+    transition: color 0.3s ease;
 }
 
 .plan-features {
@@ -1096,8 +1339,14 @@ main,
 /* --- Seção FAQ (Dúvidas Comuns) --- */
 .faq-section {
     padding: 100px 0;
-    background-color: #F9FAFB;
+    background-color: var(--color-background-alt);
     border-top: 1px solid var(--color-border);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .faq-section {
+    background-color: var(--color-background-darker);
+    border-top-color: var(--color-border-dark);
 }
 
 .faq-accordion {
@@ -1107,6 +1356,11 @@ main,
 
 .faq-item {
     border-bottom: 1px solid var(--color-border);
+    transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .faq-item {
+    border-bottom-color: var(--color-border-dark);
 }
 
 .faq-question {
@@ -1118,12 +1372,10 @@ main,
     font-size: 1.1rem;
     font-weight: 600;
     list-style: none;
-    /* Remove o marcador padrão do summary */
 }
 
 .faq-question::-webkit-details-marker {
     display: none;
-    /* Remove o marcador padrão no Chrome/Safari */
 }
 
 .faq-question i {
@@ -1139,18 +1391,16 @@ main,
     padding-bottom: 20px;
     color: var(--color-text-light);
     line-height: 1.7;
+    transition: color 0.3s ease;
 }
 
 /* --- Media Queries Adicionais para Planos --- */
 @media (max-width: 768px) {
-
     .pricing-section,
     .faq-section {
         padding: 80px 0;
     }
 }
-
-
 
 /* ==========================================================================
    10. Estilos da Página de Suporte
@@ -1163,18 +1413,23 @@ main,
 .support-grid {
     display: grid;
     grid-template-columns: 2fr 1.5fr;
-    /* Coluna do FAQ maior que a do formulário */
     gap: 60px;
     align-items: start;
 }
 
 /* --- Coluna do Formulário --- */
 .form-wrapper-card {
-    background-color: #fff;
+    background-color: var(--color-background);
     padding: 40px;
-    border-radius: 12px;
+    border-radius: 16px;
     border: 1px solid var(--color-border);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .form-wrapper-card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
 }
 
 .form-header {
@@ -1189,6 +1444,7 @@ main,
 
 .form-header p {
     color: var(--color-text-light);
+    transition: color 0.3s ease;
 }
 
 .form-group {
@@ -1209,7 +1465,13 @@ main,
     border-radius: 8px;
     font-size: 1rem;
     font-family: var(--font-family-base);
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+    background-color: var(--color-background);
+}
+
+[data-theme="dark"] .form-input {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
 }
 
 .form-input:focus {
@@ -1247,12 +1509,10 @@ textarea.form-input {
     color: #991B1B;
 }
 
-
 /* --- Media Queries Adicionais para Suporte --- */
 @media (max-width: 992px) {
     .support-grid {
         grid-template-columns: 1fr;
-        /* Colunas empilhadas */
         gap: 80px;
     }
 
@@ -1271,17 +1531,22 @@ textarea.form-input {
     justify-content: center;
     padding: 80px 0;
     min-height: calc(100vh - var(--header-height) - 250px);
-    /* Calcula altura para centralizar, descontando header e footer */
 }
 
 .form-wrapper-card {
     width: 100%;
     max-width: 450px;
-    background-color: #fff;
+    background-color: var(--color-background);
     padding: 40px;
-    border-radius: 12px;
+    border-radius: 16px;
     border: 1px solid var(--color-border);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-xl);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .form-wrapper-card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
 }
 
 .form-options {
@@ -1303,11 +1568,17 @@ textarea.form-input {
     height: 1px;
     background-color: var(--color-border);
     margin: 30px 0;
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .form-divider {
+    background-color: var(--color-border-dark);
 }
 
 .form-footer {
     text-align: center;
     color: var(--color-text-light);
+    transition: color 0.3s ease;
 }
 
 .form-footer a {
@@ -1322,11 +1593,9 @@ textarea.form-input {
 
 .field-error {
     color: #991B1B;
-    /* Tom de vermelho do alert-error */
     font-size: 0.85rem;
     margin-top: 5px;
 }
-
 
 /* ==========================================================================
    12. Estilos Adicionais para Formulário de Cadastro
@@ -1340,6 +1609,7 @@ textarea.form-input {
     font-size: 0.9rem;
     color: var(--color-text-light);
     flex-wrap: wrap;
+    transition: color 0.3s ease;
 }
 
 .form-benefits span {
@@ -1352,25 +1622,34 @@ textarea.form-input {
     color: var(--color-primary);
 }
 
-
-
 /* ==========================================================================
-   13. Estilos do Painel do Usuário (Dashboard)
+   13. Estilos do Painel do Usuário (Dashboard) - Dark Mode
    ========================================================================== */
 
 .dashboard-layout {
     display: flex;
-    background-color: #F9FAFB;
+    background-color: var(--color-background-alt);
     min-height: 100vh;
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .dashboard-layout {
+    background-color: var(--color-background-darker);
 }
 
 /* --- Barra Lateral (Sidebar) --- */
 .sidebar {
     width: 260px;
     flex-shrink: 0;
-    background-color: #fff;
+    background-color: var(--color-background);
     border-right: 1px solid var(--color-border);
     padding: 30px;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .sidebar {
+    background-color: var(--color-background-alt-dark);
+    border-right-color: var(--color-border-dark);
 }
 
 .sidebar-header {
@@ -1413,7 +1692,6 @@ textarea.form-input {
 
 .sidebar-nav a i {
     width: 20px;
-    /* Alinha os ícones */
 }
 
 /* --- Conteúdo Principal do Painel --- */
@@ -1437,6 +1715,7 @@ textarea.form-input {
 
 .dashboard-header p {
     color: var(--color-text-light);
+    transition: color 0.3s ease;
 }
 
 /* --- Grid do Painel --- */
@@ -1456,10 +1735,16 @@ textarea.form-input {
 
 /* --- Cards do Painel --- */
 .dashboard-card {
-    background-color: #fff;
-    border-radius: 12px;
+    background-color: var(--color-background);
+    border-radius: 16px;
     border: 1px solid var(--color-border);
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .dashboard-card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
 }
 
 .card-header {
@@ -1468,6 +1753,11 @@ textarea.form-input {
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--color-border);
+    transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .card-header {
+    border-bottom-color: var(--color-border-dark);
 }
 
 .card-title {
@@ -1484,9 +1774,15 @@ textarea.form-input {
 
 .card-footer {
     padding: 20px;
-    background-color: #F9FAFB;
+    background-color: var(--color-background-alt);
     border-top: 1px solid var(--color-border);
-    border-radius: 0 0 12px 12px;
+    border-radius: 0 0 16px 16px;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .card-footer {
+    background-color: var(--color-background-darker);
+    border-top-color: var(--color-border-dark);
 }
 
 /* --- Elementos dos Cards --- */
@@ -1506,6 +1802,7 @@ textarea.form-input {
 .info-label {
     color: var(--color-text-light);
     font-weight: 500;
+    transition: color 0.3s ease;
 }
 
 .info-value {
@@ -1539,15 +1836,25 @@ textarea.form-input {
     margin-top: 20px;
     padding-top: 20px;
     border-top: 1px solid var(--color-border);
+    transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .usage-meter {
+    border-top-color: var(--color-border-dark);
 }
 
 .progress-bar {
     width: 100%;
     height: 8px;
-    background-color: #E5E7EB;
+    background-color: var(--color-border);
     border-radius: 4px;
     overflow: hidden;
     margin-top: 8px;
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .progress-bar {
+    background-color: var(--color-border-dark);
 }
 
 .progress-bar-inner {
@@ -1585,7 +1892,6 @@ textarea.form-input {
 @media (max-width: 1024px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
-        /* Empilha as colunas */
     }
 }
 
@@ -1599,6 +1905,10 @@ textarea.form-input {
         height: auto;
         border-right: none;
         border-bottom: 1px solid var(--color-border);
+    }
+
+    [data-theme="dark"] .sidebar {
+        border-bottom-color: var(--color-border-dark);
     }
 
     .sidebar-nav ul {
@@ -1630,6 +1940,11 @@ textarea.form-input {
     border: none;
     border-top: 1px solid var(--color-border);
     margin: 20px 0;
+    transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .card-divider {
+    border-top-color: var(--color-border-dark);
 }
 
 /* --- Grid de Vídeos --- */
@@ -1642,19 +1957,29 @@ textarea.form-input {
 .video-card {
     display: flex;
     flex-direction: column;
+    transition: transform 0.3s ease;
+}
+
+.video-card:hover {
+    transform: translateY(-5px);
 }
 
 .video-card .card-body {
     flex-grow: 1;
-    /* Faz o corpo do card crescer para preencher o espaço */
 }
 
 /* --- Preview do Vídeo --- */
 .video-preview {
     aspect-ratio: 16 / 9;
-    background-color: #F3F4F6;
+    background-color: var(--color-background-alt);
     border-bottom: 1px solid var(--color-border);
-    border-radius: 12px 12px 0 0;
+    border-radius: 16px 16px 0 0;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .video-preview {
+    background-color: var(--color-background-darker);
+    border-bottom-color: var(--color-border-dark);
 }
 
 .video-placeholder {
@@ -1667,6 +1992,7 @@ textarea.form-input {
     text-align: center;
     padding: 20px;
     color: var(--color-text-light);
+    transition: color 0.3s ease;
 }
 
 .video-placeholder .status-icon {
@@ -1694,6 +2020,7 @@ textarea.form-input {
     font-weight: 600;
     font-size: 1.1rem;
     color: var(--color-text-dark);
+    transition: color 0.3s ease;
 }
 
 .video-placeholder small {
@@ -1717,6 +2044,7 @@ textarea.form-input {
     font-size: 0.9rem;
     color: var(--color-text-light);
     line-height: 1.5;
+    transition: color 0.3s ease;
 }
 
 /* --- Estado de "Página Vazia" --- */
@@ -1739,8 +2067,8 @@ textarea.form-input {
 .empty-state-card .status-message {
     color: var(--color-text-light);
     margin-bottom: 30px;
+    transition: color 0.3s ease;
 }
-
 
 /* ==========================================================================
    15. Estilos de Páginas Legais (Termos, Privacidade)
@@ -1748,17 +2076,22 @@ textarea.form-input {
 
 .legal-content {
     padding: 0 0 100px 0;
-    /* Menos padding no topo por causa do page-header */
 }
 
 .legal-card {
-    background-color: #fff;
+    background-color: var(--color-background);
     border: 1px solid var(--color-border);
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 50px;
     max-width: 850px;
     margin: 0 auto;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .legal-card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
 }
 
 .legal-card h1 {
@@ -1770,6 +2103,7 @@ textarea.form-input {
 .legal-card .last-updated {
     color: var(--color-text-light);
     margin-bottom: 30px;
+    transition: color 0.3s ease;
 }
 
 .legal-card h2 {
@@ -1783,6 +2117,7 @@ textarea.form-input {
 .legal-card li {
     color: var(--color-text-light);
     line-height: 1.8;
+    transition: color 0.3s ease;
 }
 
 .legal-card ul {
@@ -1799,6 +2134,11 @@ textarea.form-input {
     height: 1px;
     background-color: var(--color-border);
     margin-top: 30px;
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .legal-card .section-divider {
+    background-color: var(--color-border-dark);
 }
 
 @media (max-width: 768px) {
@@ -1826,17 +2166,22 @@ textarea.form-input {
     text-align: center;
     padding: 80px 0;
     min-height: calc(100vh - var(--header-height) - 250px);
-    /* Centraliza na tela */
 }
 
 .status-card {
-    background-color: #fff;
+    background-color: var(--color-background);
     padding: 50px;
-    border-radius: 16px;
+    border-radius: 20px;
     border: 1px solid var(--color-border);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
-    max-width: 550px;
+    box-shadow: var(--shadow-xl);
+    max-width: 100%;
     width: 100%;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .status-card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
 }
 
 .status-icon {
@@ -1869,7 +2214,6 @@ textarea.form-input {
     color: #3B82F6;
 }
 
-
 .status-title {
     font-size: 2.2rem;
     font-weight: 700;
@@ -1881,13 +2225,13 @@ textarea.form-input {
     color: var(--color-text-light);
     line-height: 1.7;
     margin-bottom: 30px;
+    transition: color 0.3s ease;
 }
 
 .status-redirect {
     margin-top: 15px;
     font-size: 0.9rem;
     color: #9CA3AF;
-    /* cinza mais claro */
 }
 
 @media (max-width: 768px) {
@@ -1910,7 +2254,6 @@ textarea.form-input {
 
 .form-card-container {
     max-width: 800px;
-    /* Define uma largura máxima para o formulário */
 }
 
 .form-grid {
@@ -1924,12 +2267,12 @@ textarea.form-input {
     margin-top: 8px;
     font-size: 0.85rem;
     color: var(--color-text-light);
+    transition: color 0.3s ease;
 }
 
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    /* Alinha os botões à direita */
     gap: 15px;
 }
 
@@ -1937,7 +2280,6 @@ textarea.form-input {
 @media (max-width: 768px) {
     .form-grid {
         grid-template-columns: 1fr;
-        /* Empilha os campos em telas menores */
     }
 }
 
@@ -1950,15 +2292,23 @@ textarea.form-input {
     background-color: #f7f7f9;
 }
 
+[data-theme="dark"] .admin-panel .sidebar {
+    background-color: #1a2235;
+}
+
 .admin-panel .sidebar-nav li.active a {
     background-color: #252E48;
-    /* Cor mais escura para o admin */
     color: white;
 }
 
 .admin-panel .sidebar-nav a:hover {
     background-color: #e8e8ed;
     color: #252E48;
+}
+
+[data-theme="dark"] .admin-panel .sidebar-nav a:hover {
+    background-color: #2a3650;
+    color: white;
 }
 
 /* --- Tabela de Dados do Painel --- */
@@ -1981,6 +2331,12 @@ textarea.form-input {
     padding: 15px 20px;
     text-align: left;
     border-bottom: 1px solid var(--color-border);
+    transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .dashboard-table th,
+[data-theme="dark"] .dashboard-table td {
+    border-bottom-color: var(--color-border-dark);
 }
 
 .dashboard-table th {
@@ -1988,11 +2344,21 @@ textarea.form-input {
     font-weight: 600;
     text-transform: uppercase;
     color: var(--color-text-light);
-    background-color: #F9FAFB;
+    background-color: var(--color-background-alt);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .dashboard-table th {
+    background-color: var(--color-background-darker);
 }
 
 .dashboard-table tbody tr:hover {
-    background-color: #F9FAFB;
+    background-color: var(--color-background-alt);
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .dashboard-table tbody tr:hover {
+    background-color: var(--color-background-darker);
 }
 
 .dashboard-table .text-right {
@@ -2030,12 +2396,10 @@ textarea.form-input {
     box-shadow: 0 0 0 0 #B91C1C;
 }
 
-
 /* --- Tabela Responsiva --- */
 @media (max-width: 768px) {
     .dashboard-table thead {
         display: none;
-        /* Esconde o cabeçalho original */
     }
 
     .dashboard-table tr {
@@ -2043,16 +2407,23 @@ textarea.form-input {
         margin-bottom: 20px;
         border: 1px solid var(--color-border);
         border-radius: 8px;
-        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        box-shadow: var(--shadow-sm);
+    }
+
+    [data-theme="dark"] .dashboard-table tr {
+        border-color: var(--color-border-dark);
     }
 
     .dashboard-table td {
         display: block;
         text-align: right;
-        border-bottom: 1px solid #f0f0f1;
+        border-bottom: 1px solid var(--color-border);
         position: relative;
         padding-left: 50%;
-        /* Espaço para o label */
+    }
+
+    [data-theme="dark"] .dashboard-table td {
+        border-bottom-color: var(--color-border-dark);
     }
 
     .dashboard-table td:last-child {
@@ -2085,14 +2456,20 @@ textarea.form-input {
 }
 
 .kpi-card {
-    background-color: #fff;
-    border-radius: 12px;
+    background-color: var(--color-background);
+    border-radius: 16px;
     border: 1px solid var(--color-border);
     padding: 25px;
     display: flex;
     align-items: center;
     gap: 20px;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .kpi-card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
 }
 
 .kpi-icon {
@@ -2122,6 +2499,7 @@ textarea.form-input {
 .kpi-title {
     color: var(--color-text-light);
     font-weight: 500;
+    transition: color 0.3s ease;
 }
 
 .dashboard-grid-reports {
@@ -2133,7 +2511,6 @@ textarea.form-input {
         grid-template-columns: 1fr;
     }
 }
-
 
 /* ==========================================================================
    20. Estilos Adicionais para Botões do Admin
@@ -2190,15 +2567,20 @@ textarea.form-input {
 
 /* Estilo para a tag de código na tabela */
 .code-badge {
-    background-color: #F3F4F6;
+    background-color: var(--color-background-alt);
     color: var(--color-text-dark);
     padding: 4px 8px;
     border-radius: 6px;
     font-family: monospace;
     font-size: 0.9rem;
     border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
 }
 
+[data-theme="dark"] .code-badge {
+    background-color: var(--color-background-darker);
+    border-color: var(--color-border-dark);
+}
 
 /* ==========================================================================
    22. Estilos Adicionais do Painel de Admin
@@ -2214,6 +2596,10 @@ textarea.form-input {
     text-decoration: underline;
 }
 
+[data-theme="dark"] .table-link {
+    color: var(--color-accent-cyan);
+}
+
 
 /* ==========================================================================
    23. Estilos Adicionais para Formulários (Campos de Seleção)
@@ -2226,7 +2612,8 @@ textarea.form-input {
     border-radius: 8px;
     font-size: 1rem;
     font-family: var(--font-family-base);
-    background-color: #fff;
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
     -webkit-appearance: none;
     -moz-appearance: none;
     appearance: none;
@@ -2243,6 +2630,13 @@ textarea.form-input {
     box-shadow: 0 0 0 3px rgba(101, 91, 226, 0.2);
 }
 
+[data-theme="dark"] .form-select {
+    background-color: var(--color-background-alt-dark);
+    color: var(--color-text-light-dark);
+    border-color: var(--color-border-dark);
+}
+
+
 /* ==========================================================================
    24. Estilos para Fieldset e Checkbox
    ========================================================================== */
@@ -2252,6 +2646,8 @@ textarea.form-input {
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 30px;
+    background-color: var(--color-background);
+    transition: all 0.3s ease;
 }
 
 .form-fieldset:last-of-type {
@@ -2262,6 +2658,16 @@ textarea.form-input {
     font-weight: 600;
     padding: 0 10px;
     margin-left: 10px;
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] .form-fieldset {
+    border-color: var(--color-border-dark);
+    background-color: var(--color-background-alt-dark);
+}
+
+[data-theme="dark"] .form-fieldset legend {
+    color: var(--color-text-light-dark);
 }
 
 /* --- Checkbox Personalizado --- */
@@ -2274,12 +2680,17 @@ textarea.form-input {
 .form-check-label {
     font-weight: 500;
     cursor: pointer;
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] .form-check-label {
+    color: var(--color-text-light-dark);
 }
 
 .form-check-input {
     appearance: none;
     -webkit-appearance: none;
-    background-color: #fff;
+    background-color: var(--color-background);
     width: 1.25em;
     height: 1.25em;
     border: 1px solid var(--color-border);
@@ -2288,6 +2699,7 @@ textarea.form-input {
     position: relative;
     display: grid;
     place-content: center;
+    transition: all 0.2s ease;
 }
 
 .form-check-input::before {
@@ -2308,6 +2720,10 @@ textarea.form-input {
     border-color: var(--color-primary);
 }
 
+[data-theme="dark"] .form-check-input {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
 
 /* ==========================================================================
    25. Estilos de Páginas Específicas do Painel
@@ -2932,4 +3348,92 @@ textarea.form-input {
 [data-theme="dark"] .sidebar {
     background: #1E293B;
     border-color: var(--color-border-dark);
+}
+
+/* Dark Mode Styles for Video Generator */
+[data-theme="dark"] .video-form {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .generator-header {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .generator-header::after {
+    background-color: var(--color-background-alt-dark);
+}
+
+[data-theme="dark"] .badge {
+    background-color: var(--color-background-darker);
+    color: var(--color-text-light-dark);
+}
+
+[data-theme="dark"] .panel-navigation {
+    border-bottom-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .step-number {
+    background-color: var(--color-background-darker);
+    color: var(--color-text-light-dark);
+}
+
+[data-theme="dark"] .progress-bar {
+    background-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .option-card {
+    border-color: var(--color-border-dark);
+    background-color: var(--color-background-alt-dark);
+}
+
+[data-theme="dark"] .option-card:hover {
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] .card-info p {
+    color: var(--color-text-lighter-dark);
+}
+
+[data-theme="dark"] .panel-actions {
+    border-top-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .btn-outline {
+    color: var(--color-text-light-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .btn-outline:hover {
+    background-color: var(--color-background-darker);
+}
+
+[data-theme="dark"] .global-actions {
+    border-top-color: var(--color-border-dark);
+    background-color: var(--color-background-darker);
+}
+
+[data-theme="dark"] .loading-overlay {
+    background: rgba(15, 23, 42, 0.9);
+}
+
+[data-theme="dark"] .end-screen-preview {
+    border-color: var(--color-border-dark);
+    background-color: #1a1a1a;
+}
+
+[data-theme="dark"] .form-field .form-input,
+[data-theme="dark"] .form-field textarea,
+[data-theme="dark"] .form-field .form-select {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+}
+
+[data-theme="dark"] .text-counter,
+[data-theme="dark"] .estimativa-narracao,
+[data-theme="dark"] .field-tip {
+    color: var(--color-text-lighter-dark);
 }
