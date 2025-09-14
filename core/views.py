@@ -799,6 +799,11 @@ def pagina_gerador(request):
     if request.method == "POST":
         form = GeradorForm(request.POST, request.FILES)
         if form.is_valid():
+            # Verificar assinatura ativa novamente dentro do bloco POST
+            tem_assinatura_ativa_post = Assinatura.objects.filter(
+                usuario=request.user, status="ativo"
+            ).exists()
+
             data = form.cleaned_data
             tipo_conteudo = data.get("tipo_conteudo")
             cor_selecionada_hex = data.get("cor_da_fonte", "#FFFFFF")
@@ -1004,6 +1009,13 @@ def pagina_gerador(request):
                     ).replace(":", "\\:")
                     video_chain += f",ass='{caminho_legenda_ffmpeg}'"
 
+                # Verificar se deve adicionar marca d'água (apenas para assinantes)
+                adicionar_marca_dagua = not tem_assinatura_ativa_post
+
+                # Adicionar marca d'água "Lunderon" no canto inferior direito (apenas para assinantes)
+                if adicionar_marca_dagua:
+                    video_chain += ",drawtext=text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5"
+
                 final_video_stream = "[v]"
                 if caminho_imagem_texto:
                     video_chain += f"[base];[base][1:v]overlay=(W-w)/2:(H-h)/2[v]"
@@ -1150,7 +1162,7 @@ def pagina_gerador(request):
                 )
 
                 # INCREMENTAR TESTE GRÁTIS APÓS SUCESSO
-                if not tem_assinatura_ativa:
+                if not tem_assinatura_ativa_post:
                     request.user.testes_gratis_utilizados += 1
                     request.user.save()
 
