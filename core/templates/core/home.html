@@ -23,9 +23,12 @@
                 <a href="{% url 'cadastre_se' %}" class="btn btn-primary btn-lg">Começar a Criar (Grátis)</a>
                 <a href="{% url 'como_funciona' %}" class="btn btn-secondary btn-lg">Ver Como Funciona</a>
             </div>
-            <div class="hero-mockup-wrapper">
+<div class="hero-mockup-wrapper">
                 <div class="hero-mockup">
-                    <img src="https://via.placeholder.com/800x450/E9E7FC/655BE2?text=LUNDERON+em+Ação" alt="Mockup da plataforma LUNDERON mostrando a criação de um vídeo" class="mockup-img">
+                    <video class="mockup-video" controls autoplay muted loop>
+                        <source src="{% static 'core/img/Menina_Cria_Conteúdo_Para_Rede_Social.mp4' %}" type="video/mp4">
+                        Seu navegador não suporta o elemento de vídeo.
+                    </video>
                 </div>
                 <div class="floating-shape shape-1">
                     <i class="fas fa-play-circle"></i>

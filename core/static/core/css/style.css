@@ -49,45 +49,62 @@ body {
 }
 
 /* ==========================================================================
-   2. Fundo Animado
+   2.5. Fundo 3D de Partículas
    ========================================================================== */
 
-.background-bubbles {
+.depth-layer {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1;
-    overflow: hidden;
+    z-index: 0;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(101, 91, 226, 0.1) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(255, 57, 167, 0.08) 0%, transparent 40%),
+        radial-gradient(circle at 40% 80%, rgba(57, 211, 255, 0.05) 0%, transparent 40%);
 }
 
-.background-bubbles li {
-    position: absolute;
-    display: block;
-    list-style: none;
-    width: 20px;
-    height: 20px;
-    background: rgba(101, 91, 226, 0.2);
-    animation: move-bubbles 25s linear infinite;
-    bottom: -150px;
-    border-radius: 50%;
+.floating-shapes {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    pointer-events: none;
 }
 
-.background-bubbles li:nth-child(1) { left: 25%; width: 80px; height: 80px; animation-delay: 0s; }
-.background-bubbles li:nth-child(2) { left: 10%; width: 20px; height: 20px; animation-delay: 2s; animation-duration: 12s; }
-.background-bubbles li:nth-child(3) { left: 70%; width: 20px; height: 20px; animation-delay: 4s; }
-.background-bubbles li:nth-child(4) { left: 40%; width: 60px; height: 60px; animation-delay: 0s; animation-duration: 18s; background-color: rgba(255, 57, 167, 0.15); }
-.background-bubbles li:nth-child(5) { left: 65%; width: 20px; height: 20px; animation-delay: 0s; }
-.background-bubbles li:nth-child(6) { left: 75%; width: 110px; height: 110px; animation-delay: 3s; background-color: rgba(57, 211, 255, 0.15); }
-.background-bubbles li:nth-child(7) { left: 35%; width: 150px; height: 150px; animation-delay: 7s; }
-.background-bubbles li:nth-child(8) { left: 50%; width: 25px; height: 25px; animation-delay: 15s; animation-duration: 45s; }
-.background-bubbles li:nth-child(9) { left: 20%; width: 15px; height: 15px; animation-delay: 2s; animation-duration: 35s; background-color: rgba(255, 57, 167, 0.2); }
-.background-bubbles li:nth-child(10) { left: 85%; width: 150px; height: 150px; animation-delay: 0s; animation-duration: 11s; }
 
-@keyframes move-bubbles {
-    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-    100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+
+@keyframes float {
+    0%, 100% {
+        transform: translate(0, 0) rotate(0deg);
+    }
+    25% {
+        transform: translate(50px, 50px) rotate(5deg);
+    }
+    50% {
+        transform: translate(0, 100px) rotate(0deg);
+    }
+    75% {
+        transform: translate(-50px, 50px) rotate(-5deg);
+    }
+}
+
+#particle-network {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* Garantir que o conteúdo fique acima do fundo */
+.header, main, .footer {
+    position: relative;
+    z-index: 10;
 }
 
 /* ==========================================================================
@@ -398,6 +415,40 @@ body {
     letter-spacing: -2px;
 }
 
+/* --- Video mockup styling --- */
+.hero-mockup-wrapper {
+    position: relative;
+    margin-top: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero-mockup {
+    max-width: 800px;
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    border: 8px solid white;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.mockup-video {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    display: block;
+    outline: none;
+    cursor: pointer;
+    background-color: black;
+}
+
+/* Optional: style for video controls container if needed */
+/* Native controls styling is limited, so rely on browser defaults */
+
 .gradient-text {
     background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent-pink) 100%);
     -webkit-background-clip: text;
@@ -424,19 +475,6 @@ body {
     margin-bottom: 40px;
 }
 
-.hero-mockup-wrapper {
-    position: relative;
-    margin-top: 60px;
-}
-
-.mockup-img {
-    width: 100%;
-    max-width: 800px;
-    border-radius: 12px;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-    border: 8px solid white;
-}
-
 .floating-shape {
     position: absolute;
     background-color: white;
@@ -447,7 +485,7 @@ body {
     animation: float 6s ease-in-out infinite;
 }
 
-.floating-shape.shape-1 { font-size: 1.5rem; top: -30px; left: 10%; animation-delay: 0s; }
+.floating-shape.shape-1 { font-size: 1.5rem; top: -80px; left: 10%; animation-delay: 0s; }
 .floating-shape.shape-2 { font-size: 2rem; top: 50%; right: 0; animation-delay: 1s; }
 .floating-shape.shape-3 { font-size: 1.2rem; bottom: -20px; left: 20%; animation-delay: 2s; }
 
@@ -1059,6 +1097,11 @@ textarea.form-input {
 .form-wrapper-card {
     width: 100%;
     max-width: 450px;
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.03);
 }
 
 .form-options {
