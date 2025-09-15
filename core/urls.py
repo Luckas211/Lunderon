@@ -15,6 +15,10 @@ urlpatterns = [
     path('termos-de-servico/', views.termos_de_servico, name='termos_de_servico'),
     path('politica-de-privacidade/', views.politica_de_privacidade, name='politica_de_privacidade'),
     path('cadastre-se/', views.cadastre_se, name='cadastre_se'),
+    path('verificar-email/<str:token>/', views.verificar_email, name='verify_email'),
+    path('verificar-email/<str:token>/', views.verificar_email, name='verify_email'),
+    path('reenviar-verificacao/<int:user_id>/', views.reenviar_verificacao_email, name='reenviar_verificacao'),
+
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('validate-otp/', views.validate_otp_view, name='validate_otp'),

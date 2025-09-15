@@ -21,6 +21,12 @@ class MediaStorage(S3Boto3Storage):
 # USUÁRIO CUSTOMIZADO
 # ================================================================
 class Usuario(AbstractUser):
+     # --- INÍCIO DA CORREÇÃO ---
+    email_verificado = models.BooleanField(default=False)
+    # CAMPOS FALTANTES QUE PRECISAM SER ADICIONADOS:
+    email_verification_token = models.CharField(max_length=64, blank=True, null=True)
+    email_verification_token_created = models.DateTimeField(blank=True, null=True)
+    # --- FIM DA CORREÇÃO ---
     email = models.EmailField(unique=True)
     stripe_customer_id = models.CharField(max_length=255, blank=True, null=True)
 

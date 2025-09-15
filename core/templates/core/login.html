@@ -4,6 +4,20 @@
 {% block title %}Login - LUNDERON{% endblock %}
 
 {% block content %}
+<div class="floating-shapes">
+    <div class="floating-shape shape-1">
+        <i class="fas fa-video"></i>
+    </div>
+    <div class="floating-shape shape-2">
+        <i class="fas fa-magic"></i>
+    </div>
+    <div class="floating-shape shape-3">
+        <i class="fas fa-rocket"></i>
+    </div>
+    <div class="floating-shape shape-4">
+        <i class="fas fa-star"></i>
+    </div>
+</div>
 <section class="form-section">
     <div class="form-wrapper-card">
         <form action="{% url 'login' %}" method="POST" class="form-content">
@@ -13,6 +27,16 @@
                 <h2>Acesse Sua Conta</h2>
                 <p>Bem-vindo de volta!</p>
             </div>
+
+            {# --- INÍCIO DO CÓDIGO CORRIGIDO --- #}
+            {% if messages %}
+                <div class="form-messages">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+            {# --- FIM DO CÓDIGO CORRIGIDO --- #}
 
             {% if form.non_field_errors %}
             <div class="form-errors">

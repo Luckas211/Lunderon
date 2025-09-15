@@ -1,6 +1,11 @@
 # ==============================================================================
 # IMPORTS ORGANIZADOS
 # ==============================================================================
+from django.utils.safestring import mark_safe
+from .utils import send_verification_email
+from .models import Usuario # Adicione se ainda não tiver
+from .utils import is_token_valid
+from django.contrib.auth import login # Adicione se ainda não tiver
 import tempfile
 import requests
 from urllib.parse import urlparse
@@ -1498,31 +1503,76 @@ def suporte(request):
     return render(request, "core/suporte.html")
 
 
+
+def verificar_email(request, token):
+    try:
+        # Encontra o usuário pelo token
+        user = Usuario.objects.get(email_verification_token=token)
+    except Usuario.DoesNotExist:
+        messages.error(request, 'Link de verificação inválido ou expirado.')
+        return redirect('login')
+
+    # Verifica se o token é válido e não expirou
+    if is_token_valid(user, token):
+        user.is_active = True
+        user.email_verificado = True
+        user.email_verification_token = None # Limpa o token após o uso
+        user.save()
+        login(request, user)
+        messages.success(request, 'E-mail verificado com sucesso! Você já pode usar a plataforma.')
+        return redirect('meu_perfil')
+    else:
+        messages.error(request, 'Link de verificação inválido ou expirado.')
+        return redirect('login')
+
+def verificar_email(request, token):
+    try:
+        # 1. Tenta encontrar um usuário que tenha exatamente este token.
+        user = Usuario.objects.get(email_verification_token=token)
+    except Usuario.DoesNotExist:
+        # 2. Se não encontrar, o link é inválido.
+        messages.error(request, 'Link de verificação inválido ou já utilizado.')
+        return redirect('login')
+
+    # 3. Verifica se o token não expirou (a lógica está em utils.py)
+    if is_token_valid(user, token):
+        # 4. Se tudo estiver certo, ativa o usuário e marca como verificado.
+        user.is_active = True
+        user.email_verificado = True
+        user.email_verification_token = None  # Limpa o token para não ser usado de novo
+        user.email_verification_token_created = None
+        user.save()
+
+        # 5. Loga o usuário automaticamente e o envia para o painel.
+        login(request, user)
+        messages.success(request, 'E-mail verificado com sucesso! Bem-vindo(a) à Lunderon.')
+        return redirect('meu_perfil')
+    else:
+        # 6. Se o token expirou, informa o usuário.
+        messages.error(request, 'Seu link de verificação expirou. Por favor, tente se cadastrar novamente.')
+        return redirect('login')
+
 def cadastre_se(request):
     if request.method == "POST":
         form = CadastroUsuarioForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            # Cria o usuário, mas não salva no banco ainda
+            user = form.save(commit=False)
+            # Define o usuário como inativo até que o e-mail seja verificado
+            user.is_active = False
+            user.save()
 
-            # --- INÍCIO DO CÓDIGO CORRIGIDO ---
-            # Este bloco estava faltando. Ele envia o e-mail de boas-vindas.
+            # Tenta enviar o e-mail de verificação
             try:
-                send_mail(
-                    subject="Bem-vindo à LUNDERON!",
-                    message=f"Olá, {user.username}!\n\nSua conta foi criada com sucesso. Estamos felizes em ter você conosco.\n\nAcesse nosso site e comece a criar vídeos incríveis agora mesmo.\n\nAtenciosamente,\nEquipe LUNDERON",
-                    from_email=settings.EMAIL_HOST_USER,
-                    recipient_list=[user.email],
-                    fail_silently=False,
-                )
+                send_verification_email(user, request)
+                messages.success(request, 'Cadastro realizado com sucesso! Enviamos um link de ativação para o seu e-mail.')
             except Exception as e:
-                # Se o e-mail falhar, o cadastro não é desfeito,
-                # mas você verá um erro no seu terminal para investigar.
-                print(f"ERRO AO ENVIAR E-MAIL DE BOAS-VINDAS: {e}")
-            # --- FIM DO CÓDIGO CORRIGIDO ---
+                # Informa sobre o erro no terminal para debug
+                print(f"ERRO AO ENVIAR E-MAIL DE VERIFICAÇÃO: {e}")
+                messages.error(request, 'Ocorreu um erro ao enviar o e-mail de verificação. Por favor, tente novamente ou contate o suporte.')
 
-            login(request, user)
-            messages.success(request, "Cadastro realizado com sucesso!")
-            return redirect("pagina_gerador")
+            # Redireciona para a página de login, onde a mensagem de sucesso/erro será exibida
+            return redirect("login")
     else:
         form = CadastroUsuarioForm()
     return render(request, "core/user/cadastre-se.html", {"form": form})
@@ -1541,25 +1591,61 @@ def validate_otp_view(request):
     return redirect("meu_perfil")
 
 
+
+
+def reenviar_verificacao_email(request, user_id):
+    try:
+        user = User.objects.get(id=user_id)
+        if not user.is_active:
+            send_verification_email(user, request)
+            messages.success(request, 'Um novo link de verificação foi enviado para o seu e-mail.')
+        else:
+            messages.info(request, 'Esta conta já está ativa. Você pode fazer login normalmente.')
+    except User.DoesNotExist:
+        messages.error(request, 'Usuário não encontrado.')
+    
+    return redirect('login')
+
 def login_view(request):
     if request.method == "POST":
         email_digitado = request.POST.get("email")
         password_digitado = request.POST.get("password")
+
         if not email_digitado or not password_digitado:
             messages.error(request, "Por favor, preencha o email e a senha.")
             return render(request, "core/login.html")
+
         try:
+            # 1. Primeiro, apenas busca o usuário pelo e-mail, sem verificar a senha.
             user_encontrado = User.objects.get(email=email_digitado)
+
+            # 2. VERIFICA SE A CONTA ESTÁ ATIVA.
+            if not user_encontrado.is_active:
+                # Se não estiver ativa, mostra uma mensagem específica com um link para reenviar o e-mail.
+                resend_url = reverse('reenviar_verificacao', kwargs={'user_id': user_encontrado.id})
+                mensagem = mark_safe(
+                    f'Sua conta ainda não foi ativada. Por favor, verifique o link que enviamos para o seu e-mail. '
+                    f'<a href="{resend_url}" class="alert-link">Não recebeu? Clique aqui para reenviar.</a>'
+                )
+                messages.warning(request, mensagem)
+                return redirect("login")
+
+            # 3. Se a conta estiver ativa, aí sim tentamos autenticar com a senha.
             user = authenticate(
                 request, username=user_encontrado.username, password=password_digitado
             )
+
             if user is not None:
                 login(request, user)
                 return redirect("meu_perfil")
             else:
+                # Se chegou aqui, a conta é ativa, mas a senha está errada.
                 messages.error(request, "Email ou senha inválidos.")
+
         except User.DoesNotExist:
+            # Se o e-mail nem existe no banco de dados.
             messages.error(request, "Email ou senha inválidos.")
+            
     return render(request, "core/login.html")
 
 

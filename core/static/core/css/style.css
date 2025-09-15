@@ -1490,6 +1490,104 @@ textarea.form-input {
     margin-bottom: 20px;
 }
 
+/* Custom style for the informational warning message */
+.form-messages .alert-info {
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    border: 2px solid #3B82F6;
+    color: #1E40AF;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+    font-size: 1.05rem;
+    text-align: center;
+    font-weight: 600;
+    line-height: 1.5;
+    max-width: 500px;
+    margin: 0 auto 30px auto;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.form-messages .alert-info::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s ease;
+}
+
+.form-messages .alert-info:hover::before {
+    left: 100%;
+}
+
+.form-messages .alert-info a {
+    color: #2563EB;
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.form-messages .alert-info a:hover {
+    color: #1D4ED8;
+    border-bottom-color: #1D4ED8;
+    text-decoration: none;
+}
+
+/* Custom style for the warning message */
+.form-messages .alert-warning {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+    border: 2px solid #F59E0B;
+    color: #92400E;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
+    font-size: 1.05rem;
+    text-align: center;
+    font-weight: 600;
+    line-height: 1.5;
+    max-width: 500px;
+    margin: 0 auto 30px auto;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.form-messages .alert-warning::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s ease;
+}
+
+.form-messages .alert-warning:hover::before {
+    left: 100%;
+}
+
+.form-messages .alert-warning a {
+    color: #D97706;
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.form-messages .alert-warning a:hover {
+    color: #B45309;
+    border-bottom-color: #B45309;
+    text-decoration: none;
+}
+
 .alert {
     padding: 15px;
     border-radius: 8px;
@@ -2563,6 +2661,29 @@ textarea.form-input {
 
 .alert.alert-info strong {
     color: #1D4ED8;
+}
+
+/* Dark mode styles for alerts */
+[data-theme="dark"] .alert-success {
+    background-color: #064E3B;
+    border-color: #065F46;
+    color: #A7F3D0;
+}
+
+[data-theme="dark"] .alert-error {
+    background-color: #7F1D1D;
+    border-color: #991B1B;
+    color: #FECACA;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: #1E3A8A;
+    border-color: #1D4ED8;
+    color: #BFDBFE;
+}
+
+[data-theme="dark"] .alert-info strong {
+    color: #93C5FD;
 }
 
 /* Estilo para a tag de código na tabela */
