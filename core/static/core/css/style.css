@@ -3437,3 +3437,254 @@ textarea.form-input {
 [data-theme="dark"] .field-tip {
     color: var(--color-text-lighter-dark);
 }
+
+/* ==========================================================================
+   26. Estilos Adicionais para Home Page
+   ========================================================================== */
+
+/* --- Seção Hero com Background Shapes --- */
+
+
+.shape-blur {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(101, 91, 226, 0.1) 0%, rgba(255, 57, 167, 0.1) 100%);
+    filter: blur(80px);
+    animation: floatShape 20s ease-in-out infinite;
+}
+
+.shape-blur.shape-1 {
+    width: 300px;
+    height: 300px;
+    top: 10%;
+    left: -5%;
+    animation-delay: 0s;
+}
+
+.shape-blur.shape-2 {
+    width: 400px;
+    height: 400px;
+    bottom: 10%;
+    right: -10%;
+    animation-delay: 10s;
+}
+
+@keyframes floatShape {
+    0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+    }
+    50% {
+        transform: translateY(-20px) rotate(180deg);
+    }
+}
+
+/* --- Seção de Estatísticas --- */
+.stats-section {
+    padding: 60px 0;
+    background-color: var(--color-background-alt);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+[data-theme="dark"] .stats-section {
+    background-color: var(--color-background-darker);
+    border-top-color: var(--color-border-dark);
+    border-bottom-color: var(--color-border-dark);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 40px;
+    text-align: center;
+}
+
+.stat-item {
+    padding: 20px;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--color-primary);
+    margin-bottom: 10px;
+    transition: color 0.3s ease;
+}
+
+.stat-label {
+    font-size: 1rem;
+    color: var(--color-text-light);
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+/* --- Grid de Benefícios --- */
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+}
+
+.benefit-card {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+[data-theme="dark"] .benefit-card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.benefit-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.benefit-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2rem;
+    box-shadow: var(--shadow-md);
+}
+
+.benefit-card h3 {
+    font-size: 1.25rem;
+    margin-bottom: 15px;
+}
+
+.benefit-card p {
+    color: var(--color-text-light);
+    line-height: 1.6;
+    transition: color 0.3s ease;
+}
+
+/* --- Seção de Depoimentos --- */
+.testimonials-section {
+    padding: 100px 0;
+}
+
+.testimonials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+}
+
+.testimonial-card {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .testimonial-card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.testimonial-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.testimonial-content {
+    margin-bottom: 20px;
+}
+
+.testimonial-content p {
+    font-style: italic;
+    color: var(--color-text-light);
+    line-height: 1.6;
+    transition: color 0.3s ease;
+}
+
+.testimonial-author {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.author-avatar {
+    width: 50px;
+    height: 50px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.author-info {
+    flex-grow: 1;
+}
+
+.author-name {
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.author-role {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    transition: color 0.3s ease;
+}
+
+/* --- Conteúdo do CTA --- */
+.cta-content {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.cta-actions {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+/* --- Media Queries para Home --- */
+@media (max-width: 768px) {
+    .hero-background-shapes {
+        display: none;
+    }
+
+    .hero-actions,
+    .cta-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .benefits-grid,
+    .testimonials-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .testimonial-author {
+        flex-direction: column;
+        text-align: center;
+    }
+}
