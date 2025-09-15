@@ -1002,25 +1002,36 @@ def pagina_gerador(request):
                 for f in inputs_adicionais_etapa1:
                     cmd_etapa1.extend(["-i", f])
 
+                # 1. Define os caminhos para as fontes DENTRO do projeto.
+                caminho_fontes_projeto = os.path.join(settings.BASE_DIR, 'core', 'static', 'core', 'fonts')
+                caminho_fonte_marca_dagua = os.path.join(caminho_fontes_projeto, 'AlfaSlabOne-Regular.ttf')
+
+                # 2. ESCAPA os caminhos para serem seguros para o comando FFmpeg (CRUCIAL)
+                caminho_fontes_projeto_ffmpeg = caminho_fontes_projeto.replace('\\', '/').replace(':', '\\:')
+                caminho_fonte_marca_dagua_ffmpeg = caminho_fonte_marca_dagua.replace('\\', '/').replace(':', '\\:')
+
+                # 3. Inicia a construção da cadeia de filtros de vídeo.
                 video_chain = "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1"
+
+                # 4. Adiciona o filtro de legenda (se houver), usando o caminho da pasta de fontes JÁ ESCAPADO.
                 if caminho_legenda_ass:
-                    caminho_legenda_ffmpeg = caminho_legenda_ass.replace(
-                        "\\", "/"
-                    ).replace(":", "\\:")
-                    video_chain += f",ass='{caminho_legenda_ffmpeg}'"
+                    caminho_legenda_ffmpeg = caminho_legenda_ass.replace('\\', '/').replace(':', '\\:')
+                    video_chain += f",ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'"
 
-                # Verificar se deve adicionar marca d'água (apenas para assinantes)
+                # 5. Verifica se deve adicionar a marca d'água.
                 adicionar_marca_dagua = not tem_assinatura_ativa_post
-
-                # Adicionar marca d'água "Lunderon" no canto inferior direito (apenas para assinantes)
                 if adicionar_marca_dagua:
-                    video_chain += ",drawtext=text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5"
+                    # Adiciona o filtro da marca d'água, usando o caminho da fonte JÁ ESCAPADO.
+                    video_chain += f",drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5"
 
+                # 6. Finaliza a cadeia de filtros, tratando o overlay de texto estático (se houver).
                 final_video_stream = "[v]"
                 if caminho_imagem_texto:
                     video_chain += f"[base];[base][1:v]overlay=(W-w)/2:(H-h)/2[v]"
                 else:
                     video_chain += "[v]"
+
+                # --- FIM DO CÓDIGO CORRIGIDO E FINAL ---
 
                 volume_musica_decimal = data.get("volume_musica", 50) / 100.0
                 music_input_index = 1 + (1 if caminho_imagem_texto else 0)
@@ -1068,30 +1079,11 @@ def pagina_gerador(request):
                 if caminho_tela_final:
                     duracao_tela_final = 3
                     cmd_etapa2 = [
-                        "ffmpeg",
-                        "-y",
-                        "-loop",
-                        "1",
-                        "-t",
-                        str(duracao_tela_final),
-                        "-i",
-                        caminho_tela_final,
-                        "-f",
-                        "lavfi",
-                        "-t",
-                        str(duracao_tela_final),
-                        "-i",
-                        "anullsrc=channel_layout=stereo:sample_rate=44100",
-                        "-c:v",
-                        "libx264",
-                        "-pix_fmt",
-                        "yuv420p",
-                        "-c:a",
-                        "aac",
-                        "-b:a",
-                        "192k",
-                        "-shortest",
-                        caminho_tela_final_video,
+                        "ffmpeg", "-y", "-loop", "1", "-t", str(duracao_tela_final),
+                        "-i", caminho_tela_final, "-f", "lavfi", "-t", str(duracao_tela_final),
+                        "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac",
+                        "-b:a", "192k", "-shortest", caminho_tela_final_video,
                     ]
                     subprocess.run(
                         cmd_etapa2,
@@ -1106,16 +1098,8 @@ def pagina_gerador(request):
                             f"file '{caminho_tela_final_video.replace(os.sep, '/')}'\n"
                         )
                     cmd_etapa3 = [
-                        "ffmpeg",
-                        "-y",
-                        "-f",
-                        "concat",
-                        "-safe",
-                        "0",
-                        "-i",
-                        lista_concat_path,
-                        "-c",
-                        "copy",
+                        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
+                        "-i", lista_concat_path, "-c", "copy",
                         caminho_video_local_final,
                     ]
                     subprocess.run(
@@ -1143,13 +1127,9 @@ def pagina_gerador(request):
                 if "loop_video" in dados_para_salvar:
                     dados_para_salvar["loop"] = dados_para_salvar.pop("loop_video")
                 chaves_para_remover = [
-                    "tipo_conteudo",
-                    "categoria_video",
-                    "categoria_musica",
-                    "duracao_segundos",
-                    "video_upload",
-                    "narrador_tom",
-                ]  # Adicionado 'narrador_tom' para limpeza
+                    "tipo_conteudo", "categoria_video", "categoria_musica",
+                    "duracao_segundos", "video_upload", "narrador_tom",
+                ]
                 for chave in chaves_para_remover:
                     dados_para_salvar.pop(chave, None)
 
@@ -1158,15 +1138,12 @@ def pagina_gerador(request):
                     status="CONCLUIDO",
                     arquivo_final=object_key_r2,
                     duracao_segundos=duracao_video,
-                    **dados_para_salvar,
+                    **dados_para_salvar # <-- VÍRGULA REMOVIDA DAQUI
                 )
 
-                # INCREMENTAR TESTE GRÁTIS APÓS SUCESSO
                 if not tem_assinatura_ativa_post:
                     request.user.testes_gratis_utilizados += 1
                     request.user.save()
-
-                    # Mostrar mensagem informando que teste grátis foi utilizado
                     testes_restantes = (
                         request.user.limite_testes_gratis
                         - request.user.testes_gratis_utilizados
@@ -1197,12 +1174,9 @@ def pagina_gerador(request):
                 if "loop_video" in dados_para_salvar:
                     dados_para_salvar["loop"] = dados_para_salvar.pop("loop_video")
                 chaves_para_remover = [
-                    "tipo_conteudo",
-                    "categoria_video",
-                    "categoria_musica",
-                    "video_upload",
-                    "narrador_tom",
-                ]  # Adicionado 'narrador_tom'
+                    "tipo_conteudo", "categoria_video", "categoria_musica",
+                    "video_upload", "narrador_tom",
+                ]
                 for chave in chaves_para_remover:
                     dados_para_salvar.pop(chave, None)
                 VideoGerado.objects.create(
@@ -1211,16 +1185,11 @@ def pagina_gerador(request):
 
             finally:
                 arquivos_para_limpar = [
-                    caminho_video_input,
-                    caminho_musica_input,
-                    caminho_narrador_input,
-                    caminho_legenda_ass,
-                    caminho_imagem_texto,
-                    caminho_tela_final,
-                    caminho_video_temp,
-                    caminho_tela_final_video,
-                    lista_concat_path,
-                    caminho_video_local_final,
+                    caminho_video_input, caminho_musica_input,
+                    caminho_narrador_input, caminho_legenda_ass,
+                    caminho_imagem_texto, caminho_tela_final,
+                    caminho_video_temp, caminho_tela_final_video,
+                    lista_concat_path, caminho_video_local_final,
                 ]
                 for path in arquivos_para_limpar:
                     if path and os.path.exists(path):
