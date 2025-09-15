@@ -36,7 +36,7 @@ class Usuario(AbstractUser):
 
     # Campos para teste grátis
     testes_gratis_utilizados = models.IntegerField(default=0)
-    limite_testes_gratis = models.IntegerField(default=2)
+    
 
     # Campo para logomarca
     logomarca = models.ImageField(

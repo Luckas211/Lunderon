@@ -40,14 +40,14 @@
                 <div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div>
                 <div class="kpi-content">
                     <span class="kpi-value">R$ {{ receita_total|floatformat:2 }}</span>
-                    <span class="kpi-title">Receita Total (Aprovada)</span>
+                    <span class="kpi-title">Receita Total</span>
                 </div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-icon"><i class="fas fa-user-plus"></i></div>
+                <div class="kpi-icon"><i class="fas fa-user-clock"></i></div>
                 <div class="kpi-content">
-                    <span class="kpi-value">{{ novos_assinantes }}</span>
-                    <span class="kpi-title">Novos Assinantes (30d)</span>
+                    <span class="kpi-value">{{ usuarios_pendentes }}</span>
+                    <span class="kpi-title">Aguardando Verificação</span>
                 </div>
             </div>
             <div class="kpi-card">
@@ -60,6 +60,37 @@
         </div>
 
         <div class="dashboard-grid dashboard-grid-reports">
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h2 class="card-title"><i class="fas fa-user-plus"></i> Últimos 5 Usuários Pendentes</h2>
+                </div>
+                <div class="card-body full-bleed">
+                    <div class="table-responsive-wrapper">
+                        <table class="dashboard-table">
+                            <thead>
+                                <tr>
+                                    <th>Usuário</th><th>Email</th><th>Data de Cadastro</th><th class="text-right">Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in ultimos_pendentes %}
+                                <tr>
+                                    <td data-label="Usuário">{{ user.username }}</td>
+                                    <td data-label="Email">{{ user.email }}</td>
+                                    <td data-label="Data">{{ user.date_joined|date:"d/m/Y H:i" }}</td>
+                                    <td data-label="Ação" class="text-right">
+                                        <a href="{% url 'admin_reenviar_verificacao' user.id %}" class="btn btn-info btn-sm">Reenviar E-mail</a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="4" class="text-center">Nenhum usuário pendente encontrado.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <div class="dashboard-card">
                 <div class="card-header">
                     <h2 class="card-title"><i class="fas fa-clipboard-list"></i> Últimas 5 Assinaturas</h2>
@@ -82,35 +113,6 @@
                                 </tr>
                                 {% empty %}
                                 <tr><td colspan="4" class="text-center">Nenhuma assinatura encontrada.</td></tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="dashboard-card">
-                <div class="card-header">
-                    <h2 class="card-title"><i class="fas fa-credit-card"></i> Últimos 5 Pagamentos</h2>
-                </div>
-                 <div class="card-body full-bleed">
-                    <div class="table-responsive-wrapper">
-                        <table class="dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Usuário</th><th>Valor</th><th>Status</th><th>Data</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for pagamento in pagamentos|slice:":5" %}
-                                <tr>
-                                    <td data-label="Usuário">{{ pagamento.usuario.username }}</td>
-                                    <td data-label="Valor">R$ {{ pagamento.valor|floatformat:2 }}</td>
-                                    <td data-label="Status"><span class="status-badge status-{{ pagamento.status|lower }}">{{ pagamento.get_status_display }}</span></td>
-                                    <td data-label="Data">{{ pagamento.data_pagamento|date:"d/m/Y" }}</td>
-                                </tr>
-                                {% empty %}
-                                <tr><td colspan="4" class="text-center">Nenhum pagamento encontrado.</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>

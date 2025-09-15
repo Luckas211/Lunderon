@@ -763,21 +763,22 @@ def pagina_gerador(request):
         usuario=request.user, status="ativo"
     ).exists()
 
-    # Se não tem assinatura ativa, verifica teste grátis
     if not tem_assinatura_ativa:
-        # Verifica se ainda tem testes grátis disponíveis
-        if request.user.testes_gratis_utilizados >= request.user.limite_testes_gratis:
+        # --- LÓGICA ATUALIZADA ---
+        # Busca o limite de testes grátis no banco de dados
+        try:
+            limite_testes = int(Configuracao.objects.get(nome="LIMITE_TESTES_GRATIS").valor)
+        except (Configuracao.DoesNotExist, ValueError):
+            limite_testes = 0 # Define 0 como padrão seguro se não encontrar
+
+        if request.user.testes_gratis_utilizados >= limite_testes:
             messages.warning(
                 request,
-                f"Você já utilizou seus {request.user.limite_testes_gratis} testes grátis. Assine um plano para continuar gerando vídeos.",
+                f"Você já utilizou seus {limite_testes} testes grátis. Assine um plano para continuar.",
             )
             return redirect("planos")
         else:
-            # Mostra quantos testes grátis ainda restam
-            testes_restantes = (
-                request.user.limite_testes_gratis
-                - request.user.testes_gratis_utilizados
-            )
+            testes_restantes = limite_testes - request.user.testes_gratis_utilizados
             messages.info(
                 request, f"Teste grátis: {testes_restantes} vídeo(s) restante(s)."
             )
@@ -1654,6 +1655,40 @@ def logout_view(request):
     return redirect("login")
 
 
+@login_required
+@user_passes_test(is_admin)
+def admin_ativar_usuario(request, user_id):
+    """
+    Ativa a conta de um usuário manualmente pelo painel de admin.
+    """
+    user_para_ativar = get_object_or_404(User, id=user_id)
+    user_para_ativar.is_active = True
+    user_para_ativar.email_verificado = True
+    user_para_ativar.save()
+    messages.success(request, f'O usuário "{user_para_ativar.username}" foi ativado com sucesso.')
+    return redirect('admin_usuarios')
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_reenviar_verificacao(request, user_id):
+    """
+    Reenvia o e-mail de verificação para um usuário inativo.
+    """
+    user_para_verificar = get_object_or_404(User, id=user_id)
+    if not user_para_verificar.is_active:
+        try:
+            send_verification_email(user_para_verificar, request)
+            messages.success(request, f'E-mail de verificação reenviado para {user_para_verificar.email}.')
+        except Exception as e:
+            messages.error(request, 'Ocorreu um erro ao tentar reenviar o e-mail.')
+            print(f"ERRO AO REENVIAR E-MAIL ADMIN: {e}")
+    else:
+        messages.warning(request, f'O usuário "{user_para_verificar.username}" já está ativo.')
+        
+    return redirect('admin_usuarios')
+
+
 # ==============================================================================
 # VIEWS DA APLICAÇÃO (requerem login)
 # ==============================================================================
@@ -1966,9 +2001,20 @@ def planos(request):
 @user_passes_test(is_admin)
 def ativar_assinatura(request, id):
     assinatura = get_object_or_404(Assinatura, id=id)
+    
+    # --- INÍCIO DA MELHORIA ---
+    # Garante que o usuário também seja ativado junto com a assinatura
+    usuario = assinatura.usuario
+    if not usuario.is_active:
+        usuario.is_active = True
+        usuario.email_verificado = True
+        usuario.save(update_fields=['is_active', 'email_verificado'])
+    # --- FIM DA MELHORIA ---
+        
     assinatura.status = "ativo"
-    assinatura.save()
-    messages.success(request, f"Assinatura de {assinatura.usuario.username} ativada.")
+    assinatura.save() # O .save() da assinatura já cuida do campo 'plano_ativo'
+    
+    messages.success(request, f'Assinatura de {assinatura.usuario.username} ativada com sucesso. A conta do usuário também foi ativada.')
     return redirect("admin_assinaturas")
 
 
@@ -2003,10 +2049,12 @@ def editar_assinatura(request, id):
 @user_passes_test(is_admin)
 def excluir_assinatura(request, id):
     assinatura = get_object_or_404(Assinatura, id=id)
-    assinatura.delete()
-    messages.error(request, "Assinatura excluída.")
-    return redirect("admin_assinaturas")
-
+    if request.method == "POST":
+        assinatura.delete()
+        messages.error(request, "Assinatura excluída.")
+        return redirect("admin_assinaturas")
+    contexto = {"item": assinatura}
+    return render(request, "core/user/confirmar_exclusao.html", contexto)
 
 # Em core/views.py
 
@@ -2120,9 +2168,12 @@ def editar_usuario(request, user_id):
 @user_passes_test(is_admin)
 def deletar_usuario(request, user_id):
     user = get_object_or_404(User, id=user_id)
-    user.delete()
-    messages.error(request, "Usuário excluído.")
-    return redirect("admin_usuarios")
+    if request.method == "POST":
+        user.delete()
+        messages.error(request, "Usuário excluído.")
+        return redirect("admin_usuarios")
+    contexto = {"item": user}
+    return render(request, "core/user/confirmar_exclusao.html", contexto)
 
 
 @login_required
@@ -2195,19 +2246,24 @@ def aprovar_pagamento(request, id):
     pagamento = get_object_or_404(Pagamento, id=id)
     usuario = pagamento.usuario
 
-    # 1. Atualiza o status do pagamento (como já fazia)
+    # 1. Atualiza o status do pagamento
     pagamento.status = "aprovado"
     pagamento.save()
 
-    # --- INÍCIO DA CORREÇÃO ---
-    # 2. Busca a duração padrão da assinatura nas configurações
+    # --- INÍCIO DA MELHORIA ---
+    # 2. Ativa e verifica a conta do usuário automaticamente para garantir o acesso
+    usuario.is_active = True
+    usuario.email_verificado = True
+    usuario.save(update_fields=['is_active', 'email_verificado'])
+
+    # 3. Busca a duração padrão da assinatura nas configurações
     try:
         config_duracao = Configuracao.objects.get(nome="DURACAO_ASSINATURA_DIAS")
         duracao_dias = int(config_duracao.valor)
     except (Configuracao.DoesNotExist, ValueError):
         duracao_dias = 30  # Usa 30 dias como padrão se não encontrar
 
-    # 3. Atualiza ou cria a ASSINATURA do usuário, deixando-a ativa
+    # 4. Atualiza ou cria a ASSINATURA do usuário, deixando-a ativa
     Assinatura.objects.update_or_create(
         usuario=usuario,
         defaults={
@@ -2216,12 +2272,11 @@ def aprovar_pagamento(request, id):
             "data_expiracao": timezone.now() + timedelta(days=duracao_dias),
         },
     )
-    # O método .save() da Assinatura já vai garantir que o 'usuario.plano_ativo' seja True.
-    # --- FIM DA CORREÇÃO ---
+    # --- FIM DA MELHORIA ---
 
     messages.success(
         request,
-        f"Pagamento de {usuario.username} aprovado e assinatura ativada/atualizada.",
+        f"Pagamento de {usuario.username} aprovado. A assinatura e a conta do usuário foram ativadas.",
     )
     return redirect("admin_pagamentos")
 
@@ -2259,50 +2314,44 @@ def recusar_pagamento(request, id):
 @user_passes_test(is_admin)
 def deletar_pagamento(request, id):
     pagamento = get_object_or_404(Pagamento, id=id)
-    pagamento.delete()
-    messages.error(request, "Pagamento excluído.")
-    return redirect("admin_pagamentos")
+    if request.method == "POST":
+        pagamento.delete()
+        messages.error(request, "Pagamento excluído.")
+        return redirect("admin_pagamentos")
+    contexto = {"item": pagamento}
+    return render(request, "core/user/confirmar_exclusao.html", contexto)
 
 
 @login_required
 @user_passes_test(is_admin)
 def admin_relatorios(request):
-    # --- LÓGICA ANTIGA (BUSCANDO AS LISTAS) ---
-    assinaturas = Assinatura.objects.select_related("usuario", "plano").order_by(
-        "-data_inicio"
-    )
-    pagamentos = Pagamento.objects.select_related("usuario", "plano").order_by(
-        "-data_pagamento"
-    )
+    # --- LÓGICA EXISTENTE ---
+    assinaturas = Assinatura.objects.select_related("usuario", "plano").order_by("-data_inicio")
+    pagamentos = Pagamento.objects.select_related("usuario", "plano").order_by("-data_pagamento")
 
-    # --- NOVA LÓGICA (CALCULANDO OS INDICADORES / KPIs) ---
-
-    # 1. Total de Assinantes com status 'ativo'
+    # --- CÁLCULO DOS KPIs ---
     total_assinantes_ativos = Assinatura.objects.filter(status="ativo").count()
-
-    # 2. Receita total, somando apenas pagamentos 'aprovados'
-    receita_total = (
-        Pagamento.objects.filter(status="aprovado").aggregate(soma=Sum("valor"))["soma"]
-        or 0
-    )
-
-    # 3. Novos assinantes nos últimos 30 dias
+    receita_total = Pagamento.objects.filter(status="aprovado").aggregate(soma=Sum("valor"))["soma"] or 0
     trinta_dias_atras = timezone.now() - timedelta(days=30)
-    novos_assinantes = Assinatura.objects.filter(
-        data_inicio__gte=trinta_dias_atras
-    ).count()
-
-    # 4. Total de vídeos gerados na plataforma
+    novos_assinantes = Assinatura.objects.filter(data_inicio__gte=trinta_dias_atras).count()
     total_videos_gerados = VideoGerado.objects.count()
+
+    # --- LÓGICA NOVA ADICIONADA ---
+    # Conta usuários que não são admins e que ainda estão inativos (não verificaram e-mail)
+    usuarios_pendentes = User.objects.filter(is_active=False, is_staff=False).count()
+    # Pega os 5 últimos usuários pendentes para exibir na nova tabela
+    ultimos_pendentes = User.objects.filter(is_active=False, is_staff=False).order_by('-date_joined')[:5]
 
     context = {
         "assinaturas": assinaturas,
         "pagamentos": pagamentos,
-        # Adicionando os novos KPIs ao contexto para serem usados no template
         "total_assinantes_ativos": total_assinantes_ativos,
         "receita_total": receita_total,
         "novos_assinantes": novos_assinantes,
         "total_videos_gerados": total_videos_gerados,
+        # --- NOVOS DADOS ENVIADOS PARA O TEMPLATE ---
+        "usuarios_pendentes": usuarios_pendentes,
+        "ultimos_pendentes": ultimos_pendentes,
     }
     return render(request, "core/user/admin_relatorios.html", context)
 

@@ -66,7 +66,7 @@
                                         <a href="{% url 'aprovar_pagamento' pagamento.id %}" class="btn btn-success btn-sm">Aprovar</a>
                                         <a href="{% url 'recusar_pagamento' pagamento.id %}" class="btn btn-warning btn-sm">Recusar</a>
                                         {% endif %}
-                                        <a href="{% url 'deletar_pagamento' pagamento.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja excluir este pagamento?');">Excluir</a>
+                                        <a href="{% url 'deletar_pagamento' pagamento.id %}" class="btn btn-danger btn-sm">Excluir</a>
                                     </div>
                                 </td>
                             </tr>

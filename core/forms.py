@@ -26,6 +26,7 @@ VELOCIDADE_NARRACAO = [
 CONFIG_CHOICES = [
     ('LIMITE_VIDEOS_MES', 'Limite de Vídeos por Mês'),
     ('DURACAO_ASSINATURA_DIAS', 'Duração da Assinatura (em dias)'),
+    ('LIMITE_TESTES_GRATIS', 'Limite de Testes Grátis para Novos Usuários'), # <-- ADICIONE ESTA LINHA
 ]
 
 class ConfiguracaoForm(forms.ModelForm):

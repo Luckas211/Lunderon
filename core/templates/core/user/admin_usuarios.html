@@ -44,11 +44,10 @@
                     <table class="dashboard-table">
                         <thead>
                             <tr>
-                                <th>Nome de Usuário</th>
+                                <th>Usuário</th>
                                 <th>Email</th>
-                                <th>Plano</th>
-                                <th>Status</th>
-                                <th>Vídeos (30d)</th>
+                                <th>Status da Conta</th>
+                                <th>Assinatura</th>
                                 <th class="text-right">Ações</th>
                             </tr>
                         </thead>
@@ -57,25 +56,39 @@
                             <tr>
                                 <td data-label="Usuário">{{ user.username }}</td>
                                 <td data-label="Email">{{ user.email }}</td>
-                                {% with assinatura=user.assinatura_set.first %}
-                                    {% if assinatura %}
-                                        <td data-label="Plano">{{ assinatura.plano.nome }}</td>
-                                        <td data-label="Status"><span class="status-badge status-{{ assinatura.status|lower }}">{{ assinatura.get_status_display }}</span></td>
+                                
+                                <td data-label="Status da Conta">
+                                    {% if user.is_active %}
+                                        <span class="status-badge status-success"><i class="fas fa-check-circle"></i> Ativo</span>
                                     {% else %}
-                                        <td class="text-muted" colspan="2" data-label="Plano/Status">Sem Assinatura</td>
+                                        <span class="status-badge status-pending"><i class="fas fa-hourglass-half"></i> Aguardando Verificação</span>
                                     {% endif %}
-                                {% endwith %}
-                                <td data-label="Vídeos (30d)">{{ user.videos_no_mes }} / {{ limite_videos_mes|default:100 }}</td>
-                                <td data-label="Ações">
+                                </td>
+
+                                <td data-label="Assinatura">
+                                    {% with assinatura=user.assinatura_set.first %}
+                                        {% if assinatura %}
+                                            <strong>{{ assinatura.plano.nome }}</strong> <br>
+                                            <span class="status-badge status-{{ assinatura.status|lower }}">{{ assinatura.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Nenhuma</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td data-label="Ações" class="text-right">
                                     <div class="action-buttons">
+                                        {% if not user.is_active %}
+                                            <a href="{% url 'admin_ativar_usuario' user.id %}" class="btn btn-success btn-sm" title="Ativar conta manualmente">Ativar</a>
+                                            <a href="{% url 'admin_reenviar_verificacao' user.id %}" class="btn btn-info btn-sm" title="Reenviar e-mail de verificação">Reenviar E-mail</a>
+                                        {% endif %}
                                         <a href="{% url 'editar_usuario' user.id %}" class="btn btn-secondary btn-sm">Editar</a>
-                                        <a href="{% url 'deletar_usuario' user.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Tem certeza que deseja deletar este usuário?');">Deletar</a>
+                                        <a href="{% url 'deletar_usuario' user.id %}" class="btn btn-danger btn-sm">Deletar</a>
                                     </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center">Nenhum usuário encontrado.</td>
+                                <td colspan="5" class="text-center">Nenhum usuário encontrado.</td>
                             </tr>
                             {% endfor %}
                         </tbody>

@@ -68,6 +68,9 @@ urlpatterns = [
     path('painel/configuracoes/editar/<int:id>/', views.editar_configuracao, name='editar_configuracao'),
     path('painel/deletar_configuracao/<int:id>/', views.deletar_configuracao, name='deletar_configuracao'),
     path('painel/relatorios/', views.admin_relatorios, name='admin_relatorios'),
+    path('painel/usuarios/reenviar-verificacao/<int:user_id>/', views.admin_reenviar_verificacao, name='admin_reenviar_verificacao'),
+    path('painel/usuarios/ativar/<int:user_id>/', views.admin_ativar_usuario, name='admin_ativar_usuario'),
+
 
     # ========================================
     # OUTRAS FUNCIONALIDADES (API/HELPERS)
