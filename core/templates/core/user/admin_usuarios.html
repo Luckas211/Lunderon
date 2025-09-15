@@ -22,7 +22,7 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-            <div class="dashboard-header-content">
+             <div class="dashboard-header-content">
                 <h1>Gerenciamento de Usuários</h1>
                 <a href="{% url 'admin:core_usuario_add' %}" class="btn btn-primary" target="_blank">
                     <i class="fas fa-plus"></i> Novo Usuário
@@ -48,6 +48,7 @@
                                 <th>Email</th>
                                 <th>Status da Conta</th>
                                 <th>Assinatura</th>
+                                <th>Uso (30d)</th> 
                                 <th class="text-right">Ações</th>
                             </tr>
                         </thead>
@@ -75,6 +76,11 @@
                                         {% endif %}
                                     {% endwith %}
                                 </td>
+
+                                <td data-label="Uso (30d)">
+                                    {{ user.videos_no_mes }} / {{ limite_videos_mes }}
+                                </td>
+
                                 <td data-label="Ações" class="text-right">
                                     <div class="action-buttons">
                                         {% if not user.is_active %}
@@ -88,7 +94,7 @@
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center">Nenhum usuário encontrado.</td>
+                                <td colspan="6" class="text-center">Nenhum usuário encontrado.</td>
                             </tr>
                             {% endfor %}
                         </tbody>

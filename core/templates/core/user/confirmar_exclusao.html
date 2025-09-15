@@ -6,7 +6,19 @@
 {% block content %}
 <div class="dashboard-layout admin-panel">
     <aside class="sidebar">
-        </aside>
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">Painel Admin</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
+                <li><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
+                <li class="active"><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
+                <li><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
+                <li><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
+            </ul>
+        </nav>
+    </aside>
 
     <main class="dashboard-content">
         <header class="dashboard-header">
@@ -24,10 +36,7 @@
                 <h2 class="status-title">Atenção!</h2>
                 <p class="status-message">
                     Você tem certeza que deseja excluir permanentemente o item: <br>
-                    <code class="code-badge" style="margin-top: 15px; display: inline-block;">
-                        {# Tenta exibir o username, senão o nome, senão um texto padrão #}
-                        {{ item.username|default:item.nome|default:"item selecionado" }}
-                    </code>?
+                    <code class="code-badge" style="margin-top: 15px; display: inline-block;">{{ item.nome | default:"item selecionado" }}</code>?
                 </p>
                 <p class="text-muted"><strong>Esta ação não pode ser desfeita.</strong></p>
             </div>
