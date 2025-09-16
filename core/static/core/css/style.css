@@ -3334,47 +3334,86 @@ textarea.form-input {
     background-color: #F9FAFB;
 }
 
-/* --- 8. Overlay de Carregamento (Loading) --- */
+/* ==========================================================================
+   CORREÇÃO DA ANIMAÇÃO DO LOADING - Sobrescreve as regras gerais
+   ========================================================================== */
+#loading-overlay,
+#loading-overlay * {
+    animation-duration: 0.8s !important;
+    animation-iteration-count: infinite !important;
+    transition-duration: 0.3s !important;
+}
+
 .loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(5px);
-    display: flex;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(8px);
+    display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     z-index: 9999;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .loading-overlay.visible {
     opacity: 1;
     visibility: visible;
+    display: flex;
 }
 
 .loading-spinner {
     width: 60px;
     height: 60px;
-    border: 6px solid var(--color-border);
-    border-top-color: var(--color-primary);
+    border: 4px solid transparent;
+    border-top-color: #655be2;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0 10px rgba(101, 91, 226, 0.3);
 }
 
 .loading-text {
     font-size: 1.2rem;
-    font-weight: 500;
-    margin-top: 20px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.75rem;
+    text-align: center;
 }
 
 .loading-overlay small {
-    color: var(--color-text-light);
+    color: #6b7280;
+    font-size: 0.9rem;
+    text-align: center;
+    max-width: 300px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Dark mode support */
+[data-theme="dark"] .loading-overlay {
+    background: rgba(15, 23, 42, 0.95);
+}
+
+[data-theme="dark"] .loading-text {
+    color: #f1f5f9;
+}
+
+[data-theme="dark"] .loading-overlay small {
+    color: #94a3b8;
 }
 
 /* --- 9. Responsividade --- */

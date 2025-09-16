@@ -2,6 +2,9 @@
 
 {% block title %}Gerador de Cortes do YouTube{% endblock %}
 
+{% block extra_css %}
+
+{% endblock %}
 
 {% block content %}
 <div class="dashboard-layout">
@@ -21,11 +24,11 @@
 
 
 <div class="container mt-5 mb-5">
-    <div id="loading-overlay" class="loading-overlay">
-        <div class="loading-spinner"></div>
-        <p class="loading-text">Gerando cortes do YouTube...</p>
-        <small>Este processo pode levar alguns instantes. Por favor, não feche esta página.</small>
-    </div>
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Gerando cortes do YouTube...</p>
+            <small>Este processo pode levar alguns instantes. Por favor, não feche esta página.</small>
+        </div>
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card shadow-sm">
@@ -83,6 +86,25 @@
 </div>
 
 <script>
+// Função para mostrar/ocultar o loading
+function toggleLoading(show, message = 'Gerando cortes do YouTube...') {
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingText = document.querySelector('.loading-text');
+    
+    if (show) {
+        loadingText.textContent = message;
+        loadingOverlay.style.display = 'flex';
+        setTimeout(() => {
+            loadingOverlay.classList.add('visible');
+        }, 10);
+    } else {
+        loadingOverlay.classList.remove('visible');
+        setTimeout(() => {
+            loadingOverlay.style.display = 'none';
+        }, 300);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const loadingOverlay = document.getElementById('loading-overlay');
     const form = document.getElementById('youtube-cutter-form');
@@ -98,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (form && loadingOverlay && submitBtn) {
         form.addEventListener('submit', function() {
             // Mostra a tela de loading ao enviar o formulário
-            loadingOverlay.classList.add('visible');
+            toggleLoading(true, 'Gerando cortes do YouTube...');
 
             // Desabilita o botão e muda o texto para dar feedback visual
             submitBtn.disabled = true;
@@ -114,8 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Mostra a tela de loading
-        loadingOverlay.classList.add('visible');
-        document.querySelector('.loading-text').textContent = 'Analisando vídeo...';
+        toggleLoading(true, 'Analisando vídeo...');
 
         analyzeBtn.disabled = true;
         analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analisando...';
@@ -170,7 +191,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } finally {
             analyzeBtn.disabled = false;
             analyzeBtn.innerHTML = 'Analisar Vídeo';
-            loadingOverlay.classList.remove('visible');
+            toggleLoading(false);
         }
     });
 
