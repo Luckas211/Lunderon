@@ -327,3 +327,26 @@ class GeradorForm(forms.Form):
 
 # Cria o FormSet a partir do formulário
 #GeradorFormSet = formset_factory(GeradorForm, extra=1, max_num=3)
+
+# ================================================================
+# FORMULÁRIO DE CORTES DO YOUTUBE
+# ================================================================
+class CortesYouTubeForm(forms.Form):
+    youtube_url = forms.URLField(
+        label="URL do Vídeo do YouTube",
+        widget=forms.URLInput(attrs={'class': 'form-input', 'placeholder': 'https://www.youtube.com/watch?v=...'}),
+        required=True
+    )
+    categoria_musica = forms.ModelChoiceField(
+        queryset=CategoriaMusica.objects.all(),
+        label="Categoria da Música de Fundo",
+        required=True
+    )
+    volume_musica = forms.IntegerField(
+        min_value=0,
+        max_value=100,
+        initial=20, # Começa com um volume mais baixo por padrão
+        label="Volume da Música de Fundo (%)",
+        help_text="Ajuste o volume da música para não sobrepor o áudio original do vídeo."
+    )
+    segments = forms.CharField(widget=forms.HiddenInput(), required=True)

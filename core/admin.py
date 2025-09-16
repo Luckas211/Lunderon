@@ -61,28 +61,25 @@ class CategoriaMusicaAdmin(admin.ModelAdmin):
 def corrigir_object_keys(modeladmin, request, queryset):
     corrigidos = 0
     for midia in queryset:
-        current_key = midia.object_key or ''
-        
-        # Extrai apenas o nome do arquivo (remove qualquer caminho existente)
-        filename = os.path.basename(current_key)
-        
-        # Define o caminho correto baseado no tipo de mídia
-        if isinstance(midia, VideoBase):
-            correct_key = f'media/videos_base/{filename}'
-        elif isinstance(midia, MusicaBase):
-            correct_key = f'media/musicas_base/{filename}'
+        # Pega o nome do arquivo do campo FileField, que é a fonte da verdade
+        if isinstance(midia, VideoBase) and midia.arquivo_video and midia.categoria:
+            filename = os.path.basename(midia.arquivo_video.name)
+            correct_key = f'media/videos_base/{midia.categoria.pasta}/{filename}'
+        elif isinstance(midia, MusicaBase) and midia.arquivo_musica and midia.categoria:
+            filename = os.path.basename(midia.arquivo_musica.name)
+            correct_key = f'media/musicas_base/{midia.categoria.pasta}/{filename}'
         else:
-            continue
-        
-        # Atualiza SEMPRE para o caminho correto (mesmo que já esteja "correto" mas sem media/)
-        if current_key != correct_key:
+            continue # Pula mídias sem arquivo ou sem categoria
+
+        # Compara com o object_key atual e corrige se necessário
+        if midia.object_key != correct_key:
             midia.object_key = correct_key
-            midia.save()
+            midia.save(update_fields=['object_key']) # Salva apenas o campo modificado
             corrigidos += 1
-            print(f"Corrigido: {current_key} -> {correct_key}")  # Debug
+            print(f"Corrigido: {midia.titulo} -> {correct_key}")
     
-    modeladmin.message_user(request, f"Object keys de {corrigidos} mídias foram corrigidos.")
-corrigir_object_keys.short_description = "Corrigir object_keys para incluir caminho completo"
+    modeladmin.message_user(request, f"Object keys de {corrigidos} mídias foram corrigidos para o caminho completo com categoria.")
+corrigir_object_keys.short_description = "Corrigir object_keys (usando pasta da categoria)"
 
 # Ação para forçar recálculo das URLs
 def recalc_urls(modeladmin, request, queryset):

@@ -1,11 +1,9 @@
 # ==============================================================================
 # IMPORTS ORGANIZADOS
 # ==============================================================================
+
 from django.utils.safestring import mark_safe
-from .utils import send_verification_email
-from .models import Usuario # Adicione se ainda não tiver
-from .utils import is_token_valid
-from django.contrib.auth import login # Adicione se ainda não tiver
+from .utils import send_verification_email, is_token_valid
 import tempfile
 import requests
 from urllib.parse import urlparse
@@ -15,27 +13,25 @@ import boto3
 from botocore.exceptions import ClientError
 from django.conf import settings
 
+import re
 import json
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
-from django.conf import settings
 import subprocess
 import stripe
 
 stripe.api_key = settings.STRIPE_SECRET_KEY
 from django.urls import reverse
 import random
-import os
-from datetime import timedelta
-from django.utils import timezone  # <-- ADICIONE ESTA LINHA
+from datetime import datetime, timedelta
+from django.utils import timezone
 from django.db.models import Count, Q, Sum
 import platform
 import textwrap
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse
-from django.contrib.auth import authenticate, login, logout, get_user_model
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponse
 from django.conf import settings
@@ -45,7 +41,7 @@ from .forms import (
     GeradorForm,
     CadastroUsuarioForm,
     AdminUsuarioForm,
-    EditarPerfilForm,
+    CortesYouTubeForm,
     ConfiguracaoForm,
     EditarAssinaturaForm,
 )
@@ -61,11 +57,11 @@ from .models import (
     CategoriaMusica,
     Plano,
     Usuario,
-    VideoGerado,
 )
 
 
 from django.core.mail import send_mail
+import yt_dlp
 
 
 def verificar_arquivo_existe_no_r2(object_key):
@@ -129,12 +125,6 @@ VOICE_MAPPING = {
     "pm_alex": {"speaker": "pm_alex", "language": "pt-br"},
     "pm_santa": {"speaker": "pm_santa", "language": "pt-br"},
 }
-# Pega o modelo de usuário customizado que definimos
-User = get_user_model()
-
-# Se estiver usando `gcloud auth application-default login`, esta linha deve ficar comentada.
-# os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(settings.BASE_DIR, 'gcloud-auth.json')
-
 
 # ==============================================================================
 # CONSTANTES E FUNÇÕES HELPER (LÓGICA DO GERADOR DE VÍDEO)
@@ -143,62 +133,13 @@ from kokoro import KPipeline
 import numpy as np
 import soundfile as sf
 
-# Mapeamento de vozes do Kokoro para português brasileiro
-# Mapeamento de vozes do Kokoro para português brasileiro
 VOZES_KOKORO = {
     "pt-BR-Wavenet-A": "pf_dora",
     "pt-BR-Wavenet-C": "pf_dora",
     "pt-BR-Wavenet-D": "pf_dora",
     "pt-BR-Wavenet-B": "pm_alex",
     "pt-BR-Neural2-B": "pm_santa",
-}
-
-
-def gerar_audio_kokoro(texto, nome_da_voz, velocidade, tom):
-    try:
-        # Converter velocidade percentual para fator (80-120% -> 0.8-1.2)
-        # CORREÇÃO: garantir que velocidade seja convertida para float
-        speed_factor = (
-            float(velocidade) / 100.0
-        )  # Convertendo para float antes da divisão
-
-        # Inicializar pipeline do Kokoro para português brasileiro
-        pipeline = KPipeline(lang_code="p")
-
-        # Gerar áudio
-        generator = pipeline(
-            texto, voice=VOZES_KOKORO.get(nome_da_voz, "pf_dora"), speed=speed_factor
-        )
-
-        # Concatenar todos os chunks de áudio
-        audio_data = None
-        for _, _, audio_chunk in generator:
-            if audio_data is None:
-                audio_data = audio_chunk
-            else:
-                audio_data = np.concatenate((audio_data, audio_chunk))
-
-        if audio_data is None:
-            return None, 0
-
-        # Salvar arquivo temporário
-        narrador_temp_dir = os.path.join(settings.MEDIA_ROOT, "narrador_temp")
-        os.makedirs(narrador_temp_dir, exist_ok=True)
-        nome_arquivo_narrador = f"narrador_{random.randint(10000, 99999)}.wav"
-        caminho_narrador_input = os.path.join(narrador_temp_dir, nome_arquivo_narrador)
-
-        # Salvar como WAV (24000 Hz)
-        sf.write(caminho_narrador_input, audio_data, 24000)
-
-        # Calcular duração do áudio em segundos
-        duracao_audio = len(audio_data) / 24000.0
-
-        return caminho_narrador_input, duracao_audio
-
-    except Exception as e:
-        print(f"--- ERRO AO GERAR ÁUDIO COM KOKORO: {e} ---")
-        return None, 0
-
+ }
 
 def gerar_audio_e_tempos(
     texto, voz, velocidade, obter_tempos=False
@@ -396,96 +337,6 @@ def create_text_image(texto, cor_da_fonte_hex, data, posicao="centro"):
     return caminho_imagem_texto
 
 
-def formatar_tempo_ass(segundos):
-    h = int(segundos // 3600)
-    m = int((segundos % 3600) // 60)
-    s = int(segundos % 60)
-    cs = int((segundos - int(segundos)) * 100)
-    return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
-
-
-def gerar_ficheiro_legenda_ass(
-    timepoints, texto_original, data, cor_da_fonte_hex, posicao="centro"
-):
-    sistema_op = platform.system()
-    nome_fonte = data.get("texto_fonte", "cunia")
-    caminho_fonte = FONT_PATHS.get(sistema_op, {}).get(
-        nome_fonte, FONT_PATHS["Windows"]["cunia"]
-    )
-    nome_fonte_ass = os.path.splitext(os.path.basename(caminho_fonte))[0].replace(
-        "_", " "
-    )
-    tamanho = data.get("texto_tamanho", 70)
-    negrito = -1 if data.get("texto_negrito", False) else 0
-    sublinhado = -1 if data.get("texto_sublinhado", False) else 0
-
-    hex_limpo = cor_da_fonte_hex.lstrip("#")
-    r, g, b = tuple(int(hex_limpo[i : i + 2], 16) for i in (0, 2, 4))
-    cor_secundaria_ass = f"&H{b:02X}{g:02X}{r:02X}"
-
-    if posicao == "inferior":
-        alignment_code = 2
-        margin_v = 150
-    else:
-        alignment_code = 5
-        margin_v = 10
-
-    cor_primaria = cor_secundaria_ass
-    cor_secundaria = cor_secundaria_ass
-    cor_outline = "&H000000"
-    cor_back = "&H00000000"
-
-    header = (
-        f"[Script Info]\nTitle: Video Gerado\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\n\n"
-        f"[V4+ Styles]\n"
-        f"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
-        f"Style: Default,{nome_fonte_ass},{tamanho},{cor_primaria},{cor_secundaria},{cor_outline},{cor_back},{negrito},0,{sublinhado},0,100,100,0,0,1,2,2,{alignment_code},10,10,{margin_v},1\n\n"
-        f"[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
-    )
-    palavras = texto_original.split()
-    if not timepoints or len(timepoints) != len(palavras):
-        print(
-            f"--- AVISO: Discrepância de timepoints/palavras. Legenda não gerada. ---"
-        )
-        return None
-    texto_quebrado = textwrap.fill(texto_original, width=30)
-    linhas = texto_quebrado.splitlines()
-    linhas_dialogo = []
-    word_index = 0
-    for linha in linhas:
-        words_in_line = linha.split()
-        num_words = len(words_in_line)
-        if num_words == 0:
-            continue
-        start_time = 0.0 if word_index == 0 else timepoints[word_index - 1].time_seconds
-        end_time = timepoints[word_index + num_words - 1].time_seconds
-        karaoke_text = ""
-        prev_time = start_time
-        for j in range(num_words):
-            tp = timepoints[word_index + j]
-            dur = tp.time_seconds - prev_time
-            dur_cs = max(1, int(dur * 100))
-            word = words_in_line[j]
-            karaoke_text += f"{{\\k{dur_cs}}}{word} "
-            prev_time = tp.time_seconds
-        karaoke_text = karaoke_text.strip()
-        start_str = formatar_tempo_ass(start_time)
-        end_str = formatar_tempo_ass(end_time)
-        linhas_dialogo.append(
-            f"Dialogue: 0,{start_str},{end_str},Default,,0,0,0,,{karaoke_text}"
-        )
-        word_index += num_words
-    conteudo_ass = header + "\n".join(linhas_dialogo)
-    legenda_temp_dir = os.path.join(settings.MEDIA_ROOT, "legenda_temp")
-    os.makedirs(legenda_temp_dir, exist_ok=True)
-    caminho_legenda = os.path.join(
-        legenda_temp_dir, f"legenda_{random.randint(1000,9999)}.ass"
-    )
-    with open(caminho_legenda, "w", encoding="utf-8") as f:
-        f.write(conteudo_ass)
-    return caminho_legenda
-
-
 @csrf_exempt
 def preview_voz(request, nome_da_voz):
     """
@@ -631,46 +482,6 @@ def download_from_cloudflare(url_or_key, extension):
     except Exception as e:
         print(f"Erro ao baixar {url_or_key}: {e}")
         return None
-
-
-def upload_to_r2(caminho_arquivo_local, object_key):
-    """
-    Faz o upload de um arquivo para o bucket R2 principal.
-    """
-    try:
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
-        s3_client.upload_file(
-            caminho_arquivo_local, settings.AWS_STORAGE_BUCKET_NAME, object_key
-        )
-        return True
-    except ClientError as e:
-        print(f"Erro no upload para o R2: {e}")
-        return False
-
-
-def delete_from_r2(object_key):
-    """
-    Apaga um arquivo do bucket R2 principal.
-    """
-    try:
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
-        s3_client.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=object_key)
-        return True
-    except ClientError as e:
-        print(f"Erro ao apagar do R2: {e}")
-        return False
 
 
 def upload_to_r2(caminho_arquivo_local, object_key):
@@ -1117,6 +928,7 @@ def download_video_direto(request, video_id):
     return redirect(presigned_url)
 
 
+
 def estimar_tempo_narracao(texto, velocidade=100):
     """
     Estima o tempo de narração com base no texto e velocidade
@@ -1144,6 +956,13 @@ def estimar_tempo_narracao(texto, velocidade=100):
 
     return duracao_segundos, num_palavras
 
+
+def formatar_tempo_ass(segundos):
+    h = int(segundos // 3600)
+    m = int((segundos % 3600) // 60)
+    s = int(segundos % 60)
+    cs = int((segundos - int(segundos)) * 100)
+    return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
 
 def gerar_legenda_sincronizada_estimada(
     texto, duracao_total, num_palavras, data, cor_da_fonte_hex, posicao="centro"
@@ -1312,87 +1131,6 @@ def politica_de_privacidade(request):
     return render(request, "core/politica_de_privacidade.html")
 
 
-def suporte(request):
-    if request.method == "POST":
-        # Coleta os dados que o usuário preencheu no formulário
-        nome = request.POST.get("name")
-        email_contato = request.POST.get("email")
-        assunto = request.POST.get("subject")
-        mensagem = request.POST.get("message")
-
-        # Validação para garantir que todos os campos foram preenchidos
-        if not all([nome, email_contato, assunto, mensagem]):
-            messages.error(
-                request, "Por favor, preencha todos os campos do formulário."
-            )
-            return render(request, "core/suporte.html")
-
-        # Monta o corpo do e-mail que você vai receber
-        corpo_email = f"""
-        Nova mensagem de suporte recebida através do site:
-
-        Nome do Remetente: {nome}
-        E-mail para Contato: {email_contato}
-        Assunto: {assunto}
-
-        Mensagem:
-        --------------------------------
-        {mensagem}
-        --------------------------------
-        """
-
-        try:
-            # Tenta enviar o e-mail
-            send_mail(
-                subject=f"Suporte LUNDERON: {assunto}",  # Assunto do e-mail
-                message=corpo_email,  # O corpo da mensagem que montamos acima
-                from_email=settings.EMAIL_HOST_USER,  # O e-mail configurado no seu .env para enviar
-                recipient_list=[
-                    "lunderoncreator@gmail.com"
-                ],  # <<< SEU E-MAIL DE SUPORTE VAI AQUI
-                fail_silently=False,
-            )
-            # Se o envio for bem-sucedido, mostra uma mensagem de sucesso
-            messages.success(
-                request,
-                "Sua mensagem foi enviada com sucesso! Nossa equipe responderá em breve.",
-            )
-            return redirect("suporte")
-
-        except Exception as e:
-            # Se ocorrer um erro, mostra uma mensagem de falha
-            print(f"Erro ao enviar e-mail de suporte: {e}")
-            messages.error(
-                request,
-                "Ocorreu um erro ao tentar enviar sua mensagem. Por favor, tente novamente mais tarde.",
-            )
-
-    # Se a requisição for GET (usuário apenas acessou a página), mostra a página normalmente
-    return render(request, "core/suporte.html")
-
-
-
-def verificar_email(request, token):
-    try:
-        # Encontra o usuário pelo token
-        user = Usuario.objects.get(email_verification_token=token)
-    except Usuario.DoesNotExist:
-        messages.error(request, 'Link de verificação inválido ou expirado.')
-        return redirect('login')
-
-    # Verifica se o token é válido e não expirou
-    if is_token_valid(user, token):
-        user.is_active = True
-        user.email_verificado = True
-        user.email_verification_token = None # Limpa o token após o uso
-        user.save()
-        login(request, user)
-        messages.success(request, 'E-mail verificado com sucesso! Você já pode usar a plataforma.')
-        return redirect('meu_perfil')
-    else:
-        messages.error(request, 'Link de verificação inválido ou expirado.')
-        return redirect('login')
-
 def verificar_email(request, token):
     try:
         # 1. Tenta encontrar um usuário que tenha exatamente este token.
@@ -1463,17 +1201,16 @@ def validate_otp_view(request):
 
 def reenviar_verificacao_email(request, user_id):
     try:
-        user = User.objects.get(id=user_id)
+        user = Usuario.objects.get(id=user_id)
         if not user.is_active:
             send_verification_email(user, request)
             messages.success(request, 'Um novo link de verificação foi enviado para o seu e-mail.')
         else:
             messages.info(request, 'Esta conta já está ativa. Você pode fazer login normalmente.')
-    except User.DoesNotExist:
+    except Usuario.DoesNotExist:
         messages.error(request, 'Usuário não encontrado.')
     
     return redirect('login')
-
 def login_view(request):
     if request.method == "POST":
         email_digitado = request.POST.get("email")
@@ -1485,7 +1222,7 @@ def login_view(request):
 
         try:
             # 1. Primeiro, apenas busca o usuário pelo e-mail, sem verificar a senha.
-            user_encontrado = User.objects.get(email=email_digitado)
+            user_encontrado = Usuario.objects.get(email=email_digitado)
 
             # 2. VERIFICA SE A CONTA ESTÁ ATIVA.
             if not user_encontrado.is_active:
@@ -1510,7 +1247,7 @@ def login_view(request):
                 # Se chegou aqui, a conta é ativa, mas a senha está errada.
                 messages.error(request, "Email ou senha inválidos.")
 
-        except User.DoesNotExist:
+        except Usuario.DoesNotExist:
             # Se o e-mail nem existe no banco de dados.
             messages.error(request, "Email ou senha inválidos.")
             
@@ -1528,7 +1265,7 @@ def admin_ativar_usuario(request, user_id):
     """
     Ativa a conta de um usuário manualmente pelo painel de admin.
     """
-    user_para_ativar = get_object_or_404(User, id=user_id)
+    user_para_ativar = get_object_or_404(Usuario, id=user_id)
     user_para_ativar.is_active = True
     user_para_ativar.email_verificado = True
     user_para_ativar.save()
@@ -1542,7 +1279,7 @@ def admin_reenviar_verificacao(request, user_id):
     """
     Reenvia o e-mail de verificação para um usuário inativo.
     """
-    user_para_verificar = get_object_or_404(User, id=user_id)
+    user_para_verificar = get_object_or_404(Usuario, id=user_id)
     if not user_para_verificar.is_active:
         try:
             send_verification_email(user_para_verificar, request)
@@ -1563,6 +1300,11 @@ def pagamento_falho(request):
     """
     Renderiza a página de pagamento falho.
     """
+    from .forms import EditarPerfilForm
+
+
+
+
     return render(request, "planos/pagamento_falho.html")
 
 
@@ -1722,6 +1464,7 @@ def stripe_webhook(request):
 
 @login_required
 def editar_perfil(request):
+    from .forms import EditarPerfilForm
     if request.method == "POST":
         form = EditarPerfilForm(request.POST, instance=request.user)
         if form.is_valid():
@@ -1732,6 +1475,55 @@ def editar_perfil(request):
         form = EditarPerfilForm(instance=request.user)
 
     return render(request, "core/usuarios/editar_perfil.html", {"form": form})
+
+
+
+@require_POST
+@csrf_exempt
+def get_youtube_segments(request):
+    """
+    Recebe a URL de um vídeo do YouTube e retorna os capítulos (segments)
+    para serem usados no formulário de cortes.
+    """
+    try:
+        data = json.loads(request.body)
+        url = data.get('url')
+        if not url:
+            return JsonResponse({'error': 'URL não fornecida.'}, status=400)
+
+        # Opções para o yt-dlp para extrair informações sem baixar o vídeo
+        ydl_opts = {
+            'quiet': True,
+            'dump_json': True,
+            'skip_download': True,
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info_dict = ydl.extract_info(url, download=False)
+            chapters = info_dict.get('chapters', [])
+
+            if not chapters:
+                # Se não houver capítulos, podemos talvez criar segmentos de X em X minutos?
+                # Por enquanto, vamos retornar uma mensagem clara.
+                return JsonResponse({'message': 'Este vídeo não contém capítulos (cortes pré-definidos). A funcionalidade de detecção automática de cenas ainda não está disponível.'}, status=200)
+
+            segments = []
+            for chapter in chapters:
+                start_time = chapter.get('start_time')
+                end_time = chapter.get('end_time')
+                if start_time is not None and end_time is not None:
+                    segments.append({
+                        'start': start_time,
+                        'end': end_time,
+                        'duration': end_time - start_time,
+                        'title': chapter.get('title', 'Segmento sem nome'),
+                    })
+
+            return JsonResponse({'segments': segments})
+
+    except Exception as e:
+        print(f"Erro ao obter segmentos do YouTube: {e}")
+        return JsonResponse({'error': 'Não foi possível analisar a URL do YouTube. Verifique se o link é válido.'}, status=500)
 
 
 @login_required
@@ -1944,7 +1736,7 @@ def admin_usuarios(request):
     # A query agora usa .annotate() para adicionar um novo campo temporário 'videos_no_mes'
     # a cada usuário, contando apenas os vídeos dos últimos 30 dias.
     usuarios = (
-        User.objects.prefetch_related("assinatura_set__plano")
+        Usuario.objects.prefetch_related("assinatura_set__plano")
         .annotate(
             videos_no_mes=Count(
                 "videogerado", filter=Q(videogerado__criado_em__gte=trinta_dias_atras)
@@ -1971,7 +1763,7 @@ def admin_usuarios(request):
 @login_required
 @user_passes_test(is_admin)
 def editar_usuario(request, user_id):
-    user = get_object_or_404(User, id=user_id)
+    user = get_object_or_404(Usuario, id=user_id)
     assinatura = (
         Assinatura.objects.filter(usuario=user).order_by("-data_inicio").first()
     )
@@ -2053,7 +1845,7 @@ def editar_usuario(request, user_id):
 @login_required
 @user_passes_test(is_admin)
 def deletar_usuario(request, user_id):
-    user = get_object_or_404(User, id=user_id)
+    user = get_object_or_404(Usuario, id=user_id)
     if request.method == "POST":
         user.delete()
         messages.error(request, "Usuário excluído.")
@@ -2224,9 +2016,9 @@ def admin_relatorios(request):
 
     # --- LÓGICA NOVA ADICIONADA ---
     # Conta usuários que não são admins e que ainda estão inativos (não verificaram e-mail)
-    usuarios_pendentes = User.objects.filter(is_active=False, is_staff=False).count()
+    usuarios_pendentes = Usuario.objects.filter(is_active=False, is_staff=False).count()
     # Pega os 5 últimos usuários pendentes para exibir na nova tabela
-    ultimos_pendentes = User.objects.filter(is_active=False, is_staff=False).order_by('-date_joined')[:5]
+    ultimos_pendentes = Usuario.objects.filter(is_active=False, is_staff=False).order_by('-date_joined')[:5]
 
     context = {
         "assinaturas": assinaturas,
@@ -2350,3 +2142,196 @@ def cancelar_assinatura_admin(request, assinatura_id):
         request, f"A assinatura de {assinatura.usuario.username} foi cancelada."
     )
     return redirect("admin_usuarios")  # Redireciona de volta para a lista de usuários
+
+
+@login_required
+@require_POST
+@csrf_exempt
+def get_youtube_segments(request):
+    """
+    Endpoint AJAX que recebe uma URL do YouTube, busca a página
+    e extrai os timestamps dos segmentos "mais repetidos".
+    """
+    try:
+        data = json.loads(request.body)
+        youtube_url = data.get('url')
+        if not youtube_url or 'youtube.com' not in youtube_url:
+            return JsonResponse({'error': 'URL do YouTube inválida.'}, status=400)
+
+        headers = {'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'pt-BR,pt;q=0.9'}
+        response = requests.get(youtube_url, headers=headers)
+        response.raise_for_status()
+
+        # Regex para encontrar o objeto ytInitialData, que contém os dados da página
+        match = re.search(r'window\["ytInitialData"\] = ({.*?});', response.text)
+        if not match:
+            # Fallback para um segundo padrão comum
+            match = re.search(r'var ytInitialData = ({.*?});', response.text)
+
+        if not match:
+            return JsonResponse({'error': 'Não foi possível encontrar os dados do vídeo na página. O vídeo pode ter restrição de idade, ser privado ou a estrutura do YouTube mudou.'}, status=404)
+
+        initial_data = json.loads(match.group(1))
+        
+        # Navega pela complexa estrutura do JSON para encontrar os marcadores
+        decorations = []
+        mutations = initial_data.get('frameworkUpdates', {}).get('entityBatchUpdate', {}).get('mutations', [])
+        for mutation in mutations:
+            if 'payload' in mutation and 'macroMarkersListEntity' in mutation['payload']:
+                markers_list = mutation['payload']['macroMarkersListEntity'].get('markersList', {})
+                decorations = markers_list.get('markersDecoration', {}).get('timedMarkerDecorations', [])
+                if decorations:
+                    break
+        
+        if not decorations:
+            return JsonResponse({'segments': [], 'message': 'Nenhum segmento "mais repetido" foi encontrado para este vídeo.'})
+
+        segments = []
+        for deco in decorations:
+            if deco.get('label', {}).get('runs', [{}])[0].get('text') == 'Mais repetidos':
+                start_ms = int(deco.get('visibleTimeRangeStartMillis', 0))
+                end_ms = int(deco.get('visibleTimeRangeEndMillis', 0))
+                
+                segments.append({
+                    'start': start_ms / 1000.0,
+                    'end': end_ms / 1000.0,
+                    'duration': (end_ms - start_ms) / 1000.0
+                })
+
+        return JsonResponse({'segments': sorted(segments, key=lambda x: x['start'])})
+
+    except requests.RequestException as e:
+        return JsonResponse({'error': f'Erro ao buscar a URL do YouTube: {e}'}, status=500)
+    except Exception as e:
+        print(f"Erro em get_youtube_segments: {e}")
+        return JsonResponse({'error': 'Ocorreu um erro inesperado ao analisar o vídeo.'}, status=500)
+
+
+@login_required
+def cortes_youtube_view(request):
+    """
+    View principal para a página de geração de cortes do YouTube.
+    """
+    if not request.user.plano_ativo:
+        messages.warning(request, "Esta funcionalidade está disponível apenas para assinantes do plano Pro.")
+        return redirect("planos")
+
+    try:
+        limite_videos_mes = int(Configuracao.objects.get(nome="LIMITE_VIDEOS_MES").valor)
+    except (Configuracao.DoesNotExist, ValueError):
+        limite_videos_mes = 100
+    
+    trinta_dias_atras = timezone.now() - timedelta(days=30)
+    videos_criados = VideoGerado.objects.filter(usuario=request.user, criado_em__gte=trinta_dias_atras).count()
+
+    if videos_criados >= limite_videos_mes:
+        messages.error(request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês.")
+        return redirect("meu_perfil")
+
+    if request.method == 'POST':
+        form = CortesYouTubeForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            youtube_url = data['youtube_url']
+            selected_segments = json.loads(data['segments'])
+            volume_musica = data.get('volume_musica', 20) / 100.0  # Converter para decimal
+            
+            if (videos_criados + len(selected_segments)) > limite_videos_mes:
+                messages.error(request, f"A criação de {len(selected_segments)} cortes excederia seu limite mensal.")
+                return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
+
+            musica_base = get_valid_media_from_category(MusicaBase, data['categoria_musica'])
+            if not musica_base:
+                messages.error(request, f"Não foi possível encontrar uma música válida para a categoria '{data['categoria_musica']}'.")
+                return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
+            
+            caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
+            if not caminho_musica_input:
+                messages.error(request, "Erro ao baixar a música de fundo.")
+                return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
+
+            videos_gerados_count = 0
+            temp_dir = os.path.join(settings.MEDIA_ROOT, "youtube_cuts_temp")
+            os.makedirs(temp_dir, exist_ok=True)
+
+            for segment in selected_segments:
+                caminho_video_segmento = None
+                caminho_video_local_final = None
+                try:
+                    segment_filename_template = os.path.join(temp_dir, f'segment_{request.user.id}_{random.randint(1000, 9999)}.%(ext)s')
+                    
+                    ydl_opts = {
+                        'format': 'best[ext=mp4][height<=1080]/best[height<=1080]/best',
+                        'outtmpl': segment_filename_template,
+                        'download_ranges': yt_dlp.utils.download_range_func(None, [(segment['start'], segment['end'])]),
+                        'force_keyframes_at_cuts': True,
+                    }
+
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(youtube_url, download=True)
+                        caminho_video_segmento = ydl.prepare_filename(info)
+
+                    if not caminho_video_segmento or not os.path.exists(caminho_video_segmento):
+                        raise Exception("yt-dlp não baixou o arquivo do segmento.")
+
+                    nome_base = f"corte_{request.user.id}_{random.randint(10000, 99999)}"
+                    nome_arquivo_final = f"{nome_base}.mp4"
+                    caminho_video_local_final = os.path.join(settings.MEDIA_ROOT, "videos_gerados", nome_arquivo_final)
+                    object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
+                    os.makedirs(os.path.dirname(caminho_video_local_final), exist_ok=True)
+
+                    # COMANDO FFMPEG CORRIGIDO - MESCLAR ÁUDIO ORIGINAL + MÚSICA DE FUNDO
+                    cmd = [
+                        "ffmpeg", "-y", 
+                        "-i", caminho_video_segmento, 
+                        "-i", caminho_musica_input,
+                        "-filter_complex", 
+                        # Processar vídeo
+                        f"[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1[v];"
+                        # Processar áudio: manter áudio original completo + música de fundo com volume ajustado
+                        f"[0:a]aformat=sample_rates=44100:channel_layouts=stereo,volume=1.0[audio_original];"
+                        f"[1:a]aformat=sample_rates=44100:channel_layouts=stereo,volume={volume_musica}[audio_musica];"
+                        f"[audio_original][audio_musica]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]",
+                        "-map", "[v]", 
+                        "-map", "[audio_mix]",
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p", 
+                        "-c:a", "aac", "-b:a", "192k", 
+                        "-shortest",
+                        caminho_video_local_final
+                    ]
+                    
+                    subprocess.run(cmd, check=True, capture_output=True, text=True, encoding='utf-8')
+
+                    if not upload_to_r2(caminho_video_local_final, object_key_r2):
+                        raise Exception("Falha no upload do corte para o Cloudflare R2.")
+
+                    VideoGerado.objects.create(
+                        usuario=request.user, status="CONCLUIDO", arquivo_final=object_key_r2,
+                        duracao_segundos=int(segment['duration']),
+                        narrador_texto=f"Corte de: {youtube_url} ({segment['start']:.1f}s - {segment['end']:.1f}s)"
+                    )
+                    videos_gerados_count += 1
+
+                except Exception as e:
+                    print(f"Erro ao processar segmento: {e}")
+                    if isinstance(e, subprocess.CalledProcessError): 
+                        print(f"FFMPEG Error: {e.stderr}")
+                finally:
+                    if caminho_video_segmento and os.path.exists(caminho_video_segmento): 
+                        os.remove(caminho_video_segmento)
+                    if caminho_video_local_final and os.path.exists(caminho_video_local_final): 
+                        os.remove(caminho_video_local_final)
+
+            if caminho_musica_input and os.path.exists(caminho_musica_input): 
+                os.remove(caminho_musica_input)
+
+            if videos_gerados_count > 0:
+                messages.success(request, f"{videos_gerados_count} corte(s) de vídeo gerado(s) com sucesso!")
+            else:
+                messages.error(request, "Não foi possível gerar nenhum corte. Tente novamente ou contate o suporte.")
+            
+            return redirect("meus_videos")
+
+    form = CortesYouTubeForm()
+    context = {'form': form, 'videos_restantes': limite_videos_mes - videos_criados}
+    return render(request, 'core/cortes_youtube.html', context)

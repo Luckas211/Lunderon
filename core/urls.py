@@ -16,7 +16,6 @@ urlpatterns = [
     path('politica-de-privacidade/', views.politica_de_privacidade, name='politica_de_privacidade'),
     path('cadastre-se/', views.cadastre_se, name='cadastre_se'),
     path('verificar-email/<str:token>/', views.verificar_email, name='verify_email'),
-    path('verificar-email/<str:token>/', views.verificar_email, name='verify_email'),
     path('reenviar-verificacao/<int:user_id>/', views.reenviar_verificacao_email, name='reenviar_verificacao'),
 
     path('login/', views.login_view, name='login'),
@@ -27,6 +26,7 @@ urlpatterns = [
     # PÁGINAS DO USUÁRIO LOGADO
     # ========================================
     path('gerador/', views.pagina_gerador, name='pagina_gerador'),
+    path('cortes-youtube/', views.cortes_youtube_view, name='cortes_youtube'),
     path('meus-videos/', views.meus_videos, name='meus_videos'),
     path('perfil/', views.meu_perfil, name='meu_perfil'),
     path('perfil/editar/', views.editar_perfil, name='editar_perfil'),
@@ -75,6 +75,7 @@ urlpatterns = [
     # ========================================
     # OUTRAS FUNCIONALIDADES (API/HELPERS)
     # ========================================
+    path('get-youtube-segments/', views.get_youtube_segments, name='get_youtube_segments'),
     path('preview-voz/<str:nome_da_voz>/', views.preview_voz, name='preview_voz'),
     path('estimativa-narracao/', views.estimativa_narracao, name='estimativa_narracao'),
 

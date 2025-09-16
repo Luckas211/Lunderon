@@ -1,0 +1,154 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Gerador de Cortes do YouTube{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title text-center mb-4">Novo Corte do YouTube</h1>
+                    <p class="text-center text-muted">Cole a URL de um vídeo do YouTube, analise os trechos mais populares e crie seus cortes com uma música de fundo.</p>
+                    
+                    <div class="alert alert-info" role="alert">
+                        Você tem <strong>{{ videos_restantes }}</strong> vídeo(s) restante(s) no seu limite mensal. Cada corte gerado consome um vídeo do seu limite.
+                    </div>
+
+                    <form id="youtube-cutter-form" method="post">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            {{ form.youtube_url.label_tag }}
+                            {{ form.youtube_url }}
+                            <div class="form-text">Cole a URL completa do vídeo do YouTube.</div>
+                        </div>
+
+                        <div class="d-grid gap-2 mb-4">
+                            <button type="button" id="analyze-btn" class="btn btn-secondary">Analisar Vídeo</button>
+                        </div>
+
+                        <div id="segments-container" class="mb-3" style="display: none;">
+                            <h5 class="mb-3">Segmentos Encontrados</h5>
+                            <div id="segments-list" class="list-group">
+                                <!-- Os segmentos serão inseridos aqui pelo JavaScript -->
+                            </div>
+                            <div id="segments-error" class="alert alert-danger mt-3" style="display: none;"></div>
+                        </div>
+
+                                                <div id="music-and-submit-container" style="display: none;">
+                            <div class="mb-3">
+                                {{ form.categoria_musica.label_tag }}
+                                {{ form.categoria_musica }}
+                            </div>
+                            <div class="mb-3">
+                                <label for="id_volume_musica">Volume da Música de Fundo (%)</label>
+                                <input type="number" name="volume_musica" value="20" class="form-control" min="0" max="100" id="id_volume_musica">
+                                <div class="form-text">Ajuste o volume da música para não sobrepor o áudio original do vídeo.</div>
+                            </div>
+                            
+                            {{ form.segments }}
+
+                            <div class="d-grid gap-2">
+                                <button type="submit" id="submit-btn" class="btn btn-primary">Gerar Cortes Selecionados</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const analyzeBtn = document.getElementById('analyze-btn');
+    const form = document.getElementById('youtube-cutter-form');
+    const segmentsContainer = document.getElementById('segments-container');
+    const segmentsList = document.getElementById('segments-list');
+    const segmentsError = document.getElementById('segments-error');
+    const musicAndSubmitContainer = document.getElementById('music-and-submit-container');
+    const hiddenSegmentsInput = document.getElementById('id_segments');
+    const youtubeUrlInput = document.getElementById('id_youtube_url');
+
+    analyzeBtn.addEventListener('click', async function() {
+        const url = youtubeUrlInput.value;
+        if (!url) {
+            alert('Por favor, insira uma URL do YouTube.');
+            return;
+        }
+
+        analyzeBtn.disabled = true;
+        analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analisando...';
+        segmentsList.innerHTML = '';
+        segmentsError.style.display = 'none';
+        segmentsContainer.style.display = 'none';
+        musicAndSubmitContainer.style.display = 'none';
+
+        try {
+            const response = await fetch("{% url 'get_youtube_segments' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ url: url })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Erro desconhecido ao analisar a URL.');
+            }
+
+            if (data.segments && data.segments.length > 0) {
+                segmentsContainer.style.display = 'block';
+                musicAndSubmitContainer.style.display = 'block';
+                
+                data.segments.forEach((segment, index) => {
+                    const startTime = new Date(segment.start * 1000).toISOString().substr(14, 5);
+                    const endTime = new Date(segment.end * 1000).toISOString().substr(14, 5);
+                    
+                    const segmentElement = document.createElement('label');
+                    segmentElement.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    segmentElement.innerHTML = `
+                        <div>
+                            <input class="form-check-input me-2" type="checkbox" value='${JSON.stringify(segment)}' id="segment-${index}" checked>
+                            <strong>Corte ${index + 1}:</strong> de ${startTime} até ${endTime}
+                        </div>
+                        <span class="badge bg-primary rounded-pill">${Math.round(segment.duration)}s</span>
+                    `;
+                    segmentsList.appendChild(segmentElement);
+                });
+            } else {
+                segmentsError.textContent = data.message || 'Nenhum segmento popular foi encontrado para este vídeo.';
+                segmentsError.style.display = 'block';
+            }
+
+        } catch (error) {
+            segmentsError.textContent = 'Erro: ' + error.message;
+            segmentsError.style.display = 'block';
+        } finally {
+            analyzeBtn.disabled = false;
+            analyzeBtn.innerHTML = 'Analisar Vídeo';
+        }
+    });
+
+    form.addEventListener('submit', function(e) {
+        const selectedCheckboxes = segmentsList.querySelectorAll('input[type="checkbox"]:checked');
+        if (selectedCheckboxes.length === 0) {
+            e.preventDefault();
+            alert('Você deve selecionar pelo menos um segmento para gerar.');
+            return;
+        }
+
+        const selectedSegments = [];
+        selectedCheckboxes.forEach(checkbox => {
+            selectedSegments.push(JSON.parse(checkbox.value));
+        });
+
+        hiddenSegmentsInput.value = JSON.stringify(selectedSegments);
+    });
+});
+</script>
+{% endblock %}

@@ -5,8 +5,6 @@ from storages.backends.s3boto3 import S3Boto3Storage
 import boto3
 from botocore.exceptions import ClientError
 import os
-import unicodedata
-import re
 
 
 # ================================================================
@@ -106,8 +104,8 @@ class CategoriaVideo(models.Model):
         # Gera o nome da pasta se não existir
         if not self.pasta:
             # Remove acentos e caracteres especiais, converte para minúsculas
-            import unicodedata
-            import re
+            import unicodedata # Mantido aqui para escopo local, mas idealmente no topo do arquivo
+            import re # Mantido aqui para escopo local, mas idealmente no topo do arquivo
 
             nome_normalizado = (
                 unicodedata.normalize("NFKD", self.nome)
@@ -139,8 +137,8 @@ class CategoriaMusica(models.Model):
     def save(self, *args, **kwargs):
         # Gera o nome da pasta se não existir
         if not self.pasta:
-            import unicodedata
-            import re
+            import unicodedata # Mantido aqui para escopo local, mas idealmente no topo do arquivo
+            import re # Mantido aqui para escopo local, mas idealmente no topo do arquivo
 
             nome_normalizado = (
                 unicodedata.normalize("NFKD", self.nome)
