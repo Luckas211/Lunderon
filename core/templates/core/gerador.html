@@ -3,6 +3,7 @@
 
 {% block title %}Gerador de Vídeos - LUNDERON{% endblock %}
 
+
 {% block content %}
 <div class="dashboard-layout">
     <aside class="sidebar">
@@ -12,6 +13,7 @@
         <nav class="sidebar-nav">
             <ul>
                 <li class="active"><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li{% if request.resolver_match.url_name == 'cortes_youtube' %} class="active"{% endif %}><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> Cortes YouTube</a></li>
                 <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
                 <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
             </ul>

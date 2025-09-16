@@ -2,8 +2,30 @@
 
 {% block title %}Gerador de Cortes do YouTube{% endblock %}
 
+
 {% block content %}
+<div class="dashboard-layout">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <ul>
+                <li ><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li{% if request.resolver_match.url_name == 'cortes_youtube' %} class="active"{% endif %}><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> Cortes YouTube</a></li>
+                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
+                <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
+            </ul>
+        </nav>
+    </aside>
+
+
 <div class="container mt-5 mb-5">
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text">Gerando cortes do YouTube...</p>
+        <small>Este processo pode levar alguns instantes. Por favor, não feche esta página.</small>
+    </div>
     <div class="row justify-content-center">
         <div class="col-lg-8">
             <div class="card shadow-sm">
@@ -62,8 +84,10 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const analyzeBtn = document.getElementById('analyze-btn');
+    const loadingOverlay = document.getElementById('loading-overlay');
     const form = document.getElementById('youtube-cutter-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const analyzeBtn = document.getElementById('analyze-btn');
     const segmentsContainer = document.getElementById('segments-container');
     const segmentsList = document.getElementById('segments-list');
     const segmentsError = document.getElementById('segments-error');
@@ -71,12 +95,27 @@ document.addEventListener('DOMContentLoaded', function() {
     const hiddenSegmentsInput = document.getElementById('id_segments');
     const youtubeUrlInput = document.getElementById('id_youtube_url');
 
+    if (form && loadingOverlay && submitBtn) {
+        form.addEventListener('submit', function() {
+            // Mostra a tela de loading ao enviar o formulário
+            loadingOverlay.classList.add('visible');
+
+            // Desabilita o botão e muda o texto para dar feedback visual
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando, por favor aguarde...';
+        });
+    }
+
     analyzeBtn.addEventListener('click', async function() {
         const url = youtubeUrlInput.value;
         if (!url) {
             alert('Por favor, insira uma URL do YouTube.');
             return;
         }
+
+        // Mostra a tela de loading
+        loadingOverlay.classList.add('visible');
+        document.querySelector('.loading-text').textContent = 'Analisando vídeo...';
 
         analyzeBtn.disabled = true;
         analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analisando...';
@@ -131,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } finally {
             analyzeBtn.disabled = false;
             analyzeBtn.innerHTML = 'Analisar Vídeo';
+            loadingOverlay.classList.remove('visible');
         }
     });
 

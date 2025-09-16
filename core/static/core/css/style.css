@@ -1,4 +1,10 @@
 /* ==========================================================================
+   IMPORTS
+   ========================================================================== */
+
+@import url('video-generator.css');
+
+/* ==========================================================================
    1. Variáveis e Configurações Globais - Dark Mode Aprimorado
    ========================================================================== */
 
@@ -1738,6 +1744,7 @@ textarea.form-input {
 /* --- Barra Lateral (Sidebar) --- */
 .sidebar {
     width: 260px;
+    height: auto;
     flex-shrink: 0;
     background-color: var(--color-background);
     border-right: 1px solid var(--color-border);
@@ -3560,7 +3567,580 @@ textarea.form-input {
 }
 
 /* ==========================================================================
-   26. Estilos Adicionais para Home Page
+   26. Estilos para Cortes YouTube Page (Cards, Forms, Checkboxes)
+   ========================================================================== */
+
+/* --- Cards no Cortes YouTube --- */
+.container .card {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .container .card {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.container .card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.container .card-body {
+    padding: 30px;
+}
+
+/* --- Formulários no Cortes YouTube --- */
+.container .form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .container .form-control {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+}
+
+.container .form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(101, 91, 226, 0.2);
+}
+
+/* --- Botões no Cortes YouTube --- */
+.container .btn {
+    display: inline-block;
+    font-family: var(--font-family-base);
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 14px 32px;
+    border-radius: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+    overflow: hidden;
+}
+
+.container .btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 6px 0 0 var(--color-primary-dark),
+                0 12px 20px rgba(101, 91, 226, 0.3);
+    transform: translateY(0);
+}
+
+.container .btn-primary:hover {
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 0 var(--color-primary-dark),
+                0 8px 15px rgba(101, 91, 226, 0.4);
+}
+
+.container .btn-primary:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 0 var(--color-primary-dark),
+                0 4px 8px rgba(101, 91, 226, 0.2);
+}
+
+.container .btn-secondary {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+    color: var(--color-primary);
+    box-shadow: 0 6px 0 0 #C3BEF7,
+                0 12px 20px rgba(233, 231, 252, 0.3);
+    transform: translateY(0);
+}
+
+.container .btn-secondary:hover {
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 0 #C3BEF7,
+                0 8px 15px rgba(233, 231, 252, 0.4);
+}
+
+.container .btn-secondary:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 0 #C3BEF7,
+                0 4px 8px rgba(233, 231, 252, 0.2);
+}
+
+/* --- Checkboxes no Cortes YouTube --- */
+.container .form-check-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--color-background);
+    width: 1.25em;
+    height: 1.25em;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    display: grid;
+    place-content: center;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .container .form-check-input {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.container .form-check-input::before {
+    content: '';
+    width: 0.75em;
+    height: 0.75em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: var(--color-primary);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.container .form-check-input:checked::before {
+    transform: scale(1);
+}
+
+.container .form-check-input:checked {
+    border-color: var(--color-primary);
+}
+
+/* --- List Group Items (Segmentos) --- */
+.container .list-group-item {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .container .list-group-item {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.container .list-group-item:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* --- Alertas no Cortes YouTube --- */
+.container .alert {
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    text-align: center;
+}
+
+.container .alert-info {
+    background-color: #DBEAFE;
+    border-color: #BFDBFE;
+    color: #1E40AF;
+}
+
+[data-theme="dark"] .container .alert-info {
+    background-color: #1E3A8A;
+    border-color: #1D4ED8;
+    color: #BFDBFE;
+}
+
+/* --- Spinner no Cortes YouTube --- */
+.container .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border: 0.25em solid var(--color-border);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ==========================================================================
+   27. Estilos para Formulário de Corte do YouTube
+   ========================================================================== */
+
+/* --- Container do Card Body --- */
+.card-body {
+    padding: 30px;
+    background-color: var(--color-background);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .card-body {
+    background-color: var(--color-background-alt-dark);
+}
+
+/* --- Título do Card --- */
+.card-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+[data-theme="dark"] .card-title {
+    color: var(--color-text-light-dark);
+}
+
+/* --- Parágrafo Descritivo --- */
+.card-body p {
+    font-size: 1rem;
+    color: var(--color-text-light);
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+[data-theme="dark"] .card-body p {
+    color: var(--color-text-lighter-dark);
+}
+
+/* --- Alertas --- */
+.alert {
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.alert-info {
+    background-color: #DBEAFE;
+    border-color: #BFDBFE;
+    color: #1E40AF;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: #1E3A8A;
+    border-color: #1D4ED8;
+    color: #BFDBFE;
+}
+
+.alert-danger {
+    background-color: #FEE2E2;
+    border-color: #FECACA;
+    color: #991B1B;
+}
+
+[data-theme="dark"] .alert-danger {
+    background-color: #7F1D1D;
+    border-color: #DC2626;
+    color: #FECACA;
+}
+
+/* --- Formulário --- */
+#youtube-cutter-form {
+    margin-top: 1.5rem;
+}
+
+/* --- Campos de Input --- */
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(101, 91, 226, 0.2);
+}
+
+[data-theme="dark"] .form-input {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(101, 91, 226, 0.2);
+}
+
+[data-theme="dark"] .form-control {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+}
+
+/* --- Texto de Ajuda do Formulário --- */
+.form-text {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+    margin-top: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+[data-theme="dark"] .form-text {
+    color: var(--color-text-lighter-dark);
+}
+
+/* --- Botões --- */
+.btn {
+    display: inline-block;
+    font-family: var(--font-family-base);
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 14px 32px;
+    border-radius: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+    overflow: hidden;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+    color: var(--color-primary);
+    box-shadow: 0 6px 0 0 #C3BEF7,
+                0 12px 20px rgba(233, 231, 252, 0.3);
+    transform: translateY(0);
+}
+
+.btn-secondary:hover {
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 0 #C3BEF7,
+                0 8px 15px rgba(233, 231, 252, 0.4);
+}
+
+.btn-secondary:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 0 #C3BEF7,
+                0 4px 8px rgba(233, 231, 252, 0.2);
+}
+
+.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 6px 0 0 var(--color-primary-dark),
+                0 12px 20px rgba(101, 91, 226, 0.3);
+    transform: translateY(0);
+}
+
+.btn-primary:hover {
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 0 var(--color-primary-dark),
+                0 8px 15px rgba(101, 91, 226, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 0 var(--color-primary-dark),
+                0 4px 8px rgba(101, 91, 226, 0.2);
+}
+
+/* --- Container de Segmentos --- */
+#segments-container {
+    margin-bottom: 1.5rem;
+}
+
+#segments-container h5 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--color-text-dark);
+    margin-bottom: 1rem;
+}
+
+[data-theme="dark"] #segments-container h5 {
+    color: var(--color-text-light-dark);
+}
+
+/* --- Lista de Segmentos --- */
+.list-group {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.list-group-item {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.list-group-item:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+/* --- Checkboxes --- */
+.form-check-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--color-background);
+    width: 1.25em;
+    height: 1.25em;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    display: grid;
+    place-content: center;
+    transition: all 0.2s ease;
+    margin-right: 0.5rem;
+}
+
+[data-theme="dark"] .form-check-input {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.form-check-input::before {
+    content: '';
+    width: 0.75em;
+    height: 0.75em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: var(--color-primary);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.form-check-input:checked::before {
+    transform: scale(1);
+}
+
+.form-check-input:checked {
+    border-color: var(--color-primary);
+}
+
+/* --- Badges --- */
+.badge {
+    display: inline-block;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.375rem;
+    background-color: var(--color-primary);
+}
+
+/* --- Container de Música e Submissão --- */
+#music-and-submit-container {
+    margin-top: 1.5rem;
+}
+
+/* --- Espaçamentos Gerais --- */
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
+.mt-3 {
+    margin-top: 1rem;
+}
+
+.d-grid {
+    display: grid;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+.text-muted {
+    color: var(--color-text-light);
+}
+
+[data-theme="dark"] .text-muted {
+    color: var(--color-text-lighter-dark);
+}
+
+/* --- Responsividade --- */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 20px;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        font-size: 0.9rem;
+    }
+
+    .list-group-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .badge {
+        align-self: flex-end;
+    }
+}
+
+/* ==========================================================================
+   28. Estilos Adicionais para Home Page
    ========================================================================== */
 
 /* --- Seção Hero com Background Shapes --- */
@@ -3807,5 +4387,1255 @@ textarea.form-input {
     .testimonial-author {
         flex-direction: column;
         text-align: center;
+    }
+}
+
+/* ==========================================================================
+   28. Estilos Específicos para a Página de Cortes do YouTube
+   ========================================================================== */
+
+/* --- Container Principal do Card --- */
+.card-body {
+    padding: 40px;
+    background-color: var(--color-background);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .card-body {
+    background-color: var(--color-background-alt-dark);
+}
+
+/* --- Título do Card --- */
+.card-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+    margin-bottom: 1rem;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .card-title {
+    color: var(--color-text-light-dark);
+}
+
+/* --- Texto Centralizado --- */
+.text-center {
+    text-align: center;
+}
+
+/* --- Texto Muted --- */
+.text-muted {
+    color: var(--color-text-light);
+    transition: color 0.3s ease;
+}
+
+/* --- Alertas --- */
+.alert {
+    padding: 16px 20px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+    border-color: #3B82F6;
+    color: #1E40AF;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+
+[data-theme="dark"] .alert-info {
+    background: linear-gradient(135deg, #1E3A8A 0%, #1D4ED8 100%);
+    border-color: #3B82F6;
+    color: #BFDBFE;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.alert-danger {
+    background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%);
+    border-color: #EF4444;
+    color: #991B1B;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+[data-theme="dark"] .alert-danger {
+    background: linear-gradient(135deg, #7F1D1D 0%, #991B1B 100%);
+    border-color: #EF4444;
+    color: #FECACA;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* --- Campos de Formulário --- */
+.form-input {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .form-input {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(101, 91, 226, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .form-input:focus {
+    box-shadow: 0 0 0 4px rgba(101, 91, 226, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.form-input::placeholder {
+    color: var(--color-text-light);
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .form-input::placeholder {
+    color: var(--color-text-lighter-dark);
+}
+
+/* --- Texto de Ajuda do Formulário --- */
+.form-text {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-top: 6px;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .form-text {
+    color: var(--color-text-lighter-dark);
+}
+
+/* --- Select de Formulário --- */
+.form-select {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .form-select {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(101, 91, 226, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .form-select:focus {
+    box-shadow: 0 0 0 4px rgba(101, 91, 226, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Input de Controle (compatibilidade) --- */
+.form-control {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .form-control {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(101, 91, 226, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .form-control:focus {
+    box-shadow: 0 0 0 4px rgba(101, 91, 226, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Grid de Display --- */
+.d-grid {
+    display: grid;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+/* --- Margens Bottom --- */
+.mb-3 {
+    margin-bottom: 1rem;
+}
+
+.mb-4 {
+    margin-bottom: 1.5rem;
+}
+
+/* --- Container de Segmentos --- */
+#segments-container {
+    margin-top: 20px;
+}
+
+#segments-container h5 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    color: var(--color-text-dark);
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] #segments-container h5 {
+    color: var(--color-text-light-dark);
+}
+
+/* --- Lista de Segmentos --- */
+#segments-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.list-group-item {
+    background-color: var(--color-background);
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.list-group-item:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .list-group-item:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Flexbox Utilities --- */
+.d-flex {
+    display: flex;
+}
+
+.justify-content-between {
+    justify-content: space-between;
+}
+
+.align-items-center {
+    align-items: center;
+}
+
+/* --- Checkboxes Personalizados --- */
+.form-check-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--color-background);
+    width: 1.25em;
+    height: 1.25em;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    display: grid;
+    place-content: center;
+    transition: all 0.2s ease;
+    margin-right: 12px;
+}
+
+[data-theme="dark"] .form-check-input {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.form-check-input::before {
+    content: '';
+    width: 0.75em;
+    height: 0.75em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: var(--color-primary);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.form-check-input:checked::before {
+    transform: scale(1);
+}
+
+.form-check-input:checked {
+    border-color: var(--color-primary);
+    background-color: rgba(101, 91, 226, 0.1);
+}
+
+[data-theme="dark"] .form-check-input:checked {
+    background-color: rgba(101, 91, 226, 0.2);
+}
+
+/* --- Margem End --- */
+.me-2 {
+    margin-right: 0.5rem;
+}
+
+/* --- Badges --- */
+.badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.bg-primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.rounded-pill {
+    border-radius: 50rem;
+}
+
+/* --- Container de Música e Submit --- */
+#music-and-submit-container {
+    margin-top: 30px;
+}
+
+/* --- Input Hidden --- */
+#id_segments {
+    display: none;
+}
+
+/* --- Responsividade para a Página de Cortes --- */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 20px;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+    }
+
+    .d-grid {
+        gap: 1rem;
+    }
+
+    .list-group-item {
+        padding: 12px 16px;
+    }
+
+    .d-flex {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .justify-content-between {
+        justify-content: flex-start;
+    }
+}
+
+/* ==========================================================================
+   29. Estilos Específicos para Formulário de Música de Fundo
+   ========================================================================== */
+
+/* --- Form Group Música --- */
+.mb-3 {
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.mb-3 label {
+    display: block;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--color-text-dark);
+    margin-bottom: 8px;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .mb-3 label {
+    color: var(--color-text-light-dark);
+}
+
+/* --- Select Música de Fundo --- */
+#id_categoria_musica {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 1rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+}
+
+#id_categoria_musica:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 4px rgba(101, 91, 226, 0.15), inset 0 1px 3px rgba(0, 0, 0, 0.1);
+    background-color: var(--color-background);
+}
+
+#id_categoria_musica:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(101, 91, 226, 0.1), inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+#id_categoria_musica option {
+    padding: 8px;
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+}
+
+[data-theme="dark"] #id_categoria_musica {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] #id_categoria_musica:focus {
+    box-shadow: 0 0 0 4px rgba(101, 91, 226, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    background-color: var(--color-background-alt-dark);
+}
+
+[data-theme="dark"] #id_categoria_musica:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(101, 91, 226, 0.2), inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="dark"] #id_categoria_musica option {
+    background-color: var(--color-background-alt-dark);
+    color: var(--color-text-light-dark);
+}
+
+/* --- Responsividade para Formulário de Música --- */
+@media (max-width: 768px) {
+    #id_categoria_musica {
+        padding: 12px 16px;
+        font-size: 0.95rem;
+    }
+
+    .mb-3 label {
+        font-size: 0.9rem;
+    }
+}
+
+/* ==========================================================================
+   30. Estilos Adicionais para o Formulário do Gerador (Missing Classes)
+   ========================================================================== */
+
+/* --- Seção de Conteúdo --- */
+.secao-conteudo {
+    margin-bottom: 30px;
+    transition: all 0.3s ease;
+}
+
+/* --- Grupos de Radio Buttons --- */
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.radio-option:hover {
+    background-color: var(--color-background-alt);
+}
+
+[data-theme="dark"] .radio-option:hover {
+    background-color: var(--color-background-darker);
+}
+
+.custom-radio {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-border);
+    border-radius: 50%;
+    background-color: var(--color-background);
+    transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .custom-radio {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.inner-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-primary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+input[type="radio"]:checked + .custom-radio .inner-circle {
+    opacity: 1;
+}
+
+input[type="radio"]:checked + .custom-radio {
+    border-color: var(--color-primary);
+}
+
+.option-label {
+    font-weight: 500;
+    color: var(--color-text-dark);
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .option-label {
+    color: var(--color-text-light-dark);
+}
+
+/* --- Toggle Switch --- */
+.toggle-switch {
+    position: relative;
+    width: 50px;
+    height: 24px;
+    background-color: var(--color-border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-switch::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 20px;
+    height: 20px;
+    background-color: white;
+    border-radius: 50%;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="checkbox"]:checked + .toggle-switch {
+    background-color: var(--color-primary);
+}
+
+input[type="checkbox"]:checked + .toggle-switch::before {
+    transform: translateX(26px);
+}
+
+[data-theme="dark"] .toggle-switch {
+    background-color: var(--color-border-dark);
+}
+
+/* --- Custom File Upload --- */
+.custom-file-upload {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 20px;
+    border: 2px dashed var(--color-border);
+    border-radius: 12px;
+    background-color: var(--color-background);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.custom-file-upload:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-background-alt);
+}
+
+[data-theme="dark"] .custom-file-upload {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+[data-theme="dark"] .custom-file-upload:hover {
+    background-color: var(--color-background-darker);
+}
+
+.upload-icon {
+    font-size: 2rem;
+    color: var(--color-primary);
+    margin-bottom: 10px;
+}
+
+.upload-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--color-text-dark);
+    margin-bottom: 5px;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .upload-text {
+    color: var(--color-text-light-dark);
+}
+
+.upload-hint {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .upload-hint {
+    color: var(--color-text-lighter-dark);
+}
+
+.custom-file-upload input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* --- Ajustes de Espaçamento --- */
+.panel-content {
+    padding: 40px 30px;
+}
+
+.step-header {
+    margin-bottom: 30px;
+}
+
+.step-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.step-header p {
+    color: var(--color-text-light);
+    transition: color 0.3s ease;
+}
+
+.option-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.form-field {
+    margin-bottom: 25px;
+}
+
+.form-field label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.text-counter {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-top: 8px;
+    transition: color 0.3s ease;
+}
+
+.estimativa-container {
+    text-align: right;
+}
+
+.field-tip {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-top: 8px;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .text-counter,
+[data-theme="dark"] .field-tip {
+    color: var(--color-text-lighter-dark);
+}
+
+.end-screen-preview {
+    border: 1px solid var(--color-border);
+    padding: 20px;
+    margin-top: 15px;
+    border-radius: 8px;
+    background-color: #333;
+    transition: border-color 0.3s ease;
+}
+
+[data-theme="dark"] .end-screen-preview {
+    border-color: var(--color-border-dark);
+}
+
+.end-screen-content {
+    text-align: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.end-screen-text {
+    font-weight: 500;
+}
+
+/* --- Grupos de Checkbox Options --- */
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.checkbox-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    padding: 12px 16px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.checkbox-option:hover {
+    background-color: var(--color-background-alt);
+}
+
+[data-theme="dark"] .checkbox-option:hover {
+    background-color: var(--color-background-darker);
+}
+
+.checkbox-option.large {
+    padding: 16px 20px;
+    border: 1px solid var(--color-border);
+    background-color: var(--color-background);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.checkbox-option.large:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--color-primary);
+}
+
+.checkbox-option.large input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+[data-theme="dark"] .checkbox-option.large {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.checkbox-box {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-border);
+    border-radius: 4px;
+    background-color: var(--color-background);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+[data-theme="dark"] .checkbox-box {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.checkmark {
+    color: var(--color-primary);
+    font-size: 14px;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.2s ease;
+}
+
+input[type="checkbox"]:checked + .checkbox-box .checkmark {
+    opacity: 1;
+    transform: scale(1);
+}
+
+input[type="checkbox"]:checked + .checkbox-box {
+    border-color: var(--color-primary);
+    background-color: rgba(101, 91, 226, 0.1);
+}
+
+[data-theme="dark"] input[type="checkbox"]:checked + .checkbox-box {
+    background-color: rgba(101, 91, 226, 0.2);
+}
+
+.option-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.option-title {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text-dark);
+    transition: color 0.3s ease;
+}
+
+.checkbox-option.large .option-title {
+    font-size: 1.1rem;
+    margin-bottom: 4px;
+}
+
+[data-theme="dark"] .option-title {
+    color: var(--color-text-light-dark);
+}
+
+.option-description {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .option-description {
+    color: var(--color-text-lighter-dark);
+}
+
+/* --- Responsividade para Formulário do Gerador --- */
+@media (max-width: 768px) {
+    .panel-content {
+        padding: 20px 15px;
+    }
+
+    .option-cards {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .radio-group {
+        gap: 10px;
+    }
+
+    .checkbox-group {
+        gap: 10px;
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .step-header h3 {
+        font-size: 1.1rem;
+    }
+
+    .custom-file-upload {
+        padding: 15px;
+    }
+
+    .checkbox-option.large {
+        padding: 12px 16px;
+    }
+
+.checkbox-option.large .option-title {
+    font-size: 1rem;
+}
+}
+
+/* ==========================================================================
+   31. Estilos para Formulário de Corte do YouTube
+   ========================================================================== */
+
+/* --- Container do Card Body --- */
+.card-body {
+    padding: 30px;
+    background-color: var(--color-background);
+    border-radius: 16px;
+    transition: background-color 0.3s ease;
+}
+
+[data-theme="dark"] .card-body {
+    background-color: var(--color-background-alt-dark);
+}
+
+/* --- Título do Card --- */
+.card-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--color-text-dark);
+    margin-bottom: 1rem;
+    text-align: center;
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .card-title {
+    color: var(--color-text-light-dark);
+}
+
+/* --- Parágrafo Descritivo --- */
+.card-body p.text-muted {
+    color: var(--color-text-light);
+    font-size: 1rem;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 2rem;
+    transition: color 0.3s ease;
+}
+
+/* --- Alertas --- */
+.alert {
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.alert-info {
+    background-color: #DBEAFE;
+    border-color: #BFDBFE;
+    color: #1E40AF;
+}
+
+[data-theme="dark"] .alert-info {
+    background-color: #1E3A8A;
+    border-color: #1D4ED8;
+    color: #BFDBFE;
+}
+
+.alert-danger {
+    background-color: #FEE2E2;
+    border-color: #FECACA;
+    color: #991B1B;
+}
+
+[data-theme="dark"] .alert-danger {
+    background-color: #7F1D1D;
+    border-color: #DC2626;
+    color: #FECACA;
+}
+
+/* --- Formulário --- */
+#youtube-cutter-form {
+    margin-top: 20px;
+}
+
+/* --- Campos de Formulário --- */
+.mb-3 {
+    margin-bottom: 1.5rem !important;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(101, 91, 226, 0.2);
+}
+
+[data-theme="dark"] .form-input {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: var(--font-family-base);
+    background-color: var(--color-background);
+    color: var(--color-text-dark);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(101, 91, 226, 0.2);
+}
+
+[data-theme="dark"] .form-control {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+    color: var(--color-text-light-dark);
+}
+
+/* --- Texto de Ajuda do Formulário --- */
+.form-text {
+    font-size: 0.875rem;
+    color: var(--color-text-light);
+    margin-top: 5px;
+    transition: color 0.3s ease;
+}
+
+/* --- Botões --- */
+.d-grid .btn {
+    width: 100%;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: var(--font-family-base);
+    cursor: pointer;
+    border: none;
+    position: relative;
+    transition: all 0.2s ease;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+    overflow: hidden;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-secondary-dark) 100%);
+    color: var(--color-primary);
+    box-shadow: 0 6px 0 0 #C3BEF7,
+                0 12px 20px rgba(233, 231, 252, 0.3);
+    transform: translateY(0);
+}
+
+.btn-secondary:hover {
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 0 #C3BEF7,
+                0 8px 15px rgba(233, 231, 252, 0.4);
+}
+
+.btn-secondary:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 0 #C3BEF7,
+                0 4px 8px rgba(233, 231, 252, 0.2);
+}
+
+.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 6px 0 0 var(--color-primary-dark),
+                0 12px 20px rgba(101, 91, 226, 0.3);
+    transform: translateY(0);
+}
+
+.btn-primary:hover {
+    transform: translateY(2px);
+    box-shadow: 0 4px 0 0 var(--color-primary-dark),
+                0 8px 15px rgba(101, 91, 226, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 0 var(--color-primary-dark),
+                0 4px 8px rgba(101, 91, 226, 0.2);
+}
+
+/* --- Lista de Segmentos --- */
+.list-group {
+    margin-bottom: 20px;
+}
+
+.list-group-item {
+    background-color: var(--color-background);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.list-group-item:hover {
+    box-shadow: var(--shadow-sm);
+    transform: translateY(-1px);
+}
+
+.list-group-item div {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.list-group-item strong {
+    margin-right: 10px;
+    color: var(--color-text-dark);
+    transition: color 0.3s ease;
+}
+
+[data-theme="dark"] .list-group-item strong {
+    color: var(--color-text-light-dark);
+}
+
+/* --- Checkboxes --- */
+.form-check-input {
+    appearance: none;
+    -webkit-appearance: none;
+    background-color: var(--color-background);
+    width: 1.25em;
+    height: 1.25em;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    cursor: pointer;
+    position: relative;
+    display: grid;
+    place-content: center;
+    margin-right: 10px;
+    transition: all 0.2s ease;
+}
+
+[data-theme="dark"] .form-check-input {
+    background-color: var(--color-background-alt-dark);
+    border-color: var(--color-border-dark);
+}
+
+.form-check-input::before {
+    content: '';
+    width: 0.75em;
+    height: 0.75em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    background-color: var(--color-primary);
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.form-check-input:checked::before {
+    transform: scale(1);
+}
+
+.form-check-input:checked {
+    border-color: var(--color-primary);
+}
+
+/* --- Badges --- */
+.badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    background-color: var(--color-primary);
+    color: white;
+    transition: background-color 0.3s ease;
+}
+
+.badge.bg-primary {
+    background-color: var(--color-primary) !important;
+}
+
+/* --- Containers Ocultos/Mostrados --- */
+#segments-container,
+#music-and-submit-container {
+    transition: all 0.3s ease;
+}
+
+/* --- Responsividade --- */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 20px;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+    }
+
+    .d-grid .btn {
+        padding: 12px 24px;
+        font-size: 0.95rem;
+    }
+
+    .list-group-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .list-group-item div {
+        width: 100%;
     }
 }

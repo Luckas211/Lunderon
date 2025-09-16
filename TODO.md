@@ -1,21 +1,23 @@
-# TODO: Melhorar Páginas com Informações Profissionais
+# TODO: Fix Loading Animation in Gerador and Cortes YouTube Pages
 
-## Análise do Sistema
-- Sistema: Gerador de vídeos para mídias sociais usando IA
-- Funcionalidades: 3 modos (Narrador, Texto Estático, Vendedor), narração em português, legendas dinâmicas, biblioteca royalty-free
-- Modelo: Assinatura mensal R$49.90, testes grátis, vídeos expiram em 1 hora
+## Tasks
+- [x] Move loading overlay div to avoid clipping by parent containers in gerador.html
+- [x] Move loading overlay div to avoid clipping by parent containers in cortes_youtube.html
+- [x] Confirm spinner animation CSS is applied correctly in video-generator.css
+- [x] Create robust CSS for loading-spinner with hardcoded values and fallbacks
+- [x] Enhance loading spinner with faster animation, dual borders, and glow effect
+- [x] Create classic border spinner using border-top-color for clean rotation effect
+- [x] Confirm FontAwesome spinner icon is used correctly in JS
+- [x] Add console logs in JS to verify the "visible" class is added on form submit
+- [ ] Test the loading animation on both pages after edits
+- [ ] Fix any remaining issues with the animation
 
-## Melhorias Planejadas
-1. **base.html**: Atualizar descrição no footer para ser mais persuasiva
-2. **home.html**: Adicionar seções de benefícios, estatísticas, depoimentos
-3. **suporte.html**: Expandir FAQ, adicionar mais informações de suporte
-4. **planos.html**: Adicionar benefícios extras, comparações, depoimentos
-5. **como_funciona.html**: Adicionar casos de uso, benefícios específicos, estatísticas
+## Dependent Files
+- core/templates/core/gerador.html
+- core/templates/core/cortes_youtube.html
+- core/static/core/css/video-generator.css
 
-## Etapas de Implementação
-- [x] Editar base.html com descrição profissional
-- [x] Editar home.html com seções adicionais de marketing
-- [x] Editar suporte.html com FAQ expandida
-- [x] Editar planos.html com conteúdo persuasivo
-- [ ] Editar como_funciona.html com mais benefícios
-- [ ] Testar páginas após edições
+## Follow-up Steps
+- Test the loading overlay and spinner animation on form submission
+- Confirm the spinner icon spins and the overlay appears correctly
+- Verify no clipping or visibility issues

@@ -11,9 +11,10 @@
         </div>
         <nav class="sidebar-nav">
             <ul>
-                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
-                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
-                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
+                <li{% if request.resolver_match.url_name == 'pagina_gerador' %} class="active"{% endif %}><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li{% if request.resolver_match.url_name == 'cortes_youtube' %} class="active"{% endif %}><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> Cortes YouTube</a></li>
+                <li{% if request.resolver_match.url_name == 'meus_videos' %} class="active"{% endif %}><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
+                <li{% if request.resolver_match.url_name == 'meu_perfil' %} class="active"{% endif %}><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
             </ul>
         </nav>
     </aside>
@@ -119,6 +120,7 @@
                     </div>
                     <div class="card-body card-actions">
                         <a href="{% url 'pagina_gerador' %}" class="btn btn-primary btn-full"><i class="fas fa-plus"></i> Gerar Novo Vídeo</a>
+                        <a href="{% url 'cortes_youtube' %}" class="btn btn-secondary btn-full"><i class="fas fa-cut"></i> Cortes YouTube</a>
                         <a href="{% url 'meus_videos' %}" class="btn btn-secondary btn-full"><i class="fas fa-video"></i> Ver Meus Vídeos</a>
                         <a href="{% url 'suporte' %}" class="btn btn-secondary btn-full"><i class="fas fa-headset"></i> Pedir Suporte</a>
                     </div>
