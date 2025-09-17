@@ -349,4 +349,9 @@ class CortesYouTubeForm(forms.Form):
         label="Volume da Música de Fundo (%)",
         help_text="Ajuste o volume da música para não sobrepor o áudio original do vídeo."
     )
+    gerar_legendas = forms.BooleanField(
+        label="Gerar Legendas (transcrição automática)",
+        required=False,
+        help_text="Ativa a transcrição automática do áudio do vídeo para legendas."
+    )
     segments = forms.CharField(widget=forms.HiddenInput(), required=True)

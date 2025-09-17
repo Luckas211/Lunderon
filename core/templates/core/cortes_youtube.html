@@ -75,6 +75,11 @@
                             {{ form.segments }}
 
                             <div class="d-grid gap-2">
+                                <div class="mb-3 form-check">
+                                    <input type="checkbox" class="form-check-input" id="id_gerar_legendas" name="gerar_legendas">
+                                    <label class="form-check-label" for="id_gerar_legendas">Gerar Legendas (transcrição automática)</label>
+                                    <small class="form-text text-muted">Ativa a transcrição automática do áudio do vídeo para legendas.</small>
+                                </div>
                                 <button type="submit" id="submit-btn" class="btn btn-primary">Gerar Cortes Selecionados</button>
                             </div>
                         </div>
