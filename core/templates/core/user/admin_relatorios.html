@@ -3,6 +3,10 @@
 
 {% block title %}Admin | Relatórios{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout admin-panel">
     <aside class="sidebar">
@@ -30,28 +34,28 @@
 
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-icon"><i class="fas fa-users"></i></div>
+                <div class="kpi-icon icon-users"><i class="fas fa-users"></i></div>
                 <div class="kpi-content">
                     <span class="kpi-value">{{ total_assinantes_ativos }}</span>
                     <span class="kpi-title">Assinantes Ativos</span>
                 </div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div>
+                <div class="kpi-icon icon-revenue"><i class="fas fa-dollar-sign"></i></div>
                 <div class="kpi-content">
                     <span class="kpi-value">R$ {{ receita_total|floatformat:2 }}</span>
                     <span class="kpi-title">Receita Total</span>
                 </div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-icon"><i class="fas fa-user-clock"></i></div>
+                <div class="kpi-icon icon-pending"><i class="fas fa-user-clock"></i></div>
                 <div class="kpi-content">
                     <span class="kpi-value">{{ usuarios_pendentes }}</span>
                     <span class="kpi-title">Aguardando Verificação</span>
                 </div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-icon"><i class="fas fa-video"></i></div>
+                <div class="kpi-icon icon-videos"><i class="fas fa-video"></i></div>
                 <div class="kpi-content">
                     <span class="kpi-value">{{ total_videos_gerados }}</span>
                     <span class="kpi-title">Vídeos Gerados</span>

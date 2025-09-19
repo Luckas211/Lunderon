@@ -3,6 +3,10 @@
 
 {% block title %}Central de Ajuda | LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/suporte.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <section class="page-header">
@@ -17,45 +21,16 @@
         <div class="support-grid">
 
             <div class="faq-column">
-                <h2 class="section-title" style="text-align: left; margin-bottom: 40px;">Perguntas Frequentes</h2>
+                <h2 class="section-title">Perguntas Frequentes</h2>
                 <div class="faq-accordion">
+                    
                     <details class="faq-item" open>
                         <summary class="faq-question">
-                            <span>Como funciona o processo de assinatura?</span>
+                            <span>Qual a diferença entre os planos Essencial e Pro?</span>
                             <i class="fas fa-chevron-down"></i>
                         </summary>
                         <div class="faq-answer">
-                            <p>Nosso processo é rápido e seguro. Crie sua conta, escolha o plano "Criador Pro" e realize o pagamento via cartão de crédito. Seu acesso a todos os recursos da plataforma é liberado imediatamente após a confirmação.</p>
-                        </div>
-                    </details>
-
-                    <details class="faq-item">
-                        <summary class="faq-question">
-                            <span>Como funciona o Gerador de Vídeos?</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </summary>
-                        <div class="faq-answer">
-                            <p>É simples: escolha um dos três modos (Narração, Texto ou Vendedor), escreva seu roteiro, personalize o estilo (cores, fontes, etc.), escolha a mídia de fundo e gere seu vídeo. Ele aparecerá na sua área "Meus Vídeos" pronto para baixar.</p>
-                        </div>
-                    </details>
-
-                    <details class="faq-item">
-                        <summary class="faq-question">
-                            <span>Por quanto tempo meus vídeos ficam disponíveis?</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </summary>
-                        <div class="faq-answer">
-                            <p>Para garantir sua privacidade e otimizar nosso armazenamento, seus vídeos gerados ficam disponíveis para download por <strong>1 hora</strong>. Após esse período, o link expira e o arquivo é permanentemente excluído dos nossos servidores.</p>
-                        </div>
-                    </details>
-                    
-                    <details class="faq-item">
-                        <summary class="faq-question">
-                            <span>Posso cancelar quando quiser?</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </summary>
-                        <div class="faq-answer">
-                            <p>Sim. Você pode gerenciar e cancelar sua assinatura a qualquer momento através do seu painel de perfil. Seu acesso permanecerá ativo até o final do período que já foi pago.</p>
+                            <p>O plano <strong>Essencial</strong> é perfeito para começar, com 30 vídeos/mês e acesso aos modos de criação principais. O plano <strong>Pro</strong> é para quem busca escala, oferecendo 100 vídeos/mês, e libera nossas ferramentas mais poderosas: os <strong>Cortes do YouTube</strong> e as <strong>Legendas Automáticas com IA</strong>, além de suporte prioritário.</p>
                         </div>
                     </details>
 
@@ -65,49 +40,40 @@
                             <i class="fas fa-chevron-down"></i>
                         </summary>
                         <div class="faq-answer">
-                            <p>Oferecemos testes grátis para novos usuários experimentarem a plataforma. Você pode criar até 5 vídeos gratuitamente para testar todas as funcionalidades antes de assinar.</p>
+                            <p>Todo novo usuário pode criar alguns vídeos gratuitamente para experimentar o poder da nossa plataforma. É a melhor forma de ver na prática como podemos acelerar seu conteúdo antes de escolher um plano.</p>
                         </div>
                     </details>
 
                     <details class="faq-item">
                         <summary class="faq-question">
-                            <span>Meus vídeos são seguros na plataforma?</span>
+                            <span>Por quanto tempo meus vídeos ficam disponíveis?</span>
                             <i class="fas fa-chevron-down"></i>
                         </summary>
                         <div class="faq-answer">
-                            <p>Sim, garantimos total segurança. Utilizamos criptografia de ponta a ponta e seus vídeos são automaticamente excluídos após 1 hora de download, garantindo privacidade total.</p>
+                            <p>Para garantir sua privacidade, seus vídeos gerados ficam disponíveis para download por <strong>1 hora</strong>. Após esse período, o link expira e o arquivo é permanentemente excluído de nossos servidores.</p>
+                        </div>
+                    </details>
+                    
+                    <details class="faq-item">
+                        <summary class="faq-question">
+                            <span>Posso cancelar ou alterar meu plano a qualquer momento?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>Sim! Você tem total controle. Através do seu painel de perfil, você pode fazer upgrade, downgrade ou cancelar sua assinatura a qualquer momento. As alterações entram em vigor no próximo ciclo de cobrança.</p>
+                        </div>
+                    </details>
+                    
+                    <details class="faq-item">
+                        <summary class="faq-question">
+                            <span>Como funciona o suporte?</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </summary>
+                        <div class="faq-answer">
+                            <p>Todos os nossos usuários têm acesso ao suporte via e-mail. Assinantes do plano <strong>Pro</strong> contam com atendimento prioritário para garantir que suas dúvidas sejam resolvidas com a máxima agilidade.</p>
                         </div>
                     </details>
 
-                    <details class="faq-item">
-                        <summary class="faq-question">
-                            <span>Posso usar os vídeos comercialmente?</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </summary>
-                        <div class="faq-answer">
-                            <p>Absolutamente! Todos os vídeos criados são seus para uso comercial. Você tem direitos totais sobre o conteúdo gerado, podendo monetizar em qualquer plataforma.</p>
-                        </div>
-                    </details>
-
-                    <details class="faq-item">
-                        <summary class="faq-question">
-                            <span>Como funciona o suporte ao cliente?</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </summary>
-                        <div class="faq-answer">
-                            <p>Oferecemos suporte prioritário por e-mail com resposta em até 24 horas úteis. Para questões urgentes, você também pode usar nosso chat online durante horário comercial.</p>
-                        </div>
-                    </details>
-
-                    <details class="faq-item">
-                        <summary class="faq-question">
-                            <span>Posso alterar meu plano a qualquer momento?</span>
-                            <i class="fas fa-chevron-down"></i>
-                        </summary>
-                        <div class="faq-answer">
-                            <p>Sim! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As mudanças entram em vigor no próximo ciclo de cobrança.</p>
-                        </div>
-                    </details>
                 </div>
             </div>
 

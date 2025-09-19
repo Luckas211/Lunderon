@@ -3,7 +3,18 @@
 
 {% block title %}Crie sua Conta - LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/autenticacao.css' %}">
+{% endblock %}
+
 {% block content %}
+<div class="floating-shapes">
+    <div class="floating-shape shape-1"><i class="fas fa-user-plus"></i></div>
+    <div class="floating-shape shape-2"><i class="fas fa-rocket"></i></div>
+    <div class="floating-shape shape-3"><i class="fas fa-key"></i></div>
+    <div class="floating-shape shape-4"><i class="fas fa-lightbulb"></i></div>
+</div>
+
 <section class="form-section">
     <div class="form-wrapper-card">
         <form action="{% url 'cadastre_se' %}" method="POST">
@@ -70,9 +81,13 @@
         </form>
     </div>
 </section>
+{% endblock %}
 
+{% block scripts %}
+{{ block.super }}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        // Aplica classes e placeholders nos campos de formulário do Django
         const fields = {
             'id_username': { placeholder: 'Crie um nome de usuário' },
             'id_email': { placeholder: 'Seu melhor e-mail' },
@@ -88,4 +103,4 @@
         }
     });
 </script>
-{% endblock %}
+{% endblock scripts %}

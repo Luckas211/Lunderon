@@ -3,6 +3,10 @@
 
 {% block title %}Confirmar Exclusão - LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout admin-panel">
     <aside class="sidebar">
@@ -13,7 +17,7 @@
             <ul>
                 <li><a href="{% url 'admin_assinaturas' %}"><i class="fas fa-clipboard-list fa-fw"></i> Assinaturas</a></li>
                 <li><a href="{% url 'admin_usuarios' %}"><i class="fas fa-users fa-fw"></i> Usuários</a></li>
-                <li class="active"><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
+                <li><a href="{% url 'admin_configuracoes' %}"><i class="fas fa-cog fa-fw"></i> Configurações</a></li>
                 <li><a href="{% url 'admin_pagamentos' %}"><i class="fas fa-credit-card fa-fw"></i> Pagamentos</a></li>
                 <li><a href="{% url 'admin_relatorios' %}"><i class="fas fa-chart-bar fa-fw"></i> Relatórios</a></li>
             </ul>
@@ -29,19 +33,19 @@
         </header>
 
         <div class="dashboard-card form-card-container">
-            <div class="card-body" style="text-align: center;">
+            <div class="card-body text-center">
                 <div class="status-icon error">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <h2 class="status-title">Atenção!</h2>
                 <p class="status-message">
                     Você tem certeza que deseja excluir permanentemente o item: <br>
-                    <code class="code-badge" style="margin-top: 15px; display: inline-block;">{{ item.nome | default:"item selecionado" }}</code>?
+                    <code class="code-badge">{{ item.nome | default:item.username | default:"item selecionado" }}</code>?
                 </p>
                 <p class="text-muted"><strong>Esta ação não pode ser desfeita.</strong></p>
             </div>
             <div class="card-footer">
-                <form method="POST" class="form-actions" style="justify-content: center;">
+                <form method="POST" class="form-actions justify-center">
                     {% csrf_token %}
                     <a href="{{ request.META.HTTP_REFERER|default:'/' }}" class="btn btn-secondary">Cancelar e Voltar</a>
                     <button type="submit" class="btn btn-danger">Sim, Excluir Permanentemente</button>

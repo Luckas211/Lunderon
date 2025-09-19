@@ -3,6 +3,10 @@
 
 {% block title %}Admin | Editar Assinatura{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout admin-panel">
     <aside class="sidebar">
@@ -24,7 +28,7 @@
         <header class="dashboard-header">
             <div class="header-main-content">
                 <h1>Editar Assinatura</h1>
-                <p>Usuário: {{ assinatura.usuario.username }}</p>
+                <p>Usuário: <span class="text-highlight">{{ assinatura.usuario.username }}</span></p>
             </div>
         </header>
 

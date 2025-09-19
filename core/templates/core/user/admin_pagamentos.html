@@ -3,6 +3,10 @@
 
 {% block title %}Admin | Gerenciar Pagamentos{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout admin-panel">
     <aside class="sidebar">
@@ -53,7 +57,9 @@
                         <tbody>
                             {% for pagamento in pagamentos %}
                             <tr>
-                                <td data-label="Usuário">{{ pagamento.usuario.username }}</td>
+                                <td data-label="Usuário">
+                                    <a href="{% url 'editar_usuario' pagamento.usuario.id %}" class="table-link">{{ pagamento.usuario.username }}</a>
+                                </td>
                                 <td data-label="Plano">{{ pagamento.plano.nome }}</td>
                                 <td data-label="Valor">R$ {{ pagamento.valor|floatformat:2 }}</td>
                                 <td data-label="Status">

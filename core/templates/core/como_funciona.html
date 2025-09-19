@@ -3,106 +3,88 @@
 
 {% block title %}Como Funciona | LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/como-funciona.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <section class="page-header">
     <div class="container">
         <h1 class="page-title">Sua Fábrica de Conteúdo Automatizada</h1>
-        <p class="page-subtitle">Descubra como transformar qualquer ideia em vídeos de alto impacto em três passos simples.</p>
+        <p class="page-subtitle">Entenda o fluxo de criação e descubra as ferramentas de IA que transformam suas ideias em vídeos de alto impacto.</p>
     </div>
 </section>
 
-<section class="content-section">
+<section class="how-it-works-section">
     <div class="container">
-        <div class="intro-card">
-            <h2 class="intro-title">O Poder da Criação com LUNDERON</h2>
-            <p>
-                O LUNDERON não é apenas um editor de vídeos, é seu parceiro de produção de conteúdo. Desenvolvemos uma plataforma inteligente que automatiza as partes mais complexas da criação de vídeos – narração, legendagem e design – liberando você para focar no que realmente importa: <strong>sua mensagem</strong>.
-            </p>
-            <p>
-                Utilizando tecnologias de ponta, nossa ferramenta permite que qualquer pessoa, mesmo sem experiência técnica, produza conteúdo com qualidade de estúdio, pronto para monetizar e engajar em qualquer plataforma digital.
-            </p>
+
+        <div class="how-it-works-row">
+            <div class="how-it-works-visual">
+                <div class="visual-icon">
+                    <i class="fas fa-photo-video"></i>
+                </div>
+            </div>
+            <div class="how-it-works-content">
+                <span class="step-indicator">Passo 1</span>
+                <h2 class="step-title">Escolha a Origem da sua Mídia</h2>
+                <p class="step-description">Comece selecionando de onde virá seu conteúdo de vídeo principal. Nossa plataforma oferece total flexibilidade para suas ideias.</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> Use nossa biblioteca com milhares de vídeos licenciados.</li>
+                    <li><i class="fas fa-check-circle"></i> Cole um link do YouTube e deixe nossa IA encontrar os melhores clipes.</li>
+                    <li><i class="fas fa-check-circle"></i> Envie seu próprio vídeo para criar anúncios de produtos e muito mais.</li>
+                </ul>
+            </div>
         </div>
+
+        <div class="how-it-works-row row-reversed">
+            <div class="how-it-works-visual">
+                <div class="visual-icon">
+                    <i class="fas fa-magic"></i>
+                </div>
+            </div>
+            <div class="how-it-works-content">
+                <span class="step-indicator">Passo 2</span>
+                <h2 class="step-title">Dê Vida ao seu Conteúdo com IA</h2>
+                <p class="step-description">Com a mídia selecionada, é hora de usar o poder da inteligência artificial para enriquecer seu vídeo e torná-lo único.</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> Transforme roteiros em narrações profissionais com vozes ultra-realistas.</li>
+                    <li><i class="fas fa-check-circle"></i> Gere legendas automáticas a partir do áudio para máximo engajamento.</li>
+                    <li><i class="fas fa-check-circle"></i> Personalize fontes, cores e estilos para alinhar com sua marca.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="how-it-works-row">
+            <div class="how-it-works-visual">
+                <div class="visual-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+            </div>
+            <div class="how-it-works-content">
+                <span class="step-indicator">Passo 3</span>
+                <h2 class="step-title">Exporte, Publique e Domine</h2>
+                <p class="step-description">Seu vídeo está pronto para conquistar as redes sociais. O processo final é simples, rápido e seguro.</p>
+                <ul class="feature-list">
+                    <li><i class="fas fa-check-circle"></i> Baixe seu vídeo em alta resolução, no formato vertical perfeito para mobile.</li>
+                    <li><i class="fas fa-check-circle"></i> Fique tranquilo: seu arquivo é excluído permanentemente após 1 hora.</li>
+                    <li><i class="fas fa-check-circle"></i> Use seu vídeo comercialmente e monetize seu conteúdo sem restrições.</li>
+                </ul>
+            </div>
+        </div>
+
     </div>
 </section>
 
-
-<section class="features-section">
-    <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">Recursos Detalhados à sua Disposição</h2>
-            <p class="section-subtitle">Cada funcionalidade foi desenhada para lhe dar máximo controle com o mínimo esforço.</p>
-        </div>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="card-icon icon-color-1"><i class="fas fa-microphone-alt"></i></div>
-                <h3>Modo Narrador: Seu Locutor Pessoal</h3>
-                <p>Ideal para contar histórias, curiosidades ou notícias. Cole seu texto, escolha uma voz e ajuste a velocidade. A plataforma gera uma narração fluida e cria legendas dinâmicas para prender a atenção.</p>
-            </div>
-            <div class="feature-card">
-                <div class="card-icon icon-color-2"><i class="fas fa-text-height"></i></div>
-                <h3>Modo Texto Estático: Mensagens Rápidas</h3>
-                <p>Perfeito para anúncios ou citações. Escreva uma mensagem curta, defina a duração e personalize cada detalhe visual, como posição, cor, fonte, e mais. Crie vídeos curtos e diretos.</p>
-            </div>
-            <div class="feature-card">
-                <div class="card-icon icon-color-3"><i class="fas fa-store"></i></div>
-                <h3>Modo Vendedor: Anúncios que Convertem</h3>
-                <p>Transforme um vídeo simples do seu produto em um anúncio profissional. Faça o upload, escreva o roteiro e nossa IA adiciona uma narração de alta qualidade com legendas sincronizadas.</p>
-            </div>
-        </div>
-    </div>
-</section>
-
-
-<section class="benefits-section">
-    <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">Benefícios Reais para seu Conteúdo</h2>
-            <p class="section-subtitle">Veja como nossa plataforma pode acelerar seu crescimento e maximizar seus resultados.</p>
-        </div>
-        <div class="features-grid">
-             <div class="feature-card">
-                <div class="card-icon icon-color-4"><i class="fas fa-dollar-sign"></i></div>
-                <h3>Acelere sua Monetização</h3>
-                <p>Produza conteúdo de alta qualidade em um ritmo impossível de alcançar manualmente, gerando mais visualizações e receita. Nossos usuários relatam aumento de até 300% em engajamento.</p>
-            </div>
-             <div class="feature-card">
-                <div class="card-icon icon-color-5"><i class="fas fa-users"></i></div>
-                <h3>Domine as Redes Sociais</h3>
-                <p>Crie conteúdo otimizado para TikTok, Reels e Shorts, com vídeos verticais desenhados para prender a atenção. Alcance milhões de espectadores com algoritmos que favorecem conteúdo profissional.</p>
-            </div>
-             <div class="feature-card">
-                <div class="card-icon icon-color-6"><i class="fas fa-brain"></i></div>
-                <h3>Foque na Estratégia</h3>
-                <p>Gaste seu tempo pesquisando temas e roteiros, em vez de horas lutando com softwares de edição complexos. Nossa IA cuida da produção técnica para você focar no que importa.</p>
-            </div>
-             <div class="feature-card">
-                <div class="card-icon icon-color-1"><i class="fas fa-rocket"></i></div>
-                <h3>Escalabilidade Total</h3>
-                <p>Da ideia ao vídeo final em minutos. Produza 100 vídeos por mês sem comprometer a qualidade, permitindo que você escale seu negócio de conteúdo exponencialmente.</p>
-            </div>
-             <div class="feature-card">
-                <div class="card-icon icon-color-2"><i class="fas fa-shield-alt"></i></div>
-                <h3>Privacidade e Segurança</h3>
-                <p>Seus vídeos são automaticamente excluídos após 1 hora, garantindo total controle sobre seu conteúdo. Utilizamos criptografia de ponta para proteger seus dados.</p>
-            </div>
-             <div class="feature-card">
-                <div class="card-icon icon-color-3"><i class="fas fa-headset"></i></div>
-                <h3>Suporte Especializado</h3>
-                <p>Equipe dedicada pronta para ajudar com qualquer dúvida. Resposta garantida em até 24 horas, com chat online durante horário comercial para questões urgentes.</p>
-            </div>
-        </div>
-    </div>
-</section>
 
 <section class="cta-section">
     <div class="container">
         <div class="cta-card">
             <div class="cta-content">
                 <h2 class="cta-title">Pronto para Automatizar sua Criação?</h2>
-                <p class="cta-subtitle">Comece a produzir conteúdo em escala hoje mesmo.</p>
+                <p class="cta-subtitle">Comece a produzir conteúdo em escala hoje mesmo com nosso teste gratuito.</p>
                 <div class="cta-actions">
-                    <a href="{% url 'planos' %}" class="btn btn-primary">Ver Planos e Assinar</a>
+                    <a href="{% url 'planos' %}" class="btn btn-primary btn-lg">Ver Planos e Assinar</a>
                 </div>
             </div>
         </div>

@@ -3,15 +3,20 @@
 
 {% block title %}Editar Perfil - LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout">
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+            <h2 class="sidebar-user">{% firstof user.get_full_name user.username %}</h2>
         </div>
         <nav class="sidebar-nav">
             <ul>
                 <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> Cortes YouTube</a></li>
                 <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
                 <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
             </ul>
@@ -76,7 +81,7 @@
                 </div>
                 <div class="card-footer">
                     <div class="form-actions">
-                        <a href="{% url 'meu_perfil' %}" class="btn btn-secondary">Cancelar</a>
+                        <a href="{% url 'meu_perfil' %}" class="btn btn-outline">Cancelar</a>
                         <button type="submit" class="btn btn-primary">Salvar Alterações</button>
                     </div>
                 </div>

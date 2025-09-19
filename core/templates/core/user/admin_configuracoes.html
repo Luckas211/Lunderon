@@ -3,6 +3,10 @@
 
 {% block title %}Admin | Configurações{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout admin-panel">
     <aside class="sidebar">
@@ -70,7 +74,7 @@
                                 <td data-label="Ações" class="text-right">
                                     <div class="action-buttons">
                                         <a href="{% url 'editar_configuracao' config.id %}" class="btn btn-secondary btn-sm">Editar</a>
-                                        <a href="{% url 'deletar_configuracao' config.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Atenção! Excluir uma configuração pode causar erros no site. Tem certeza?');">Deletar</a>
+                                        <a href="{% url 'deletar_configuracao' config.id %}" class="btn btn-danger btn-sm">Excluir</a>
                                     </div>
                                 </td>
                             </tr>

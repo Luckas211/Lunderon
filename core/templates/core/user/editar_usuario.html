@@ -3,6 +3,10 @@
 
 {% block title %}Admin | Editar Usuário{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout admin-panel">
     <aside class="sidebar">
@@ -24,7 +28,7 @@
         <header class="dashboard-header">
             <div class="header-main-content">
                 <h1>Editar Usuário</h1>
-                <p>Modifique os dados e a assinatura de: {{ usuario_editando.username }}</p>
+                <p>Modifique os dados e a assinatura de: <span class="text-highlight">{{ usuario_editando.username }}</span></p>
             </div>
         </header>
 

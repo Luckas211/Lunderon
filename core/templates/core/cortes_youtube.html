@@ -1,136 +1,145 @@
 {% extends 'core/base.html' %}
+{% load static %}
 
-{% block title %}Gerador de Cortes do YouTube{% endblock %}
+{% block title %}Editor de Cortes do YouTube - LUNDERON{% endblock %}
 
 {% block extra_css %}
-
+<link rel="stylesheet" href="{% static 'core/css/editor_page.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-layout">
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+<div class="editor-layout">
+    <aside class="editor-panel">
+        <div class="panel-header">
+            <i class="fas fa-cut"></i>
+            <h2>Editor de Cortes</h2>
         </div>
-        <nav class="sidebar-nav">
-            <ul>
-                <li ><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
-                <li{% if request.resolver_match.url_name == 'cortes_youtube' %} class="active"{% endif %}><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> Cortes YouTube</a></li>
-                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
-                <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Perfil</a></li>
-            </ul>
-        </nav>
-    </aside>
 
+        <form id="youtube-cutter-form" method="post" class="panel-form">
+            {% csrf_token %}
+            
+            <div class="form-step-wrapper">
+                <div class="form-step active" data-step="1">
+                    <div class="step-header">
+                        <div class="step-number">1</div>
+                        <h3>Cole a URL do Vídeo</h3>
+                    </div>
+                    <div class="form-group">
+                        <label for="{{ form.youtube_url.id_for_label }}">URL do YouTube</label>
+                        {{ form.youtube_url }}
+                    </div>
+                    <button type="button" id="analyze-btn" class="btn btn-primary btn-full">Analisar Vídeo</button>
+                    <div class="form-text">Cole a URL completa para que nossa IA encontre os melhores momentos.</div>
+                </div>
 
-<div class="container mt-5 mb-5">
-        <div id="loading-overlay" class="loading-overlay">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">Gerando cortes do YouTube...</p>
-            <small>Este processo pode levar alguns instantes. Por favor, não feche esta página.</small>
-        </div>
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h1 class="card-title text-center mb-4">Novo Corte do YouTube</h1>
-                    <p class="text-center text-muted">Cole a URL de um vídeo do YouTube, analise os trechos mais populares e crie seus cortes com uma música de fundo.</p>
+                <div class="form-step" data-step="2">
+                    <div class="step-header">
+                        <div class="step-number">2</div>
+                        <h3>Selecione os Cortes e Opções</h3>
+                    </div>
                     
-                    <div class="alert alert-info" role="alert">
-                        Você tem <strong>{{ videos_restantes }}</strong> vídeo(s) restante(s) no seu limite mensal. Cada corte gerado consome um vídeo do seu limite.
+                    <div id="segments-container" class="form-group">
+                        <label>Segmentos Encontrados</label>
+                        <div id="segments-list">
+                            </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.categoria_musica.id_for_label }}">Música de Fundo</label>
+                        {{ form.categoria_musica }}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="id_volume_musica">Volume da Música (%)</label>
+                        <div class="range-slider-group">
+                            <input type="range" name="volume_musica" value="20" class="form-range" min="0" max="100" id="id_volume_musica" oninput="this.nextElementSibling.value = this.value">
+                            <output>20</output>
+                        </div>
                     </div>
 
-                    <form id="youtube-cutter-form" method="post">
-                        {% csrf_token %}
-                        
-                        <div class="mb-3">
-                            {{ form.youtube_url.label_tag }}
-                            {{ form.youtube_url }}
-                            <div class="form-text">Cole a URL completa do vídeo do YouTube.</div>
-                        </div>
-
-                        <div class="d-grid gap-2 mb-4">
-                            <button type="button" id="analyze-btn" class="btn btn-secondary">Analisar Vídeo</button>
-                        </div>
-
-                        <div id="segments-container" class="mb-3" style="display: none;">
-                            <h5 class="mb-3">Segmentos Encontrados</h5>
-                            <div id="segments-list" class="list-group">
-                                <!-- Os segmentos serão inseridos aqui pelo JavaScript -->
+                    <div class="form-group">
+                        <label class="form-check-wrapper">
+                            <input type="checkbox" class="form-check-input" id="id_gerar_legendas" name="gerar_legendas">
+                            <div class="form-check-info">
+                                <span class="form-check-title">Gerar Legendas (IA)</span>
+                                <small class="form-text">Ativa a transcrição automática do áudio para legendas.</small>
                             </div>
-                            <div id="segments-error" class="alert alert-danger mt-3" style="display: none;"></div>
-                        </div>
-
-                                                <div id="music-and-submit-container" style="display: none;">
-                            <div class="mb-3">
-                                {{ form.categoria_musica.label_tag }}
-                                {{ form.categoria_musica }}
-                            </div>
-                            <div class="mb-3">
-                                <label for="id_volume_musica">Volume da Música de Fundo (%)</label>
-                                <input type="number" name="volume_musica" value="20" class="form-control" min="0" max="100" id="id_volume_musica">
-                                <div class="form-text">Ajuste o volume da música para não sobrepor o áudio original do vídeo.</div>
-                            </div>
-                            
-                            {{ form.segments }}
-
-                            <div class="d-grid gap-2">
-                                <div class="mb-3 form-check">
-                                    <input type="checkbox" class="form-check-input" id="id_gerar_legendas" name="gerar_legendas">
-                                    <label class="form-check-label" for="id_gerar_legendas">Gerar Legendas (transcrição automática)</label>
-                                    <small class="form-text text-muted">Ativa a transcrição automática do áudio do vídeo para legendas.</small>
-                                </div>
-                                <button type="submit" id="submit-btn" class="btn btn-primary">Gerar Cortes Selecionados</button>
-                            </div>
-                        </div>
-                    </form>
+                        </label>
+                    </div>
                 </div>
             </div>
+            
+            <input type="hidden" name="segments" id="id_segments">
+            <div class="panel-footer">
+                <div class="alert alert-info">
+                    Você tem <strong>{{ videos_restantes }}</strong> vídeo(s) restante(s) no seu limite.
+                </div>
+                <button type="submit" id="submit-btn" class="btn btn-primary btn-full btn-lg" disabled>Gerar Cortes Selecionados</button>
+            </div>
+        </form>
+    </aside>
+
+    <main class="editor-preview">
+        <div id="loading-overlay" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">Analisando...</p>
         </div>
-    </div>
+        
+        <div id="preview-placeholder" class="preview-placeholder">
+            <i class="fab fa-youtube"></i>
+            <h3>Sua prévia aparecerá aqui</h3>
+            <p>Cole uma URL e clique em "Analisar Vídeo" para começar.</p>
+        </div>
+
+        <div id="preview-content" class="preview-content">
+            <div class="video-preview-wrapper">
+                <img id="video-thumbnail" src="" alt="Thumbnail do Vídeo">
+                <div class="video-info">
+                    <h3 id="video-title">Título do Vídeo</h3>
+                </div>
+            </div>
+            <div id="segments-error" class="alert alert-danger"></div>
+        </div>
+    </main>
 </div>
+{% endblock %}
 
+
+{% block scripts %}
+{{ block.super }}
 <script>
-// Função para mostrar/ocultar o loading
-function toggleLoading(show, message = 'Gerando cortes do YouTube...') {
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const loadingText = document.querySelector('.loading-text');
-    
-    if (show) {
-        loadingText.textContent = message;
-        loadingOverlay.style.display = 'flex';
-        setTimeout(() => {
-            loadingOverlay.classList.add('visible');
-        }, 10);
-    } else {
-        loadingOverlay.classList.remove('visible');
-        setTimeout(() => {
-            loadingOverlay.style.display = 'none';
-        }, 300);
-    }
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-    const loadingOverlay = document.getElementById('loading-overlay');
+    // Mapeamento de elementos
     const form = document.getElementById('youtube-cutter-form');
-    const submitBtn = document.getElementById('submit-btn');
     const analyzeBtn = document.getElementById('analyze-btn');
-    const segmentsContainer = document.getElementById('segments-container');
+    const submitBtn = document.getElementById('submit-btn');
+    const youtubeUrlInput = document.getElementById('id_youtube_url');
     const segmentsList = document.getElementById('segments-list');
     const segmentsError = document.getElementById('segments-error');
-    const musicAndSubmitContainer = document.getElementById('music-and-submit-container');
     const hiddenSegmentsInput = document.getElementById('id_segments');
-    const youtubeUrlInput = document.getElementById('id_youtube_url');
+    
+    const previewPlaceholder = document.getElementById('preview-placeholder');
+    const previewContent = document.getElementById('preview-content');
+    const videoThumbnail = document.getElementById('video-thumbnail');
+    const videoTitle = document.getElementById('video-title');
+    
+    const step1 = document.querySelector('.form-step[data-step="1"]');
+    const step2 = document.querySelector('.form-step[data-step="2"]');
+    const loadingOverlay = document.getElementById('loading-overlay');
 
-    if (form && loadingOverlay && submitBtn) {
-        form.addEventListener('submit', function() {
-            // Mostra a tela de loading ao enviar o formulário
-            toggleLoading(true, 'Gerando cortes do YouTube...');
+    // Adiciona classes aos campos do Django
+    youtubeUrlInput.classList.add('form-input');
+    document.getElementById('id_categoria_musica').classList.add('form-select');
 
-            // Desabilita o botão e muda o texto para dar feedback visual
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando, por favor aguarde...';
-        });
+    function toggleLoading(show, message) {
+        loadingOverlay.style.display = show ? 'flex' : 'none';
+        loadingOverlay.querySelector('.loading-text').textContent = message;
+    }
+
+    function getYoutubeVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
     }
 
     analyzeBtn.addEventListener('click', async function() {
@@ -140,63 +149,70 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Mostra a tela de loading
-        toggleLoading(true, 'Analisando vídeo...');
+        const videoId = getYoutubeVideoId(url);
+        if (!videoId) {
+            alert('URL do YouTube inválida.');
+            return;
+        }
 
+        toggleLoading(true, 'Analisando vídeo...');
         analyzeBtn.disabled = true;
-        analyzeBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Analisando...';
+        analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
+        
         segmentsList.innerHTML = '';
         segmentsError.style.display = 'none';
-        segmentsContainer.style.display = 'none';
-        musicAndSubmitContainer.style.display = 'none';
+        previewContent.style.display = 'none';
+        previewPlaceholder.style.display = 'flex';
+        submitBtn.disabled = true;
 
         try {
             const response = await fetch("{% url 'get_youtube_segments' %}", {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
                 body: JSON.stringify({ url: url })
             });
-
+            
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Erro desconhecido ao analisar a URL.');
-            }
+            if (!response.ok) throw new Error(data.error || 'Erro desconhecido.');
+
+            videoThumbnail.src = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+            videoTitle.textContent = "Selecione os segmentos abaixo";
+            previewPlaceholder.style.display = 'none';
+            previewContent.style.display = 'block';
 
             if (data.segments && data.segments.length > 0) {
-                segmentsContainer.style.display = 'block';
-                musicAndSubmitContainer.style.display = 'block';
-                
                 data.segments.forEach((segment, index) => {
                     const startTime = new Date(segment.start * 1000).toISOString().substr(14, 5);
                     const endTime = new Date(segment.end * 1000).toISOString().substr(14, 5);
                     
                     const segmentElement = document.createElement('label');
-                    segmentElement.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    segmentElement.className = 'segment-item';
                     segmentElement.innerHTML = `
-                        <div>
-                            <input class="form-check-input me-2" type="checkbox" value='${JSON.stringify(segment)}' id="segment-${index}" checked>
-                            <strong>Corte ${index + 1}:</strong> de ${startTime} até ${endTime}
+                        <input class="form-check-input" type="checkbox" value='${JSON.stringify(segment)}' id="segment-${index}" checked>
+                        <div class="segment-info">
+                            <strong>Corte ${index + 1}</strong>
+                            <span>${startTime} - ${endTime}</span>
                         </div>
-                        <span class="badge bg-primary rounded-pill">${Math.round(segment.duration)}s</span>
+                        <span class="segment-duration">${Math.round(segment.duration)}s</span>
                     `;
                     segmentsList.appendChild(segmentElement);
                 });
+                
+                step1.classList.remove('active');
+                step2.classList.add('active');
+                submitBtn.disabled = false;
             } else {
-                segmentsError.textContent = data.message || 'Nenhum segmento popular foi encontrado para este vídeo.';
+                segmentsError.textContent = data.message || 'Nenhum segmento popular foi encontrado.';
                 segmentsError.style.display = 'block';
             }
-
         } catch (error) {
             segmentsError.textContent = 'Erro: ' + error.message;
             segmentsError.style.display = 'block';
         } finally {
             analyzeBtn.disabled = false;
             analyzeBtn.innerHTML = 'Analisar Vídeo';
-            toggleLoading(false);
+            toggleLoading(false, '');
         }
     });
 
@@ -208,12 +224,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        const selectedSegments = [];
-        selectedCheckboxes.forEach(checkbox => {
-            selectedSegments.push(JSON.parse(checkbox.value));
-        });
-
+        const selectedSegments = Array.from(selectedCheckboxes).map(cb => JSON.parse(cb.value));
         hiddenSegmentsInput.value = JSON.stringify(selectedSegments);
+        
+        toggleLoading(true, 'Gerando cortes...');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
     });
 });
 </script>

@@ -3,6 +3,10 @@
 
 {% block title %}Termos de Serviço - LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/legal_page.css' %}">
+{% endblock %}
+
 {% block content %}
 
 <section class="page-header">
@@ -16,7 +20,7 @@
     <div class="container">
         <div class="legal-card">
             <h1>Termos de Serviço da LUNDERON</h1>
-            <p class="last-updated">Última atualização: {% now "d/m/Y" %}</p>
+            <p class="last-updated">Última atualização: 19/09/2025</p>
 
             <h2>1. Aceitação dos Termos</h2>
             <p>Ao acessar, registrar-se ou utilizar a plataforma LUNDERON ("Serviços"), você concorda em cumprir e se vincular a estes Termos de Serviço. Se você não concordar com qualquer parte dos termos, não terá permissão para acessar os Serviços.</p>
@@ -24,7 +28,7 @@
             <hr class="section-divider">
 
             <h2>2. Descrição do Serviço</h2>
-            <p>A LUNDERON é uma plataforma de software como serviço (SaaS) que permite aos usuários criar conteúdo audiovisual personalizado ("Vídeos Gerados") a partir de textos, vídeos de upload, e uma biblioteca de mídia licenciada, utilizando inteligência artificial para narração e automação.</p>
+            <p>A LUNDERON é uma plataforma de software como serviço (SaaS) que permite aos usuários criar conteúdo audiovisual personalizado ("Vídeos Gerados") a partir de textos, vídeos de upload, links do YouTube e uma biblioteca de mídia licenciada, utilizando inteligência artificial para narração, legendagem e automação.</p>
 
             <hr class="section-divider">
 
@@ -34,7 +38,7 @@
             <hr class="section-divider">
 
             <h2>4. Planos, Pagamentos e Cancelamento</h2>
-            <p>Nossos Serviços são oferecidos através de um plano de assinatura recorrente. Os pagamentos são processados de forma segura através do nosso parceiro, Stripe. Ao assinar, você autoriza a cobrança mensal automática. Você pode cancelar sua assinatura a qualquer momento através do seu painel de perfil, e o acesso permanecerá ativo até o final do ciclo de faturamento já pago.</p>
+            <p>Nossos Serviços são oferecidos através de planos de assinatura recorrentes ("Criador Essencial", "Criador Pro"). Os pagamentos são processados de forma segura através do nosso parceiro, Stripe. Ao assinar, você autoriza a cobrança recorrente (mensal ou anual, conforme sua escolha). Você pode cancelar sua assinatura a qualquer momento através do seu painel de perfil, e o acesso permanecerá ativo até o final do ciclo de faturamento já pago.</p>
 
             <hr class="section-divider">
 
@@ -42,11 +46,10 @@
             <p>Você concorda em utilizar a plataforma de forma ética e legal. É estritamente proibido:</p>
             <ul>
                 <li>Gerar conteúdo que seja ilegal, difamatório, odioso, ou que infrinja os direitos de terceiros.</li>
-                <li>Violar direitos autorais ou de propriedade intelectual, incluindo o uso de material protegido em seus uploads.</li>
+                <li>Violar direitos autorais ou de propriedade intelectual, incluindo o uso de material protegido em seus uploads ou links do YouTube.</li>
                 <li>Utilizar a plataforma para distribuir spam, malware ou realizar atividades fraudulentas.</li>
-                <li>Tentar fazer engenharia reversa, descompilar ou acessar o código-fonte da plataforma.</li>
             </ul>
-            <p>Sua assinatura lhe concede o direito de gerar até 100 vídeos por mês. Este limite é restabelecido a cada renovação do ciclo de pagamento.</p>
+            <p>Sua assinatura concede o direito de gerar um número específico de vídeos por mês, conforme detalhado no plano escolhido no momento da compra (e.g., 30 vídeos para o plano Essencial, 100 vídeos para o plano Pro). Funcionalidades avançadas, como a ferramenta de Cortes do YouTube e Legendas Automáticas, estão disponíveis apenas em planos específicos, como o "Criador Pro".</p>
             
             <hr class="section-divider">
 

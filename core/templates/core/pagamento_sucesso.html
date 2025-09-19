@@ -3,6 +3,10 @@
 
 {% block title %}Pagamento Aprovado - LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/status_page.css' %}">
+{% endblock %}
+
 {% block content %}
 <section class="status-page-section">
     <div class="container">
@@ -26,7 +30,7 @@
 {% endblock %}
 
 {% block scripts %}
-{{ block.super }} {# Mantém scripts do base.html, se houver #}
+{{ block.super }}
 <script>
     setTimeout(function() {
         window.location.href = "{% url 'pagina_gerador' %}";

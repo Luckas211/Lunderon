@@ -3,15 +3,20 @@
 
 {% block title %}Seu Plano Ativo - LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout">
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+            <h2 class="sidebar-user">{% firstof user.get_full_name user.username %}</h2>
         </div>
         <nav class="sidebar-nav">
             <ul>
                 <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> Cortes YouTube</a></li>
                 <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
                 <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
             </ul>
@@ -58,14 +63,17 @@
                                 <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
                             </div>
                             <div class="progress-bar">
-                                <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"></div>
+                                {% widthratio videos_criados_no_mes|default:0 limite_videos_mes 100 as usage_percentage %}
+                                <div class="progress-bar-inner" style="width: {{ usage_percentage }}%;">
+                                    <span>{{ usage_percentage|floatformat:0 }}%</span>
+                                </div>
                             </div>
                         </div>
                     {% endif %}
                 </div>
                 <div class="card-footer">
                     <div class="form-actions space-between">
-                        <a href="{% url 'meu_perfil' %}" class="btn btn-secondary">Voltar ao Painel</a>
+                        <a href="{% url 'meu_perfil' %}" class="btn btn-outline">Voltar ao Painel</a>
                         <a href="{% url 'gerenciar_assinatura' %}" class="btn btn-primary">Gerenciar Assinatura</a>
                     </div>
                 </div>

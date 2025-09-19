@@ -3,18 +3,22 @@
 
 {% block title %}Meu Painel - LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/dashboard.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout">
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2 class="sidebar-user">{% firstof user.first_name user.username %}</h2>
+            <h2 class="sidebar-user">{% firstof user.get_full_name user.username %}</h2>
         </div>
         <nav class="sidebar-nav">
             <ul>
-                <li{% if request.resolver_match.url_name == 'pagina_gerador' %} class="active"{% endif %}><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
-                <li{% if request.resolver_match.url_name == 'cortes_youtube' %} class="active"{% endif %}><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> Cortes YouTube</a></li>
-                <li{% if request.resolver_match.url_name == 'meus_videos' %} class="active"{% endif %}><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
-                <li{% if request.resolver_match.url_name == 'meu_perfil' %} class="active"{% endif %}><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
+                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
+                <li><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> Cortes YouTube</a></li>
+                <li><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
+                <li class="active"><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
             </ul>
         </nav>
     </aside>
@@ -68,12 +72,17 @@
                                     <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
                                 </div>
                                 <div class="progress-bar">
-                                    <div class="progress-bar-inner" style="width: calc({{ videos_criados_no_mes|default:0 }} / {{ limite_videos_mes }} * 100%);"></div>
+                                    {% widthratio videos_criados_no_mes|default:0 limite_videos_mes 100 as usage_percentage %}
+                                    <div class="progress-bar-inner" style="width: {{ usage_percentage }}%;">
+                                        <span>{{ usage_percentage|floatformat:0 }}%</span>
+                                    </div>
                                 </div>
                             </div>
                         {% else %}
                             <div class="empty-state">
-                                <p>Você ainda não possui uma assinatura ativa.</p>
+                                <div class="empty-state-icon"><i class="fas fa-rocket"></i></div>
+                                <h3>Desbloqueie todo o potencial</h3>
+                                <p>Você ainda não possui uma assinatura ativa. Assine um plano para começar a criar vídeos sem limites.</p>
                                 <a href="{% url 'planos' %}" class="btn btn-primary">Ver Planos</a>
                             </div>
                         {% endif %}
@@ -97,10 +106,6 @@
                                 <span class="info-value">{% firstof user.get_full_name 'Não informado' %}</span>
                             </li>
                             <li class="info-item">
-                                <span class="info-label">Nome de Usuário</span>
-                                <span class="info-value">{{ user.username }}</span>
-                            </li>
-                             <li class="info-item">
                                 <span class="info-label">Email de Acesso</span>
                                 <span class="info-value">{{ user.email }}</span>
                             </li>
@@ -120,14 +125,14 @@
                     </div>
                     <div class="card-body card-actions">
                         <a href="{% url 'pagina_gerador' %}" class="btn btn-primary btn-full"><i class="fas fa-plus"></i> Gerar Novo Vídeo</a>
-                        <a href="{% url 'cortes_youtube' %}" class="btn btn-secondary btn-full"><i class="fas fa-cut"></i> Cortes YouTube</a>
-                        <a href="{% url 'meus_videos' %}" class="btn btn-secondary btn-full"><i class="fas fa-video"></i> Ver Meus Vídeos</a>
-                        <a href="{% url 'suporte' %}" class="btn btn-secondary btn-full"><i class="fas fa-headset"></i> Pedir Suporte</a>
+                        <a href="{% url 'cortes_youtube' %}" class="btn btn-outline btn-full"><i class="fas fa-cut"></i> Cortes YouTube</a>
+                        <a href="{% url 'meus_videos' %}" class="btn btn-outline btn-full"><i class="fas fa-video"></i> Ver Meus Vídeos</a>
+                        <a href="{% url 'suporte' %}" class="btn btn-outline btn-full"><i class="fas fa-headset"></i> Pedir Suporte</a>
                     </div>
                 </div>
             </div>
 
         </div>
-    </div>
-</main>
+    </main>
+</div>
 {% endblock %}

@@ -1,151 +1,142 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Nosso Plano | LUNDERON{% endblock %}
+{% block title %}Planos e Preços | LUNDERON{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/planos.css' %}">
+{% endblock %}
 
 {% block content %}
 
 <section class="page-header">
     <div class="container">
-        <h1 class="page-title">Acesso Total. Sem Limites Criativos.</h1>
-        <p class="page-subtitle">Um único plano com todas as ferramentas que você precisa para produzir conteúdo em escala, sem complicações. Junte-se a milhares de criadores que já transformaram suas ideias em sucesso viral.</p>
+        <h1 class="page-title">Planos Flexíveis para Cada Criador</h1>
+        <p class="page-subtitle">Escolha o plano ideal para sua jornada, seja você um iniciante ou um profissional em busca de escala.</p>
     </div>
 </section>
 
 <section class="pricing-section">
     <div class="container">
-        <div class="pricing-card-wrapper">
+        <div class="pricing-grid">
+            
             <div class="pricing-card">
-                <div class="plan-badge">Mais Popular</div>
                 <div class="pricing-card-header">
-                    <h2 class="plan-name">Plano Criador Pro</h2>
-                    <p class="plan-description">Acesso ilimitado a todas as funcionalidades da plataforma.</p>
+                    <h2 class="plan-name">Criador Essencial</h2>
+                    <p class="plan-description">O ponto de partida perfeito para novos criadores de conteúdo.</p>
                 </div>
 
                 <div class="plan-price">
-                    R$ 49,90<span class="plan-period">/mês</span>
+                    R$ 29,90<span class="plan-period">/mês</span>
                 </div>
 
                 <ul class="plan-features">
-                    <li><i class="fas fa-check-circle"></i> <strong>100 Vídeos por Mês:</strong> Produza conteúdo diariamente.</li>
-                    <li><i class="fas fa-check-circle"></i> <strong>Narração com IA:</strong> Vozes realistas para seus roteiros.</li>
-                    <li><i class="fas fa-check-circle"></i> <strong>Legendas Dinâmicas:</strong> Aumente a retenção com legendas customizadas.</li>
-                    <li><i class="fas fa-check-circle"></i> <strong>3 Modos de Criação:</strong> Narrador, Texto Estático e Vendedor.</li>
-                    <li><i class="fas fa-check-circle"></i> <strong>Biblioteca Royalty-Free:</strong> Milhares de vídeos e músicas.</li>
-                    <li><i class="fas fa-check-circle"></i> <strong>Privacidade Total:</strong> Vídeos excluídos após 1 hora.</li>
-                    <li><i class="fas fa-check-circle"></i> <strong>Suporte Prioritário</strong> via e-mail.</li>
+                    <li><i class="fas fa-check-circle"></i> <strong>30 Vídeos por Mês</strong></li>
+                    <li><i class="fas fa-check-circle"></i> Modos de Criação Essenciais</li>
+                    <li><i class="fas fa-check-circle"></i> Narração com Vozes Padrão IA</li>
+                    <li><i class="fas fa-check-circle"></i> Biblioteca de Mídia Padrão</li>
+                    <li><i class="fas fa-check-circle"></i> Suporte via E-mail</li>
                 </ul>
 
-                <a href="{% url 'criar_checkout' %}" class="btn btn-primary btn-full btn-lg">Quero Assinar Agora</a>
+                <a href="{% url 'criar_checkout' %}" class="btn btn-secondary btn-full btn-lg">Assinar Essencial</a>
             </div>
+
+            <div class="pricing-card pro-plan">
+                <div class="plan-badge">Recomendado</div>
+                <div class="pricing-card-header">
+                    <h2 class="plan-name">Criador Pro</h2>
+                    <p class="plan-description">As ferramentas mais poderosas para quem leva a criação a sério.</p>
+                </div>
+
+                <div class="plan-price">
+                    R$ 59,90<span class="plan-period">/mês</span>
+                </div>
+
+                <ul class="plan-features">
+                    <li><i class="fas fa-check-circle"></i> <strong>100 Vídeos por Mês</strong></li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Acesso a TODOS os Modos</strong></li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Ferramenta de Cortes do YouTube</strong></li>
+                    <li><i class="fas fa-check-circle"></i> <strong>Legendas Automáticas com IA</strong></li>
+                    <li><i class="fas fa-check-circle"></i> Narração com Vozes Premium IA</li>
+                    <li><i class="fas fa-check-circle"></i> Biblioteca de Mídia Premium</li>
+                    <li><i class="fas fa-check-circle"></i> Suporte Prioritário</li>
+                </ul>
+
+                <a href="{% url 'criar_checkout' %}" class="btn btn-primary btn-full btn-lg">Assinar Plano Pro</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="comparison-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Compare os Recursos</h2>
+            <p class="section-subtitle">Veja em detalhes o que cada plano oferece para você.</p>
+        </div>
+        
+        <div class="comparison-table-wrapper">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Funcionalidade</th>
+                        <th>Criador Essencial</th>
+                        <th>Criador Pro</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Limite de Vídeos / Mês</td>
+                        <td>30</td>
+                        <td>100</td>
+                    </tr>
+                    <tr>
+                        <td>Modo Narrador e Texto</td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Modo Vendedor (Upload)</td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Cortes de Vídeos do YouTube</td>
+                        <td><i class="fas fa-times-circle muted"></i></td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Legendas Automáticas com IA</td>
+                        <td><i class="fas fa-times-circle muted"></i></td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Vozes Premium de IA</td>
+                        <td><i class="fas fa-times-circle muted"></i></td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                    </tr>
+                     <tr>
+                        <td>Privacidade (Vídeos expiram em 1h)</td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Suporte Prioritário</td>
+                        <td><i class="fas fa-times-circle muted"></i></td>
+                        <td><i class="fas fa-check-circle success"></i></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </section>
 
 <section class="faq-section">
     <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">Dúvidas Comuns</h2>
-            <p class="section-subtitle">Respostas rápidas para as perguntas mais importantes.</p>
         </div>
-        <div class="faq-accordion">
-            <details class="faq-item">
-                <summary class="faq-question">
-                    <span>Posso cancelar a qualquer momento?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </summary>
-                <div class="faq-answer">
-                    <p>Sim! Você pode gerenciar e cancelar sua assinatura quando quiser, sem burocracia. Seu acesso continuará ativo até o final do período já pago.</p>
-                </div>
-            </details>
-            <details class="faq-item">
-                <summary class="faq-question">
-                    <span>Quais métodos de pagamento são aceitos?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </summary>
-                <div class="faq-answer">
-                    <p>Aceitamos os principais cartões de crédito (Visa, MasterCard, Amex) através da nossa parceria com a Stripe, uma das plataformas de pagamento mais seguras do mundo.</p>
-                </div>
-            </details>
-            <details class="faq-item">
-                <summary class="faq-question">
-                    <span>O que exatamente eu recebo ao assinar?</span>
-                    <i class="fas fa-chevron-down"></i>
-                </summary>
-                <div class="faq-answer">
-                    <p>Você ganha acesso total à plataforma para gerar até 100 vídeos por mês, utilizando todos os recursos: narração com IA, todos os modos de criação, biblioteca de mídia completa e suporte.</p>
-                </div>
-            </details>
-        </div>
-    </div>
-</section>
-
-<section class="testimonials-section">
-    <div class="container">
-        <div class="section-header">
-            <h2 class="section-title">Criadores que escolheram o Plano Pro</h2>
-            <p class="section-subtitle">Veja como o investimento no Plano Criador Pro transformou seus resultados</p>
-        </div>
-        <div class="testimonials-grid">
-            <div class="testimonial-card">
-                <div class="testimonial-content">
-                    <p>"O Plano Pro me deu liberdade criativa total. Em 3 meses, meus vídeos no TikTok passaram de 10k para 500k visualizações. O ROI foi incrível!"</p>
-                </div>
-                <div class="testimonial-author">
-                    <div class="author-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
-                    <div class="author-info">
-                        <div class="author-name">Carlos Mendes</div>
-                        <div class="author-role">TikToker Profissional</div>
-                    </div>
-                </div>
-            </div>
-            <div class="testimonial-card">
-                <div class="testimonial-content">
-                    <p>"Como agência, precisamos de velocidade e qualidade. O Plano Pro nos permite atender múltiplos clientes com eficiência. Investimento que se paga sozinho."</p>
-                </div>
-                <div class="testimonial-author">
-                    <div class="author-avatar">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <div class="author-info">
-                        <div class="author-name">Agência Digital XYZ</div>
-                        <div class="author-role">Agência de Marketing</div>
-                    </div>
-                </div>
-            </div>
-            <div class="testimonial-card">
-                <div class="testimonial-content">
-                    <p>"O suporte do Plano Pro é excepcional. Sempre que preciso, recebo ajuda rápida. Meus vídeos educacionais nunca foram tão profissionais."</p>
-                </div>
-                <div class="testimonial-author">
-                    <div class="author-avatar">
-                        <i class="fas fa-graduation-cap"></i>
-                    </div>
-                    <div class="author-info">
-                        <div class="author-name">Prof. Roberto Lima</div>
-                        <div class="author-role">Educador Online</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </section>
 
 <section class="cta-section">
-    <div class="container">
-        <div class="cta-card">
-            <div class="cta-content">
-                <h2 class="cta-title">Pronto para escalar seu conteúdo?</h2>
-                <p class="cta-subtitle">Não perca mais tempo. Assine o Plano Criador Pro hoje e comece a gerar vídeos que convertem em resultados reais.</p>
-                <div class="cta-actions">
-                    <a href="{% url 'criar_checkout' %}" class="btn btn-primary btn-lg">Assinar Plano Pro</a>
-                    <a href="{% url 'como_funciona' %}" class="btn btn-secondary btn-lg">Ver Demonstração</a>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+    </section>
 
 {% endblock %}

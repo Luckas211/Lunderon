@@ -2235,7 +2235,7 @@ def cortes_youtube_view(request):
             data = form.cleaned_data
             youtube_url = data['youtube_url']
             selected_segments = json.loads(data['segments'])
-            volume_musica = data.get('volume_musica', 20) / 100.0  # Converter para decimal
+            volume_musica = data.get('volume_musica', 20) / 100.0
             gerar_legendas = data.get('gerar_legendas', False)
             
             if (videos_criados + len(selected_segments)) > limite_videos_mes:
@@ -2264,12 +2264,18 @@ def cortes_youtube_view(request):
                 try:
                     segment_filename_template = os.path.join(temp_dir, f'segment_{request.user.id}_{random.randint(1000, 9999)}.%(ext)s')
                     
+                    # ### INÍCIO DA CORREÇÃO DE QUALIDADE ###
+                    # Ajuste para priorizar 1080p a 60fps.
+                    # O 'bestvideo' seleciona a melhor trilha de vídeo, e '[height<=1080]' limita a 1080p.
+                    # O '+bestaudio' garante que o melhor áudio seja baixado separadamente e mesclado.
                     ydl_opts = {
-                        'format': 'best[ext=mp4][height<=1080]/best[height<=1080]/best',
+                        'format': 'bestvideo[height<=1080][fps=60]+bestaudio/bestvideo[height<=1080]+bestaudio/best',
                         'outtmpl': segment_filename_template,
                         'download_ranges': yt_dlp.utils.download_range_func(None, [(segment['start'], segment['end'])]), 
                         'force_keyframes_at_cuts': True,
+                        'merge_output_format': 'mp4', # Garante a saída em MP4 após mesclar vídeo e áudio
                     }
+                    # ### FIM DA CORREÇÃO DE QUALIDADE ###
 
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(youtube_url, download=True)
@@ -2278,14 +2284,9 @@ def cortes_youtube_view(request):
                     if not caminho_video_segmento or not os.path.exists(caminho_video_segmento):
                         raise Exception("yt-dlp não baixou o arquivo do segmento.")
 
-                    # --- Lógica de Transcrição com Whisper ---
                     if gerar_legendas:
-                        print(f"Iniciando extração de áudio para transcrição do segmento {segment['start']}-{segment['end']}...")
                         caminho_audio_extraido = extract_audio_from_video(caminho_video_segmento)
-                        print(f"Áudio extraído para: {caminho_audio_extraido}")
-                        print("Iniciando transcrição com Whisper...")
                         caminho_legenda_srt = transcribe_audio_to_srt(caminho_audio_extraido)
-                        print(f"Legenda SRT gerada em: {caminho_legenda_srt}")
 
                     nome_base = f"corte_{request.user.id}_{random.randint(10000, 99999)}"
                     nome_arquivo_final = f"{nome_base}.mp4"
@@ -2293,7 +2294,6 @@ def cortes_youtube_view(request):
                     object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
                     os.makedirs(os.path.dirname(caminho_video_local_final), exist_ok=True)
 
-                    # COMANDO FFMPEG - MESCLAR ÁUDIO ORIGINAL + MÚSICA DE FUNDO + LEGENDAS
                     cmd = [
                         "ffmpeg", "-y", 
                         "-i", caminho_video_segmento, 
@@ -2302,33 +2302,33 @@ def cortes_youtube_view(request):
                     if caminho_legenda_srt:
                         cmd.extend(["-i", caminho_legenda_srt])
 
-                    # Video filter chain
                     video_filters = "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1"
                     if caminho_legenda_srt:
-                        # CORREÇÃO: Escapa as barras invertidas para o FFmpeg
                         escaped_srt_path = caminho_legenda_srt.replace('\\', '/').replace(':', '\\:')
-                        # Define o estilo da legenda
-                        style_options = "FontName=impact,FontSize=9,MarginV=60,Alignment=2"
+                        style_options = "FontName=impact,FontSize=8,PrimaryColour=&H00FFFFFF,Bold=-1,MarginV=60"
                         video_filters += f",subtitles='{escaped_srt_path}':force_style='{style_options}'"
-
-                    # Audio filter chain
-                    audio_filters = f"[0:a]aformat=sample_rates=44100:channel_layouts=stereo,volume=1.0[audio_original];[1:a]aformat=sample_rates=44100:channel_layouts=stereo,volume={volume_musica}[audio_musica];[audio_original][audio_musica]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]"
-
-                    # Combine into filter_complex_str
-                    # The video chain starts with [0:v] and outputs to [v]
-                    # The audio chain starts with [0:a] and [1:a] and outputs to [audio_mix]
-                    # These two chains are separated by a semicolon.
+                    
+                    audio_filters = f"[0:a]volume=1.0[audio_original];[1:a]volume={volume_musica}[audio_musica];[audio_original][audio_musica]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]"
+                    
                     filter_complex_str = f"[0:v]{video_filters}[v];{audio_filters}"
 
+                    # ### INÍCIO DA OTIMIZAÇÃO FFMPEG ###
                     cmd.extend([
                         "-filter_complex", filter_complex_str,
                         "-map", "[v]", 
                         "-map", "[audio_mix]",
-                        "-c:v", "libx264", "-pix_fmt", "yuv420p", 
+                        "-c:v", "libx264",
+                        "-preset", "fast",  # Bom equilíbrio entre velocidade e qualidade
+                        "-crf", "23",       # Qualidade visual padrão, bom para web
+                        "-r", "60",         # Força a saída para 60fps
+                        "-pix_fmt", "yuv420p", 
                         "-c:a", "aac", "-b:a", "192k", 
                         "-shortest",
                         caminho_video_local_final
                     ])
+                    # Nota: Para performance máxima em produção, considere usar "-c:v h264_nvenc" (NVIDIA)
+                    # ou "-c:v h264_amf" (AMD) se o hardware do servidor tiver aceleração gráfica.
+                    # ### FIM DA OTIMIZAÇÃO FFMPEG ###
                     
                     subprocess.run(cmd, check=True, capture_output=True, text=True, encoding='utf-8')
 
@@ -2347,14 +2347,10 @@ def cortes_youtube_view(request):
                     if isinstance(e, subprocess.CalledProcessError): 
                         print(f"FFMPEG Error: {e.stderr}")
                 finally:
-                    if caminho_video_segmento and os.path.exists(caminho_video_segmento): 
-                        os.remove(caminho_video_segmento)
-                    if caminho_audio_extraido and os.path.exists(caminho_audio_extraido):
-                        os.remove(caminho_audio_extraido)
-                    if caminho_legenda_srt and os.path.exists(caminho_legenda_srt):
-                        os.remove(caminho_legenda_srt)
-                    if caminho_video_local_final and os.path.exists(caminho_video_local_final): 
-                        os.remove(caminho_video_local_final)
+                    # Limpeza dos arquivos temporários
+                    for path in [caminho_video_segmento, caminho_audio_extraido, caminho_legenda_srt, caminho_video_local_final]:
+                        if path and os.path.exists(path):
+                            os.remove(path)
 
             if caminho_musica_input and os.path.exists(caminho_musica_input): 
                 os.remove(caminho_musica_input)
@@ -2369,4 +2365,3 @@ def cortes_youtube_view(request):
     form = CortesYouTubeForm()
     context = {'form': form, 'videos_restantes': limite_videos_mes - videos_criados}
     return render(request, 'core/cortes_youtube.html', context)
-

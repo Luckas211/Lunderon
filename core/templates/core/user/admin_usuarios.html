@@ -3,8 +3,12 @@
 
 {% block title %}Admin | Gerenciar Usuários{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+{% endblock %}
+
 {% block content %}
-<div class="dashboard-layout">
+<div class="dashboard-layout admin-panel">
     <aside class="sidebar">
         <div class="sidebar-header">
             <h2 class="sidebar-user">Painel Admin</h2>
@@ -22,16 +26,17 @@
 
     <main class="dashboard-content">
         <header class="dashboard-header">
-             <div class="dashboard-header-content">
+             <div class="header-main-content">
                 <h1>Gerenciamento de Usuários</h1>
-                <a href="{% url 'admin:core_usuario_add' %}" class="btn btn-primary" target="_blank">
-                    <i class="fas fa-plus"></i> Novo Usuário
-                </a>
+                <p>Visualize e administre todas as contas da plataforma.</p>
             </div>
+            <a href="{% url 'admin:core_usuario_add' %}" class="btn btn-primary" target="_blank">
+                <i class="fas fa-plus"></i> Novo Usuário
+            </a>
         </header>
         
         {% if messages %}
-            <div class="messages-container" style="margin-bottom: 30px;">
+            <div class="messages-container">
             {% for message in messages %}
                 <div class="alert alert-{{ message.tags }}">{{ message }}</div>
             {% endfor %}
@@ -55,14 +60,16 @@
                         <tbody>
                             {% for user in usuarios %}
                             <tr>
-                                <td data-label="Usuário">{{ user.username }}</td>
+                                <td data-label="Usuário">
+                                    <a href="{% url 'editar_usuario' user.id %}" class="table-link" title="Editar este usuário">{{ user.username }}</a>
+                                </td>
                                 <td data-label="Email">{{ user.email }}</td>
                                 
                                 <td data-label="Status da Conta">
                                     {% if user.is_active %}
                                         <span class="status-badge status-success"><i class="fas fa-check-circle"></i> Ativo</span>
                                     {% else %}
-                                        <span class="status-badge status-pending"><i class="fas fa-hourglass-half"></i> Aguardando Verificação</span>
+                                        <span class="status-badge status-pending"><i class="fas fa-hourglass-half"></i> Inativo</span>
                                     {% endif %}
                                 </td>
 
@@ -78,17 +85,17 @@
                                 </td>
 
                                 <td data-label="Uso (30d)">
-                                    {{ user.videos_no_mes }} / {{ limite_videos_mes }}
+                                    <span class="usage-text">{{ user.videos_no_mes }} / {{ limite_videos_mes }}</span>
                                 </td>
 
                                 <td data-label="Ações" class="text-right">
                                     <div class="action-buttons">
                                         {% if not user.is_active %}
                                             <a href="{% url 'admin_ativar_usuario' user.id %}" class="btn btn-success btn-sm" title="Ativar conta manualmente">Ativar</a>
-                                            <a href="{% url 'admin_reenviar_verificacao' user.id %}" class="btn btn-info btn-sm" title="Reenviar e-mail de verificação">Reenviar E-mail</a>
+                                            <a href="{% url 'admin_reenviar_verificacao' user.id %}" class="btn btn-info btn-sm" title="Reenviar e-mail de verificação">Reenviar</a>
                                         {% endif %}
                                         <a href="{% url 'editar_usuario' user.id %}" class="btn btn-secondary btn-sm">Editar</a>
-                                        <a href="{% url 'deletar_usuario' user.id %}" class="btn btn-danger btn-sm">Deletar</a>
+                                        <a href="{% url 'deletar_usuario' user.id %}" class="btn btn-danger btn-sm">Excluir</a>
                                     </div>
                                 </td>
                             </tr>

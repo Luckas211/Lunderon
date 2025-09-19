@@ -3,6 +3,10 @@
 
 {% block title %}Admin | Adicionar Configuração{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/admin.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="dashboard-layout admin-panel">
     <aside class="sidebar">
@@ -72,12 +76,12 @@
     document.addEventListener("DOMContentLoaded", function () {
         const nomeField = document.getElementById('id_nome');
         if (nomeField) {
-            nomeField.classList.add('form-select'); // Estilo para campos de seleção
+            nomeField.classList.add('form-select');
         }
         
         const valorField = document.getElementById('id_valor');
         if (valorField) {
-            valorField.classList.add('form-input'); // Estilo para campos de texto
+            valorField.classList.add('form-input');
         }
     });
 </script>

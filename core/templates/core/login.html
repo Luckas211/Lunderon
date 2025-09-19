@@ -3,21 +3,18 @@
 
 {% block title %}Login - LUNDERON{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'core/css/autenticacao.css' %}">
+{% endblock %}
+
 {% block content %}
 <div class="floating-shapes">
-    <div class="floating-shape shape-1">
-        <i class="fas fa-video"></i>
-    </div>
-    <div class="floating-shape shape-2">
-        <i class="fas fa-magic"></i>
-    </div>
-    <div class="floating-shape shape-3">
-        <i class="fas fa-rocket"></i>
-    </div>
-    <div class="floating-shape shape-4">
-        <i class="fas fa-star"></i>
-    </div>
+    <div class="floating-shape shape-1"><i class="fas fa-video"></i></div>
+    <div class="floating-shape shape-2"><i class="fas fa-magic"></i></div>
+    <div class="floating-shape shape-3"><i class="fas fa-rocket"></i></div>
+    <div class="floating-shape shape-4"><i class="fas fa-star"></i></div>
 </div>
+
 <section class="form-section">
     <div class="form-wrapper-card">
         <form action="{% url 'login' %}" method="POST" class="form-content">
@@ -28,21 +25,21 @@
                 <p>Bem-vindo de volta!</p>
             </div>
 
-            {# --- INÍCIO DO CÓDIGO CORRIGIDO --- #}
             {% if messages %}
                 <div class="form-messages">
                 {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                    <div class="alert alert-{{ message.tags }}">{{ message|safe }}</div>
                 {% endfor %}
                 </div>
             {% endif %}
-            {# --- FIM DO CÓDIGO CORRIGIDO --- #}
 
             {% if form.non_field_errors %}
-            <div class="form-errors">
+            <div class="form-messages">
+                <div class="alert alert-error">
                 {% for error in form.non_field_errors %}
-                <p>{{ error }}</p>
+                    <p>{{ error }}</p>
                 {% endfor %}
+                </div>
             </div>
             {% endif %}
 
@@ -53,15 +50,16 @@
 
             <div class="form-group">
                 <label for="password" class="form-label">Senha</label>
-                <input type="password" id="password" name="password" class="form-input" placeholder="Sua senha"
-                    required>
+                <input type="password" id="password" name="password" class="form-input" placeholder="Sua senha" required>
             </div>
 
             <div class="form-options">
                 <a href="{% url 'password_reset' %}">Esqueceu a senha?</a>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-full">Entrar</button>
+            <button type="submit" class="btn btn-primary btn-full btn-lg">Entrar</button>
+
+            <div class="form-divider"></div>
 
             <div class="form-footer">
                 <p>Não tem uma conta? <a href="{% url 'cadastre_se' %}">Cadastre-se</a></p>
