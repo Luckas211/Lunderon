@@ -39,7 +39,7 @@
                     </div>
                     
                     <div id="segments-container" class="form-group">
-                        <label>Segmentos Encontrados</label>
+                        <label>Segmentos Encontrados (Clique em ▶️ para pré-visualizar)</label>
                         <div id="segments-list">
                             </div>
                     </div>
@@ -93,12 +93,10 @@
 
         <div id="preview-content" class="preview-content">
             <div class="video-preview-wrapper">
-                <img id="video-thumbnail" src="" alt="Thumbnail do Vídeo">
-                <div class="video-info">
-                    <h3 id="video-title">Título do Vídeo</h3>
+                <div id="youtube-player"></div>
+
                 </div>
-            </div>
-            <div id="segments-error" class="alert alert-danger"></div>
+            <div id="segments-error" class="alert alert-danger" style="display: none;"></div>
         </div>
     </main>
 </div>
@@ -107,7 +105,26 @@
 
 {% block scripts %}
 {{ block.super }}
+<script src="https://www.youtube.com/iframe_api"></script>
+
 <script>
+// 2. Variáveis globais para o player e o videoId
+let player;
+let currentVideoId;
+
+// 3. Função que a API do YouTube chama automaticamente quando está pronta
+function onYouTubeIframeAPIReady() {
+    player = new YT.Player('youtube-player', {
+        height: '100%',
+        width: '100%',
+        playerVars: {
+            'playsinline': 1,
+            'controls': 0, // Desativa os controles padrão para uma experiência limpa
+            'rel': 0,      // Não mostra vídeos relacionados no final
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Mapeamento de elementos
     const form = document.getElementById('youtube-cutter-form');
@@ -120,8 +137,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const previewPlaceholder = document.getElementById('preview-placeholder');
     const previewContent = document.getElementById('preview-content');
-    const videoThumbnail = document.getElementById('video-thumbnail');
-    const videoTitle = document.getElementById('video-title');
     
     const step1 = document.querySelector('.form-step[data-step="1"]');
     const step2 = document.querySelector('.form-step[data-step="2"]');
@@ -154,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('URL do YouTube inválida.');
             return;
         }
+        currentVideoId = videoId; // Armazena o ID do vídeo atual
 
         toggleLoading(true, 'Analisando vídeo...');
         analyzeBtn.disabled = true;
@@ -161,8 +177,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         segmentsList.innerHTML = '';
         segmentsError.style.display = 'none';
-        previewContent.style.display = 'none';
-        previewPlaceholder.style.display = 'flex';
         submitBtn.disabled = true;
 
         try {
@@ -175,26 +189,35 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (!response.ok) throw new Error(data.error || 'Erro desconhecido.');
-
-            videoThumbnail.src = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
-            videoTitle.textContent = "Selecione os segmentos abaixo";
+            
+            // Mostra o player em vez da thumbnail
             previewPlaceholder.style.display = 'none';
             previewContent.style.display = 'block';
 
             if (data.segments && data.segments.length > 0) {
+                // Carrega o vídeo no player, mas não toca ainda
+                player.cueVideoById(videoId);
+
                 data.segments.forEach((segment, index) => {
                     const startTime = new Date(segment.start * 1000).toISOString().substr(14, 5);
                     const endTime = new Date(segment.end * 1000).toISOString().substr(14, 5);
                     
-                    const segmentElement = document.createElement('label');
+                    const segmentElement = document.createElement('div');
                     segmentElement.className = 'segment-item';
+                    
+                    // 4. Estrutura do item da lista atualizada com o botão de prévia
                     segmentElement.innerHTML = `
-                        <input class="form-check-input" type="checkbox" value='${JSON.stringify(segment)}' id="segment-${index}" checked>
+                        <label class="segment-checkbox">
+                           <input class="form-check-input" type="checkbox" value='${JSON.stringify(segment)}' id="segment-${index}" checked>
+                        </label>
                         <div class="segment-info">
                             <strong>Corte ${index + 1}</strong>
                             <span>${startTime} - ${endTime}</span>
                         </div>
                         <span class="segment-duration">${Math.round(segment.duration)}s</span>
+                        <button type="button" class="btn-preview" data-start="${segment.start}" data-end="${segment.end}" title="Assistir prévia">
+                            <i class="fas fa-play"></i>
+                        </button>
                     `;
                     segmentsList.appendChild(segmentElement);
                 });
@@ -216,6 +239,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // 5. Event listener para os botões de pré-visualização
+    segmentsList.addEventListener('click', function(e) {
+        const previewBtn = e.target.closest('.btn-preview');
+        if (previewBtn) {
+            const startSeconds = parseFloat(previewBtn.dataset.start);
+            const endSeconds = parseFloat(previewBtn.dataset.end);
+            
+            if (player && typeof player.loadVideoById === 'function') {
+                player.loadVideoById({
+                    videoId: currentVideoId,
+                    startSeconds: startSeconds,
+                    endSeconds: endSeconds
+                });
+            }
+        }
+    });
+
     form.addEventListener('submit', function(e) {
         const selectedCheckboxes = segmentsList.querySelectorAll('input[type="checkbox"]:checked');
         if (selectedCheckboxes.length === 0) {
@@ -233,4 +273,35 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+
+<style>
+    .segment-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .segment-checkbox {
+        display: flex;
+        align-items: center;
+    }
+    .btn-preview {
+        background: var(--color-secondary);
+        color: var(--color-primary);
+        border: none;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        margin-left: auto;
+        transition: background-color 0.2s;
+    }
+    .btn-preview:hover {
+        background-color: var(--color-secondary-dark);
+    }
+</style>
+
 {% endblock %}
