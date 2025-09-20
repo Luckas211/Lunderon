@@ -784,7 +784,13 @@ def pagina_gerador(request):
                 music_input_index = 1 + (1 if caminho_imagem_texto else 0)
                 if caminho_narrador_input:
                     narrator_input_index = music_input_index + 1
-                    audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[a1];[{narrator_input_index}:a]aformat=sample_rates=44100,volume=1.0[a2];[a1][a2]amix=inputs=2:duration=longest[aout]"
+                    audio_chain = (
+                        f"[{music_input_index}:a]loudnorm[musica_norm];"
+                        f"[{narrator_input_index}:a]loudnorm[narrador_norm];"
+                        f"[musica_norm]volume={volume_musica_decimal}[musica_final];"
+                        f"[narrador_norm]volume=1.0[narrador_final];"
+                        f"[musica_final][narrador_final]amix=inputs=2:duration=longest[aout]"
+                    )
                 else:
                     audio_chain = (f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]")
 
@@ -2273,7 +2279,12 @@ def cortes_youtube_view(request):
                         style_options = "FontName=impact,FontSize=8,PrimaryColour=&H00FFFFFF,Bold=-1,MarginV=60"
                         video_filters += f",subtitles='{escaped_srt_path}':force_style='{style_options}'"
                     
-                    audio_filters = f"[0:a]volume=1.0[audio_original];[1:a]volume={volume_musica}[audio_musica];[audio_original][audio_musica]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]"
+                    audio_filters = (
+                        f"[0:a]loudnorm[audio_original_norm];"
+                        f"[1:a]loudnorm[audio_musica_norm];"
+                        f"[audio_musica_norm]volume={volume_musica}[audio_musica_final];"
+                        f"[audio_original_norm][audio_musica_final]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]"
+                    )
                     
                     filter_complex_str = f"[0:v]{video_filters}[v];{audio_filters}"
 
