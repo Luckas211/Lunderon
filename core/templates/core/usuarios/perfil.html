@@ -67,14 +67,14 @@
                                 {% endif %}
                             </ul>
                             <div class="usage-meter">
-                                <div class="info-item">
-                                    <span class="info-label">Uso no ciclo atual</span>
-                                    <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
-                                </div>
-                                <div class="progress-bar">
-                                    {% widthratio videos_criados_no_mes|default:0 limite_videos_mes 100 as usage_percentage %}
-                                    <div class="progress-bar-inner" style="width: {{ usage_percentage }}%;">
-                                        <span>{{ usage_percentage|floatformat:0 }}%</span>
+                            <div class="info-item">
+                                <span class="info-label">Uso no ciclo atual</span>
+                                <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
+                            </div>
+                            <div class="progress-bar">
+                                {% widthratio videos_criados_no_mes|default:0 limite_videos_mes 100 as usage_percentage %}
+                                <div class="progress-bar-inner" style="width: {{ usage_percentage }}%;">
+                                    <span>{{ usage_percentage|floatformat:0 }}%</span>
                                     </div>
                                 </div>
                             </div>
@@ -94,6 +94,21 @@
                     {% endif %}
                 </div>
 
+                {% if assinatura and assinatura.plano.link_pdf_dicas %}
+                <div class="dashboard-card">
+                    <div class="card-header">
+                        <h2 class="card-title"><i class="fas fa-book"></i> Bônus do Plano Pro</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Obrigado por ser um membro Pro! Acesse seu guia exclusivo abaixo para tirar o máximo proveito da plataforma.</p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{{ assinatura.plano.link_pdf_dicas }}" class="btn btn-primary btn-full" target="_blank" rel="noopener noreferrer">
+                            Baixar PDF de Dicas <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
                 <div class="dashboard-card">
                     <div class="card-header">
                         <h2 class="card-title"><i class="fas fa-id-card"></i> Minhas Informações</h2>

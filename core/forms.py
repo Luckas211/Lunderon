@@ -23,10 +23,11 @@ VELOCIDADE_NARRACAO = [
     (120, 'Rápida (120%)'),
 ]
 
+# --- CORREÇÃO APLICADA AQUI ---
+# A opção 'LIMITE_VIDEOS_MES' foi removida pois o limite agora é definido por plano.
 CONFIG_CHOICES = [
-    ('LIMITE_VIDEOS_MES', 'Limite de Vídeos por Mês'),
     ('DURACAO_ASSINATURA_DIAS', 'Duração da Assinatura (em dias)'),
-    ('LIMITE_TESTES_GRATIS', 'Limite de Testes Grátis para Novos Usuários'), # <-- ADICIONE ESTA LINHA
+    ('LIMITE_TESTES_GRATIS', 'Limite de Testes Grátis para Novos Usuários'),
 ]
 
 class ConfiguracaoForm(forms.ModelForm):

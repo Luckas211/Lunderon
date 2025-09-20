@@ -65,6 +65,27 @@ import yt_dlp
 from .transcription_utils import extract_audio_from_video, transcribe_audio_to_srt
 
 
+def _get_user_video_usage(user):
+    """
+    Busca a assinatura ativa de um usuário e retorna seu uso de vídeos,
+    o limite do seu plano e o objeto da assinatura.
+    """
+    # Usar select_related('plano') otimiza a consulta, evitando uma busca extra no banco de dados.
+    assinatura_ativa = Assinatura.objects.filter(usuario=user, status="ativo").select_related('plano').first()
+    
+    limite_videos_mes = 0
+    if assinatura_ativa:
+        limite_videos_mes = assinatura_ativa.plano.limite_videos_mensal
+
+    trinta_dias_atras = timezone.now() - timedelta(days=30)
+    videos_criados = VideoGerado.objects.filter(
+        usuario=user, criado_em__gte=trinta_dias_atras
+    ).count()
+
+    return videos_criados, limite_videos_mes, assinatura_ativa
+
+
+
 def verificar_arquivo_existe_no_r2(object_key):
     """
     Verifica se um arquivo realmente existe no Cloudflare R2 antes de tentar baixar
@@ -394,30 +415,22 @@ def preview_voz(request, nome_da_voz):
 def meus_videos(request):
     videos = VideoGerado.objects.filter(usuario=request.user).order_by("-criado_em")
 
-    try:
-        limite_videos_mes = int(
-            Configuracao.objects.get(nome="LIMITE_VIDEOS_MES").valor
-        )
-    except (Configuracao.DoesNotExist, ValueError):
-        limite_videos_mes = 100
-
-    trinta_dias_atras = timezone.now() - timedelta(days=30)
-    videos_criados_no_mes = VideoGerado.objects.filter(
-        usuario=request.user, criado_em__gte=trinta_dias_atras
-    ).count()
-
-    # --- LÓGICA DO CÁLCULO DA PORCENTAGEM ADICIONADA AQUI ---
+    # --- LÓGICA ATUALIZADA ---
+    # A lógica de busca do limite foi substituída pela função auxiliar.
+    
+    videos_criados_no_mes, limite_videos_mes, assinatura = _get_user_video_usage(request.user)
+    
     uso_percentual = 0
     if limite_videos_mes > 0:
         # Calcula a porcentagem de uso
         uso_percentual = (videos_criados_no_mes / limite_videos_mes) * 100
-    # --- FIM DA LÓGICA DO CÁLCULO ---
+    # --- FIM DA ATUALIZAÇÃO ---
 
     context = {
         "videos": videos,
         "videos_criados_no_mes": videos_criados_no_mes,
         "limite_videos_mes": limite_videos_mes,
-        "uso_percentual": uso_percentual,  # <-- Nova variável enviada para o template
+        "uso_percentual": uso_percentual,
     }
     return render(request, "core/meus_videos.html", context)
 
@@ -570,58 +583,44 @@ def delete_video_file(request, video_id):
 # SUBSTITUA A SUA FUNÇÃO 'pagina_gerador' ATUAL POR ESTA VERSÃO COMPLETA
 @login_required
 def pagina_gerador(request):
-    # VERIFICAÇÃO DE TESTE GRÁTIS E ASSINATURA
-    tem_assinatura_ativa = Assinatura.objects.filter(
-        usuario=request.user, status="ativo"
-    ).exists()
+    # --- LÓGICA DE VERIFICAÇÃO ATUALIZADA ---
+    # Usamos a função auxiliar para buscar o uso, o limite e o status da assinatura de uma só vez.
+    videos_criados, limite_videos_mes, assinatura_ativa = _get_user_video_usage(request.user)
 
-    # Tenta buscar o limite de testes grátis no banco de dados
-    try:
-        limite_testes_config = int(Configuracao.objects.get(nome="LIMITE_TESTES_GRATIS").valor)
-    except (Configuracao.DoesNotExist, ValueError):
-        limite_testes_config = 0 # Define 0 como padrão seguro se não encontrar
+    # Verifica o limite para assinantes ativos
+    if assinatura_ativa:
+        if videos_criados >= limite_videos_mes:
+            messages.error(
+                request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês."
+            )
+            return redirect("meu_perfil")
+    
+    # Se não for assinante, verifica o limite de testes grátis
+    else:
+        try:
+            limite_testes_config = int(Configuracao.objects.get(nome="LIMITE_TESTES_GRATIS").valor)
+        except (Configuracao.DoesNotExist, ValueError):
+            limite_testes_config = 0
 
-    # Se não tem assinatura ativa, verifica o uso do teste grátis
-    if not tem_assinatura_ativa:
         if request.user.testes_gratis_utilizados >= limite_testes_config:
             messages.warning(
                 request,
-                f"Você já utilizou seus {limite_testes_config} testes grátis. Assine um plano para continuar gerando vídeos.",
+                f"Você já utilizou seus {limite_testes_config} testes grátis. Assine um plano para continuar.",
             )
             return redirect("planos")
         else:
-            testes_restantes = limite_testes_config - request.user.testes_gratis_utilizados
-            if request.method == 'GET': # Mostra a mensagem apenas ao carregar a página
-                 messages.info(
+            # Mostra a mensagem de testes restantes apenas ao carregar a página (GET)
+            if request.method == 'GET':
+                testes_restantes = limite_testes_config - request.user.testes_gratis_utilizados
+                messages.info(
                     request, f"Teste grátis: {testes_restantes} vídeo(s) restante(s)."
                 )
+    # --- FIM DA VERIFICAÇÃO ---
 
-    # Lógica para o limite mensal de assinantes
-    try:
-        limite_videos_mes = int(
-            Configuracao.objects.get(nome="LIMITE_VIDEOS_MES").valor
-        )
-    except (Configuracao.DoesNotExist, ValueError):
-        limite_videos_mes = 100
-
-    trinta_dias_atras = timezone.now() - timedelta(days=30)
-    videos_criados = VideoGerado.objects.filter(
-        usuario=request.user, criado_em__gte=trinta_dias_atras
-    ).count()
-
-    if tem_assinatura_ativa and videos_criados >= limite_videos_mes:
-        messages.error(
-            request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês."
-        )
-        return redirect("meu_perfil")
-
-    # Lógica do formulário
+    # Lógica do formulário (processamento do POST)
     if request.method == "POST":
         form = GeradorForm(request.POST, request.FILES)
         if form.is_valid():
-            tem_assinatura_ativa_post = Assinatura.objects.filter(
-                usuario=request.user, status="ativo"
-            ).exists()
             
             data = form.cleaned_data
             tipo_conteudo = data.get("tipo_conteudo")
@@ -769,9 +768,12 @@ def pagina_gerador(request):
                 if caminho_legenda_ass:
                     caminho_legenda_ffmpeg = caminho_legenda_ass.replace('\\', '/').replace(':', '\\:')
                     video_chain += f",ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'"
-                adicionar_marca_dagua = not tem_assinatura_ativa_post
+                
+                # Usa a variável 'assinatura_ativa' que já buscamos no início da função
+                adicionar_marca_dagua = not assinatura_ativa
                 if adicionar_marca_dagua:
                     video_chain += f",drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5"
+                
                 final_video_stream = "[v]"
                 if caminho_imagem_texto:
                     video_chain += f"[base];[base][1:v]overlay=(W-w)/2:(H-h)/2[v]"
@@ -817,11 +819,9 @@ def pagina_gerador(request):
                 if not os.path.exists(caminho_video_local_final):
                     raise Exception("Arquivo final de vídeo não foi criado localmente.")
 
-                print(f"Fazendo upload de {nome_arquivo_final} para o R2...")
                 sucesso_upload = upload_to_r2(caminho_video_local_final, object_key_r2)
                 if not sucesso_upload:
                     raise Exception("Falha no upload do vídeo final para o Cloudflare R2.")
-                print("Upload concluído.")
 
                 dados_para_salvar = data.copy()
                 if "loop_video" in dados_para_salvar:
@@ -838,7 +838,8 @@ def pagina_gerador(request):
                     duracao_segundos=duracao_video, **dados_para_salvar
                 )
 
-                if not tem_assinatura_ativa_post:
+                # Se não for assinante, incrementa o contador de testes grátis
+                if not assinatura_ativa:
                     request.user.testes_gratis_utilizados += 1
                     request.user.save()
                     testes_restantes_apos_uso = limite_testes_config - request.user.testes_gratis_utilizados
@@ -1529,28 +1530,13 @@ def get_youtube_segments(request):
 
 @login_required
 def meu_perfil(request):
-    assinatura = Assinatura.objects.filter(usuario=request.user).first()
-
-    # --- INÍCIO DA ATUALIZAÇÃO ---
-    # Busca o limite de vídeos no banco de dados
-    try:
-        limite_videos_mes = int(
-            Configuracao.objects.get(nome="LIMITE_VIDEOS_MES").valor
-        )
-    except (Configuracao.DoesNotExist, ValueError):
-        limite_videos_mes = 100  # Valor padrão caso não encontre
-
-    # Conta quantos vídeos o usuário fez nos últimos 30 dias
-    trinta_dias_atras = timezone.now() - timedelta(days=30)
-    videos_criados_no_mes = VideoGerado.objects.filter(
-        usuario=request.user, criado_em__gte=trinta_dias_atras
-    ).count()
-    # --- FIM DA ATUALIZAÇÃO ---
+    # A linha abaixo busca TUDO o que precisamos: os vídeos criados, 
+    # o limite correto do plano do usuário e a assinatura dele.
+    videos_criados_no_mes, limite_videos_mes, assinatura = _get_user_video_usage(request.user)
 
     context = {
         "user": request.user,
         "assinatura": assinatura,
-        # Enviando os novos dados para o template
         "videos_criados_no_mes": videos_criados_no_mes,
         "limite_videos_mes": limite_videos_mes,
     }
@@ -1612,31 +1598,16 @@ def admin_assinaturas(request):
 
 def planos(request):
     """
-    Exibe a página de Planos para usuários anônimos ou sem assinatura.
-    Para usuários com assinatura ativa, exibe a página de status do plano.
+    Exibe a página de Planos. Para usuários logados e com plano ativo,
+    mostra o status da assinatura. Para outros, mostra os planos para contratação.
     """
-    # Verifica se o usuário está logado e se sua assinatura está ativa
     if request.user.is_authenticated and request.user.plano_ativo:
-        assinatura_ativa = Assinatura.objects.filter(
-            usuario=request.user, status="ativo"
-        ).first()
-
-        # Se, por alguma razão, não encontrar a assinatura, envia para a página de planos
+        # Esta parte já está correta, buscando o uso e limite do plano do usuário.
+        videos_criados_no_mes, limite_videos_mes, assinatura_ativa = _get_user_video_usage(request.user)
+        
         if not assinatura_ativa:
-            return render(request, "core/planos/planos.html")
-
-        # Lógica para buscar o uso de vídeos (igual à do meu_perfil)
-        try:
-            limite_videos_mes = int(
-                Configuracao.objects.get(nome="LIMITE_VIDEOS_MES").valor
-            )
-        except (Configuracao.DoesNotExist, ValueError):
-            limite_videos_mes = 100
-
-        trinta_dias_atras = timezone.now() - timedelta(days=30)
-        videos_criados_no_mes = VideoGerado.objects.filter(
-            usuario=request.user, criado_em__gte=trinta_dias_atras
-        ).count()
+             # Caso de segurança se plano_ativo=True mas não há assinatura
+            return redirect("planos") # Redireciona para a mesma página para reavaliar a lógica abaixo
 
         uso_percentual = 0
         if limite_videos_mes > 0:
@@ -1648,12 +1619,17 @@ def planos(request):
             "limite_videos_mes": limite_videos_mes,
             "uso_percentual": uso_percentual,
         }
-        # Renderiza a página que mostra o plano já ativo
         return render(request, "core/planos/plano_ativo.html", context)
 
-    # Se o usuário não estiver logado OU não tiver um plano ativo,
-    # mostra a página normal de planos para assinar.
-    context = {"stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY}
+    # --- CORREÇÃO APLICADA AQUI ---
+    # Para usuários não assinantes, buscamos todos os planos para exibi-los na página.
+    todos_os_planos = Plano.objects.order_by('preco')
+    context = {
+        "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
+        "planos": todos_os_planos  # Adiciona a lista de planos ao contexto
+    }
+    # --- FIM DA CORREÇÃO ---
+    
     return render(request, "core/planos/planos.html", context)
 
 
@@ -1727,15 +1703,13 @@ from django.utils import timezone
 from datetime import timedelta
 # (e outros imports necessários)
 
-@login_required
 @user_passes_test(is_admin)
 def admin_usuarios(request):
-    # Calcula a data de 30 dias atrás a partir de hoje
     trinta_dias_atras = timezone.now() - timedelta(days=30)
 
-    # --- INÍCIO DA ATUALIZAÇÃO ---
-    # A query agora usa .annotate() para adicionar um novo campo temporário 'videos_no_mes'
-    # a cada usuário, contando apenas os vídeos dos últimos 30 dias.
+    # --- INÍCIO DA CORREÇÃO ---
+    # Trocamos 'select_related' por 'prefetch_related' e usamos 'assinatura_set__plano'
+    # para otimizar a busca reversa da assinatura e do plano associado.
     usuarios = (
         Usuario.objects.prefetch_related("assinatura_set__plano")
         .annotate(
@@ -1745,19 +1719,14 @@ def admin_usuarios(request):
         )
         .order_by("-date_joined")
     )
+    # --- FIM DA CORREÇÃO ---
     
-    # Busca o limite de vídeos que vem das configurações
-    try:
-        limite_videos_mes = int(Configuracao.objects.get(nome="LIMITE_VIDEOS_MES").valor)
-    except (Configuracao.DoesNotExist, ValueError):
-        limite_videos_mes = 100 # Valor padrão caso não encontre
-
     contexto = {
         "usuarios": usuarios,
-        "limite_videos_mes": limite_videos_mes, # Envia o limite para o template
+        # A variável 'limite_videos_mes' foi corretamente removida,
+        # pois o template agora busca o limite do plano de cada usuário.
     }
-    # --- FIM DA ATUALIZAÇÃO ---
-
+    
     return render(request, "core/user/admin_usuarios.html", contexto)
 
 
@@ -2047,57 +2016,56 @@ def pagamento_sucesso(request):
 
 
 @login_required
-def criar_checkout_session(request):
-
+def criar_checkout_session(request, plano_id):
+    """
+    Cria uma sessão de checkout no Stripe para um plano específico que o usuário selecionou.
+    """
     if request.user.plano_ativo:
         messages.warning(request, "Você já possui um plano ativo.")
-        return redirect(
-            "plano_ativo"
-        )  # Assuma que você tem uma view/template para isso, ou crie
-    """
-    Cria uma sessão de checkout no Stripe para o usuário logado assinar o plano.
-    """
+        return redirect("plano_ativo")
+
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
     try:
-        # Pega o primeiro plano disponível. Ideal para quando se tem apenas um plano.
-        # Se tiver múltiplos planos, você precisará de uma lógica para identificar qual plano o usuário escolheu.
-        plano = Plano.objects.first()
-        if not plano:
-            messages.error(
-                request, "Nenhum plano de assinatura foi configurado no sistema."
-            )
+        # 1. Busca o plano específico pelo ID vindo da URL.
+        plano = get_object_or_404(Plano, id=plano_id)
+
+        # Valida se o plano tem um Price ID do Stripe configurado
+        if not plano.stripe_price_id:
+            messages.error(request, "Este plano não está configurado para pagamento. Por favor, contate o suporte.")
             return redirect("planos")
 
-        # 1. Busca o ID do cliente no Stripe (se não tiver, cria um novo)
+        # 2. Busca ou cria o cliente no Stripe.
         stripe_customer_id = request.user.stripe_customer_id
         if not stripe_customer_id:
             customer = stripe.Customer.create(
-                email=request.user.email, name=request.user.username
+                email=request.user.email,
+                name=request.user.username
             )
             request.user.stripe_customer_id = customer.id
             request.user.save()
             stripe_customer_id = customer.id
 
-        # 2. Define as URLs de sucesso e cancelamento
+        # 3. Define as URLs de sucesso e cancelamento.
         success_url = request.build_absolute_uri(reverse("pagamento_sucesso"))
         cancel_url = request.build_absolute_uri(reverse("planos"))
 
-        # 3. Cria a sessão de Checkout no Stripe
+        # 4. Cria a sessão de Checkout no Stripe usando o Price ID do plano selecionado.
         checkout_session = stripe.checkout.Session.create(
             customer=stripe_customer_id,
             payment_method_types=["card"],
             line_items=[
                 {
-                    "price": settings.STRIPE_PRICE_ID,  # O ID do preço do seu plano no Stripe
+                    "price": plano.stripe_price_id,  # <-- CORREÇÃO PRINCIPAL AQUI
                     "quantity": 1,
                 }
             ],
             mode="subscription",
             success_url=success_url,
             cancel_url=cancel_url,
-            # ADICIONADO: Envia o ID do nosso plano para o webhook
-            metadata={"plano_id": plano.id},
+            metadata={
+                "plano_id": plano.id  # Envia o ID do nosso banco de dados para o webhook
+            },
         )
 
         return redirect(checkout_session.url, code=303)
@@ -2211,23 +2179,24 @@ def get_youtube_segments(request):
 @login_required
 def cortes_youtube_view(request):
     """
-    View principal para a página de geração de cortes do YouTube.
+    View principal para a página de geração de cortes do YouTube, com lógica de planos atualizada.
     """
+    # --- LÓGICA DE VERIFICAÇÃO ATUALIZADA ---
+    
+    # 1. Verifica se o usuário tem QUALQUER plano ativo. A mensagem foi corrigida.
     if not request.user.plano_ativo:
-        messages.warning(request, "Esta funcionalidade está disponível apenas para assinantes do plano Pro.")
+        messages.warning(request, "Esta funcionalidade está disponível apenas para assinantes.")
         return redirect("planos")
 
-    try:
-        limite_videos_mes = int(Configuracao.objects.get(nome="LIMITE_VIDEOS_MES").valor)
-    except (Configuracao.DoesNotExist, ValueError):
-        limite_videos_mes = 100
-    
-    trinta_dias_atras = timezone.now() - timedelta(days=30)
-    videos_criados = VideoGerado.objects.filter(usuario=request.user, criado_em__gte=trinta_dias_atras).count()
+    # 2. Busca o limite de vídeos do plano específico do usuário e o uso atual.
+    videos_criados, limite_videos_mes, _ = _get_user_video_usage(request.user)
 
+    # 3. Verifica se o usuário já atingiu o limite do seu plano.
     if videos_criados >= limite_videos_mes:
         messages.error(request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês.")
         return redirect("meu_perfil")
+    
+    # --- FIM DA ATUALIZAÇÃO ---
 
     if request.method == 'POST':
         form = CortesYouTubeForm(request.POST)
@@ -2238,8 +2207,9 @@ def cortes_youtube_view(request):
             volume_musica = data.get('volume_musica', 20) / 100.0
             gerar_legendas = data.get('gerar_legendas', False)
             
+            # A verificação agora usa o limite correto vindo do plano do usuário
             if (videos_criados + len(selected_segments)) > limite_videos_mes:
-                messages.error(request, f"A criação de {len(selected_segments)} cortes excederia seu limite mensal.")
+                messages.error(request, f"A criação de {len(selected_segments)} cortes excederia seu limite mensal de {limite_videos_mes} vídeos.")
                 return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
 
             musica_base = get_valid_media_from_category(MusicaBase, data['categoria_musica'])
@@ -2264,18 +2234,13 @@ def cortes_youtube_view(request):
                 try:
                     segment_filename_template = os.path.join(temp_dir, f'segment_{request.user.id}_{random.randint(1000, 9999)}.%(ext)s')
                     
-                    # ### INÍCIO DA CORREÇÃO DE QUALIDADE ###
-                    # Ajuste para priorizar 1080p a 60fps.
-                    # O 'bestvideo' seleciona a melhor trilha de vídeo, e '[height<=1080]' limita a 1080p.
-                    # O '+bestaudio' garante que o melhor áudio seja baixado separadamente e mesclado.
                     ydl_opts = {
                         'format': 'bestvideo[height<=1080][fps=60]+bestaudio/bestvideo[height<=1080]+bestaudio/best',
                         'outtmpl': segment_filename_template,
                         'download_ranges': yt_dlp.utils.download_range_func(None, [(segment['start'], segment['end'])]), 
                         'force_keyframes_at_cuts': True,
-                        'merge_output_format': 'mp4', # Garante a saída em MP4 após mesclar vídeo e áudio
+                        'merge_output_format': 'mp4',
                     }
-                    # ### FIM DA CORREÇÃO DE QUALIDADE ###
 
                     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                         info = ydl.extract_info(youtube_url, download=True)
@@ -2312,23 +2277,19 @@ def cortes_youtube_view(request):
                     
                     filter_complex_str = f"[0:v]{video_filters}[v];{audio_filters}"
 
-                    # ### INÍCIO DA OTIMIZAÇÃO FFMPEG ###
                     cmd.extend([
                         "-filter_complex", filter_complex_str,
                         "-map", "[v]", 
                         "-map", "[audio_mix]",
                         "-c:v", "libx264",
-                        "-preset", "fast",  # Bom equilíbrio entre velocidade e qualidade
-                        "-crf", "23",       # Qualidade visual padrão, bom para web
-                        "-r", "60",         # Força a saída para 60fps
+                        "-preset", "fast",
+                        "-crf", "23",
+                        "-r", "60",
                         "-pix_fmt", "yuv420p", 
                         "-c:a", "aac", "-b:a", "192k", 
                         "-shortest",
                         caminho_video_local_final
                     ])
-                    # Nota: Para performance máxima em produção, considere usar "-c:v h264_nvenc" (NVIDIA)
-                    # ou "-c:v h264_amf" (AMD) se o hardware do servidor tiver aceleração gráfica.
-                    # ### FIM DA OTIMIZAÇÃO FFMPEG ###
                     
                     subprocess.run(cmd, check=True, capture_output=True, text=True, encoding='utf-8')
 
@@ -2347,7 +2308,6 @@ def cortes_youtube_view(request):
                     if isinstance(e, subprocess.CalledProcessError): 
                         print(f"FFMPEG Error: {e.stderr}")
                 finally:
-                    # Limpeza dos arquivos temporários
                     for path in [caminho_video_segmento, caminho_audio_extraido, caminho_legenda_srt, caminho_video_local_final]:
                         if path and os.path.exists(path):
                             os.remove(path)
@@ -2363,5 +2323,6 @@ def cortes_youtube_view(request):
             return redirect("meus_videos")
 
     form = CortesYouTubeForm()
+    # Passa para o template o número de vídeos que o usuário ainda pode criar
     context = {'form': form, 'videos_restantes': limite_videos_mes - videos_criados}
     return render(request, 'core/cortes_youtube.html', context)

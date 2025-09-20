@@ -85,9 +85,14 @@
                                 </td>
 
                                 <td data-label="Uso (30d)">
-                                    <span class="usage-text">{{ user.videos_no_mes }} / {{ limite_videos_mes }}</span>
+                                    {% with assinatura=user.assinatura_set.first %}
+                                        {% if assinatura and assinatura.status == 'ativo' %}
+                                            <span class="usage-text">{{ user.videos_no_mes }} / {{ assinatura.plano.limite_videos_mensal }}</span>
+                                        {% else %}
+                                            <span class="usage-text">{{ user.videos_no_mes }} / -</span>
+                                        {% endif %}
+                                    {% endwith %}
                                 </td>
-
                                 <td data-label="Ações" class="text-right">
                                     <div class="action-buttons">
                                         {% if not user.is_active %}
