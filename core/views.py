@@ -1,7 +1,7 @@
 # ==============================================================================
 # IMPORTS ORGANIZADOS
 # ==============================================================================
-
+from .transcription_utils import get_word_timestamps
 from django.utils.safestring import mark_safe
 from .utils import send_verification_email, is_token_valid
 import tempfile
@@ -583,19 +583,13 @@ def delete_video_file(request, video_id):
 # SUBSTITUA A SUA FUNÇÃO 'pagina_gerador' ATUAL POR ESTA VERSÃO COMPLETA
 @login_required
 def pagina_gerador(request):
-    # --- LÓGICA DE VERIFICAÇÃO ATUALIZADA ---
-    # Usamos a função auxiliar para buscar o uso, o limite e o status da assinatura de uma só vez.
+    # --- LÓGICA DE VERIFICAÇÃO DE ASSINATURA E LIMITES ---
     videos_criados, limite_videos_mes, assinatura_ativa = _get_user_video_usage(request.user)
 
-    # Verifica o limite para assinantes ativos
     if assinatura_ativa:
         if videos_criados >= limite_videos_mes:
-            messages.error(
-                request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês."
-            )
+            messages.error(request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês.")
             return redirect("meu_perfil")
-    
-    # Se não for assinante, verifica o limite de testes grátis
     else:
         try:
             limite_testes_config = int(Configuracao.objects.get(nome="LIMITE_TESTES_GRATIS").valor)
@@ -603,177 +597,110 @@ def pagina_gerador(request):
             limite_testes_config = 0
 
         if request.user.testes_gratis_utilizados >= limite_testes_config:
-            messages.warning(
-                request,
-                f"Você já utilizou seus {limite_testes_config} testes grátis. Assine um plano para continuar.",
-            )
+            messages.warning(request, f"Você já utilizou seus {limite_testes_config} testes grátis. Assine um plano para continuar.")
             return redirect("planos")
         else:
-            # Mostra a mensagem de testes restantes apenas ao carregar a página (GET)
             if request.method == 'GET':
                 testes_restantes = limite_testes_config - request.user.testes_gratis_utilizados
-                messages.info(
-                    request, f"Teste grátis: {testes_restantes} vídeo(s) restante(s)."
-                )
-    # --- FIM DA VERIFICAÇÃO ---
-
-    # Lógica do formulário (processamento do POST)
+                messages.info(request, f"Teste grátis: {testes_restantes} vídeo(s) restante(s).")
+    
+    # --- LÓGICA DO FORMULÁRIO ---
     if request.method == "POST":
         form = GeradorForm(request.POST, request.FILES)
         if form.is_valid():
-            
             data = form.cleaned_data
-            tipo_conteudo = data.get("tipo_conteudo")
-            cor_selecionada_hex = data.get("cor_da_fonte", "#FFFFFF")
-            posicao_selecionada = data.get("posicao_texto", "centro")
-            texto_tela_final = data.get("texto_tela_final")
-            duracao_video = data.get("duracao_segundos", 30)
+            
+            # Inicializa todas as variáveis de caminho para evitar NameError no finally
+            caminho_video_input, caminho_narrador_input, caminho_legenda_ass, caminho_imagem_texto, \
+            caminho_tela_final, caminho_musica_input, caminho_video_temp, caminho_tela_final_video, \
+            lista_concat_path, caminho_video_local_final = [None] * 10
 
-            caminho_narrador_input = None
-            caminho_legenda_ass = None
-            caminho_imagem_texto = None
-            caminho_tela_final = None
-            timepoints = None
-            caminho_video_input = None
+            try:
+                tipo_conteudo = data.get("tipo_conteudo")
+                duracao_video = data.get("duracao_segundos", 30)
 
-            # Modo NARRADOR
-            if tipo_conteudo == "narrador":
-                if data.get("narrador_texto"):
-                    obter_tempos = data.get("legenda_sincronizada", False)
-                    caminho_narrador_input, timepoints, duracao_audio = gerar_audio_e_tempos(
-                        data["narrador_texto"], data["narrador_voz"],
-                        data["narrador_velocidade"], obter_tempos=obter_tempos,
+                # --- LÓGICA DE GERAÇÃO DE ÁUDIO E LEGENDA PRECISA ---
+                if (tipo_conteudo == "narrador" or tipo_conteudo == "vendedor") and data.get("narrador_texto"):
+                    caminho_narrador_input, _, duracao_audio = gerar_audio_e_tempos(
+                        data["narrador_texto"], data["narrador_voz"], data["narrador_velocidade"]
                     )
-                    if duracao_audio > 0:
-                        duracao_video = duracao_audio
-                    if obter_tempos:
-                        duracao_estimada, num_palavras = estimar_tempo_narracao(
-                            data["narrador_texto"], data["narrador_velocidade"]
-                        )
-                        duracao_para_legenda = (
-                            duracao_audio if duracao_audio > 0 else duracao_estimada
-                        )
-                        caminho_legenda_ass = gerar_legenda_sincronizada_estimada(
-                            data["narrador_texto"], duracao_para_legenda,
-                            num_palavras, data, cor_selecionada_hex, posicao_selecionada,
-                        )
-                video_base = get_valid_media_from_category(
-                    VideoBase, data["categoria_video"]
-                )
-                if not video_base:
-                    messages.error(request, f"Não foi possível encontrar um vídeo válido para a categoria '{data['categoria_video']}'.")
-                    return render(request, "core/gerador.html", {"form": form})
-                caminho_video_input = download_from_cloudflare(video_base.object_key, ".mp4")
-
-            # Modo TEXTO ESTÁTICO
-            elif tipo_conteudo == "texto":
-                if data.get("texto_overlay"):
-                    caminho_imagem_texto = create_text_image(
-                        data["texto_overlay"], cor_selecionada_hex, data, posicao_selecionada
-                    )
-                video_base = get_valid_media_from_category(VideoBase, data["categoria_video"])
-                if not video_base:
-                    messages.error(request, f"Não foi possível encontrar um vídeo válido para a categoria '{data['categoria_video']}'.")
-                    return render(request, "core/gerador.html", {"form": form})
-                caminho_video_input = download_from_cloudflare(video_base.object_key, ".mp4")
-
-            # Modo VENDEDOR
-            elif tipo_conteudo == "vendedor":
-                video_upload = data.get("video_upload") or request.FILES.get("video_upload")
-                if video_upload:
-                    temp_video_dir = os.path.join(settings.MEDIA_ROOT, "uploaded_videos_temp")
-                    os.makedirs(temp_video_dir, exist_ok=True)
-                    temp_video_path = os.path.join(
-                        temp_video_dir,
-                        f"{request.user.id}_{random.randint(10000,99999)}_{getattr(video_upload, 'name', 'video.mp4')}",
-                    )
-                    try:
+                    if duracao_audio > 0: duracao_video = duracao_audio
+                    
+                    if data.get("legenda_sincronizada") and caminho_narrador_input:
+                        try:
+                            word_timestamps = get_word_timestamps(caminho_narrador_input)
+                            if word_timestamps:
+                                caminho_legenda_ass = gerar_legenda_karaoke_ass(
+                                    word_timestamps, data, data.get("cor_da_fonte", "#FFFFFF"), data.get("posicao_texto", "centro")
+                                )
+                        except Exception as e:
+                            print(f"AVISO: Falha ao gerar legenda precisa: {e}")
+                            messages.warning(request, "Não foi possível gerar a legenda precisa. O vídeo foi criado sem ela.")
+                
+                # --- LÓGICA PARA OBTER O VÍDEO DE FUNDO ---
+                if tipo_conteudo in ["narrador", "texto"]:
+                    video_base = get_valid_media_from_category(VideoBase, data["categoria_video"])
+                    if not video_base: raise Exception(f"Não foi possível encontrar um vídeo para a categoria '{data['categoria_video']}'.")
+                    caminho_video_input = download_from_cloudflare(video_base.object_key, ".mp4")
+                
+                elif tipo_conteudo == "vendedor":
+                    video_upload = data.get("video_upload") or request.FILES.get("video_upload")
+                    if video_upload:
+                        temp_video_dir = os.path.join(settings.MEDIA_ROOT, "uploaded_videos_temp")
+                        os.makedirs(temp_video_dir, exist_ok=True)
+                        temp_video_path = os.path.join(temp_video_dir, f"{request.user.id}_{random.randint(10000, 99999)}_{getattr(video_upload, 'name', 'video.mp4')}")
                         with open(temp_video_path, "wb+") as destination:
                             for chunk in video_upload.chunks():
                                 destination.write(chunk)
                         caminho_video_input = temp_video_path
-                    except Exception as e:
-                        messages.error(request, f"Erro ao salvar o vídeo enviado: {e}")
-                        return render(request, "core/gerador.html", {"form": form})
+                    else:
+                        raise Exception("Você precisa enviar um vídeo para o modo vendedor.")
+                
+                if tipo_conteudo == "texto" and data.get("texto_overlay"):
+                    caminho_imagem_texto = create_text_image(data["texto_overlay"], data.get("cor_da_fonte", "#FFFFFF"), data, data.get("posicao_texto", "centro"))
 
-                    if data.get("narrador_texto"):
-                        obter_tempos = data.get("legenda_sincronizada", False)
-                        caminho_narrador_input, timepoints, duracao_audio = gerar_audio_e_tempos(
-                            data["narrador_texto"], data["narrador_voz"],
-                            data["narrador_velocidade"], obter_tempos=obter_tempos,
-                        )
-                        if duracao_audio > 0:
-                            duracao_video = duracao_audio
-                        if obter_tempos:
-                            duracao_estimada, num_palavras = estimar_tempo_narracao(
-                                data["narrador_texto"], data["narrador_velocidade"]
-                            )
-                            duracao_para_legenda = (
-                                duracao_audio if duracao_audio > 0 else duracao_estimada
-                            )
-                            caminho_legenda_ass = gerar_legenda_sincronizada_estimada(
-                                data["narrador_texto"], duracao_para_legenda,
-                                num_palavras, data, cor_selecionada_hex, posicao_selecionada,
-                            )
-                else:
-                    messages.error(request, "Você precisa enviar um vídeo para o modo vendedor.")
-                    return render(request, "core/gerador.html", {"form": form})
+                # --- LÓGICA DE MÚSICA E TELA FINAL ---
+                musica_base = get_valid_media_from_category(MusicaBase, data["categoria_musica"])
+                if not musica_base: raise Exception(f"Não foi possível encontrar uma música para a categoria '{data['categoria_musica']}'.")
+                caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
 
-            musica_base = get_valid_media_from_category(MusicaBase, data["categoria_musica"])
-            if not musica_base:
-                messages.error(request, f"Não foi possível encontrar uma música válida para a categoria '{data['categoria_musica']}'.")
-                return render(request, "core/gerador.html", {"form": form})
-            caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
+                if data.get("texto_tela_final"):
+                    opcoes_tela_final = { "texto_fonte": data.get("texto_fonte", "arial"), "texto_tamanho": data.get("texto_tamanho", 80), "texto_negrito": data.get("texto_negrito", False), "texto_sublinhado": data.get("texto_sublinhado", False) }
+                    caminho_tela_final = create_text_image(data["texto_tela_final"], "#FFFFFF", opcoes_tela_final, "centro")
 
-            if texto_tela_final:
-                opcoes_tela_final = {
-                    "texto_fonte": data.get("texto_fonte", "arial"), "texto_tamanho": data.get("texto_tamanho", 80),
-                    "texto_negrito": data.get("texto_negrito", False), "texto_sublinhado": data.get("texto_sublinhado", False),
-                }
-                caminho_tela_final = create_text_image(texto_tela_final, "#FFFFFF", opcoes_tela_final, "centro")
+                if not caminho_video_input or not caminho_musica_input:
+                    raise Exception("Erro ao obter os arquivos de mídia necessários para a geração.")
 
-            if not caminho_video_input or not caminho_musica_input:
-                messages.error(request, "Erro ao obter arquivos de mídia necessários.")
-                return render(request, "core/gerador.html", {"form": form})
-
-            nome_base = f"video_{request.user.id}_{random.randint(10000, 99999)}"
-            nome_arquivo_final = f"{nome_base}.mp4"
-            caminho_video_local_final = os.path.join(settings.MEDIA_ROOT, "videos_gerados", nome_arquivo_final)
-            object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
-            caminho_video_temp = os.path.join(settings.MEDIA_ROOT, "videos_gerados", f"{nome_base}_temp.mp4")
-            caminho_tela_final_video = os.path.join(settings.MEDIA_ROOT, "videos_gerados", f"{nome_base}_endscreen.mp4")
-            lista_concat_path = os.path.join(settings.MEDIA_ROOT, "videos_gerados", f"{nome_base}_concat.txt")
-            os.makedirs(os.path.dirname(caminho_video_local_final), exist_ok=True)
-
-            try:
-                cmd_etapa1 = ["ffmpeg", "-y"]
+                # --- PREPARAÇÃO PARA O FFmpeg ---
+                nome_base = f"video_{request.user.id}_{random.randint(10000, 99999)}"
+                nome_arquivo_final = f"{nome_base}.mp4"
+                caminho_video_local_final = os.path.join(settings.MEDIA_ROOT, "videos_gerados", nome_arquivo_final)
+                object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
+                caminho_video_temp = os.path.join(settings.MEDIA_ROOT, "videos_gerados", f"{nome_base}_temp.mp4")
+                os.makedirs(os.path.dirname(caminho_video_local_final), exist_ok=True)
+                
+                # --- PROCESSAMENTO COM FFmpeg ---
+                cmd = ["ffmpeg", "-y"]
                 if tipo_conteudo == "narrador" or data.get("loop_video", False):
-                    cmd_etapa1.extend(["-stream_loop", "-1", "-i", caminho_video_input])
+                    cmd.extend(["-stream_loop", "-1", "-i", caminho_video_input])
                 else:
-                    cmd_etapa1.extend(["-i", caminho_video_input])
-
-                inputs_adicionais_etapa1 = [caminho_musica_input]
-                if caminho_imagem_texto:
-                    inputs_adicionais_etapa1.insert(0, caminho_imagem_texto)
-                if caminho_narrador_input:
-                    inputs_adicionais_etapa1.append(caminho_narrador_input)
-                for f in inputs_adicionais_etapa1:
-                    cmd_etapa1.extend(["-i", f])
-
-                caminho_fontes_projeto = os.path.join(settings.BASE_DIR, 'core', 'static', 'core', 'fonts').replace('\\', '/')
-                caminho_fonte_marca_dagua = os.path.join(caminho_fontes_projeto, 'AlfaSlabOne-Regular.ttf')
-                caminho_fontes_projeto_ffmpeg = caminho_fontes_projeto.replace('\\', '/').replace(':', '\\:')
-                caminho_fonte_marca_dagua_ffmpeg = caminho_fonte_marca_dagua.replace('\\', '/').replace(':', '\\:')
+                    cmd.extend(["-i", caminho_video_input])
+                
+                inputs_adicionais = [caminho_musica_input]
+                if caminho_imagem_texto: inputs_adicionais.insert(0, caminho_imagem_texto)
+                if caminho_narrador_input: inputs_adicionais.append(caminho_narrador_input)
+                for f in inputs_adicionais: cmd.extend(["-i", f])
+                
                 video_chain = "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1"
                 if caminho_legenda_ass:
                     caminho_legenda_ffmpeg = caminho_legenda_ass.replace('\\', '/').replace(':', '\\:')
+                    caminho_fontes_projeto_ffmpeg = os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts').replace('\\', '/').replace(':', '\\:')
                     video_chain += f",ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'"
                 
-                # Usa a variável 'assinatura_ativa' que já buscamos no início da função
-                adicionar_marca_dagua = not assinatura_ativa
-                if adicionar_marca_dagua:
+                if not assinatura_ativa:
+                    caminho_fonte_marca_dagua_ffmpeg = os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'AlfaSlabOne-Regular.ttf').replace('\\', '/').replace(':', '\\:')
                     video_chain += f",drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5"
-                
+
                 final_video_stream = "[v]"
                 if caminho_imagem_texto:
                     video_chain += f"[base];[base][1:v]overlay=(W-w)/2:(H-h)/2[v]"
@@ -782,43 +709,34 @@ def pagina_gerador(request):
 
                 volume_musica_decimal = data.get("volume_musica", 50) / 100.0
                 music_input_index = 1 + (1 if caminho_imagem_texto else 0)
+                
                 if caminho_narrador_input:
                     narrator_input_index = music_input_index + 1
-                    audio_chain = (
-                        f"[{music_input_index}:a]loudnorm[musica_norm];"
-                        f"[{narrator_input_index}:a]loudnorm[narrador_norm];"
-                        f"[musica_norm]volume={volume_musica_decimal}[musica_final];"
-                        f"[narrador_norm]volume=1.0[narrador_final];"
-                        f"[musica_final][narrador_final]amix=inputs=2:duration=longest[aout]"
-                    )
+                    audio_chain = (f"[{music_input_index}:a]loudnorm[musica_norm];[{narrator_input_index}:a]loudnorm[narrador_norm];"
+                                 f"[musica_norm]volume={volume_musica_decimal}[musica_final];[narrador_norm]volume=1.0[narrador_final];"
+                                 f"[musica_final][narrador_final]amix=inputs=2:duration=longest[aout]")
                 else:
-                    audio_chain = (f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]")
+                    audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]"
 
                 filter_complex_str = f"{video_chain};{audio_chain}"
-                cmd_etapa1.extend(["-filter_complex", filter_complex_str, "-map", final_video_stream, "-map", "[aout]"])
-                cmd_etapa1.extend(["-t", str(duracao_video)])
-                cmd_etapa1.extend(["-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k"])
-                cmd_etapa1.append(caminho_video_temp)
-                subprocess.run(cmd_etapa1, check=True, text=True, capture_output=True, encoding="utf-8")
+                cmd.extend(["-filter_complex", filter_complex_str, "-map", final_video_stream, "-map", "[aout]", "-t", str(duracao_video)])
+                cmd.extend(["-c:v", "libx264", "-pix_fmt", "yuv420p", "-preset", "medium", "-crf", "20", "-c:a", "aac", "-b:a", "192k"])
+                cmd.append(caminho_video_temp)
+                
+                subprocess.run(cmd, check=True, capture_output=True, text=True, encoding='utf-8')
 
                 if caminho_tela_final:
-                    duracao_tela_final = 3
-                    cmd_etapa2 = [
-                        "ffmpeg", "-y", "-loop", "1", "-t", str(duracao_tela_final),
-                        "-i", caminho_tela_final, "-f", "lavfi", "-t", str(duracao_tela_final),
-                        "-i", "anullsrc=channel_layout=stereo:sample_rate=44100",
-                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac",
-                        "-b:a", "192k", "-shortest", caminho_tela_final_video,
-                    ]
-                    subprocess.run(cmd_etapa2, check=True, text=True, capture_output=True, encoding="utf-8")
+                    caminho_tela_final_video = os.path.join(settings.MEDIA_ROOT, "videos_gerados", f"{nome_base}_endscreen.mp4")
+                    lista_concat_path = os.path.join(settings.MEDIA_ROOT, "videos_gerados", f"{nome_base}_concat.txt")
+                    cmd_tela_final = ["ffmpeg", "-y", "-loop", "1", "-t", "3", "-i", caminho_tela_final, "-f", "lavfi", "-t", "3", "-i", "anullsrc=channel_layout=stereo:sample_rate=44100", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-shortest", caminho_tela_final_video]
+                    subprocess.run(cmd_tela_final, check=True, capture_output=True, text=True, encoding='utf-8')
+                    
                     with open(lista_concat_path, "w") as f:
                         f.write(f"file '{caminho_video_temp.replace(os.sep, '/')}'\n")
                         f.write(f"file '{caminho_tela_final_video.replace(os.sep, '/')}'\n")
-                    cmd_etapa3 = [
-                        "ffmpeg", "-y", "-f", "concat", "-safe", "0",
-                        "-i", lista_concat_path, "-c", "copy", caminho_video_local_final,
-                    ]
-                    subprocess.run(cmd_etapa3, check=True, text=True, capture_output=True, encoding="utf-8")
+                    
+                    cmd_concat = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", lista_concat_path, "-c", "copy", caminho_video_local_final]
+                    subprocess.run(cmd_concat, check=True, capture_output=True, text=True, encoding='utf-8')
                 else:
                     os.rename(caminho_video_temp, caminho_video_local_final)
 
@@ -827,55 +745,51 @@ def pagina_gerador(request):
 
                 sucesso_upload = upload_to_r2(caminho_video_local_final, object_key_r2)
                 if not sucesso_upload:
-                    raise Exception("Falha no upload do vídeo final para o Cloudflare R2.")
+                    raise Exception("Falha no upload para o Cloudflare R2.")
 
+                # --- Lógica de salvar no Banco de Dados ---
                 dados_para_salvar = data.copy()
                 if "loop_video" in dados_para_salvar:
                     dados_para_salvar["loop"] = dados_para_salvar.pop("loop_video")
-                chaves_para_remover = [
-                    "tipo_conteudo", "categoria_video", "categoria_musica",
-                    "duracao_segundos", "video_upload", "narrador_tom",
-                ]
+
+                # CORREÇÃO: Adicionamos 'duracao_segundos' à lista de remoção
+                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom", "duracao_segundos"]
                 for chave in chaves_para_remover:
                     dados_para_salvar.pop(chave, None)
 
                 VideoGerado.objects.create(
                     usuario=request.user, status="CONCLUIDO", arquivo_final=object_key_r2,
-                    duracao_segundos=duracao_video, **dados_para_salvar
+                    duracao_segundos=int(duracao_video), **dados_para_salvar
                 )
 
-                # Se não for assinante, incrementa o contador de testes grátis
                 if not assinatura_ativa:
                     request.user.testes_gratis_utilizados += 1
                     request.user.save()
                     testes_restantes_apos_uso = limite_testes_config - request.user.testes_gratis_utilizados
-                    
                     if testes_restantes_apos_uso > 0:
-                        messages.success(request, f"Vídeo gerado com sucesso! Testes grátis restantes: {testes_restantes_apos_uso}")
+                         messages.success(request, f"Vídeo gerado com sucesso! Testes grátis restantes: {testes_restantes_apos_uso}")
                     else:
-                        messages.success(request, "Vídeo gerado com sucesso! Seus testes grátis acabaram. Assine um plano para continuar.")
+                         messages.success(request, "Vídeo gerado com sucesso! Seus testes grátis acabaram. Assine um plano para continuar.")
                 else:
                     messages.success(request, "Vídeo gerado com sucesso!")
-
+                
                 return redirect("meus_videos")
-
-            except (subprocess.CalledProcessError, FileNotFoundError, Exception) as e:
+            
+            except (subprocess.CalledProcessError, Exception) as e:
                 messages.error(request, "Ocorreu um erro ao gerar seu vídeo.")
-                print(f"Erro durante o processamento do vídeo: {e}")
                 if isinstance(e, subprocess.CalledProcessError):
-                    print(f"Comando que falhou: {' '.join(e.cmd)}")
-                    print(f"Saída de Erro (stderr):\n{e.stderr}")
+                    print(f"Erro no FFmpeg: {e.stderr}")
+                else:
+                    print(f"Erro geral na geração: {e}")
 
-                dados_para_salvar = data.copy()
-                if "loop_video" in dados_para_salvar:
-                    dados_para_salvar["loop"] = dados_para_salvar.pop("loop_video")
-                chaves_para_remover = [
-                    "tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom",
-                ]
+                dados_para_salvar_erro = data.copy()
+                if "loop_video" in dados_para_salvar_erro:
+                    dados_para_salvar_erro["loop"] = dados_para_salvar_erro.pop("loop_video")
+                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom"]
                 for chave in chaves_para_remover:
-                    dados_para_salvar.pop(chave, None)
-                VideoGerado.objects.create(usuario=request.user, status="ERRO", **dados_para_salvar)
-
+                    dados_para_salvar_erro.pop(chave, None)
+                VideoGerado.objects.create(usuario=request.user, status="ERRO", **dados_para_salvar_erro)
+            
             finally:
                 arquivos_para_limpar = [
                     caminho_video_input, caminho_musica_input, caminho_narrador_input,
@@ -887,11 +801,12 @@ def pagina_gerador(request):
                     if path and os.path.exists(path):
                         try:
                             os.remove(path)
-                        except Exception as e:
-                            print(f"Erro ao remover arquivo temporário {path}: {e}")
+                        except Exception as e_clean:
+                            print(f"Erro ao remover arquivo temporário {path}: {e_clean}")
+
     else:
         form = GeradorForm()
-
+    
     return render(request, "core/gerador.html", {"form": form})
 
 
@@ -972,80 +887,69 @@ def formatar_tempo_ass(segundos):
     cs = int((segundos - int(segundos)) * 100)
     return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
 
-def gerar_legenda_sincronizada_estimada(
-    texto, duracao_total, num_palavras, data, cor_da_fonte_hex, posicao="centro"
-):
+# ================================================================
+# NOVA FUNÇÃO DE LEGENDA PRECISA (ESTILO KARAOKÊ)
+# ================================================================
+def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, posicao="centro"):
     """
-    Gera uma legenda ASS com sincronização estimada
+    Gera uma legenda .ASS com sincronização precisa por palavra (efeito karaokê)
+    a partir dos timestamps extraídos pelo Whisper.
     """
-    palavras = texto.split()
-
-    # Calcular tempo médio por palavra
-    tempo_por_palavra = duracao_total / num_palavras if num_palavras > 0 else 0
-
-    # Configurações de estilo baseadas nos dados do formulário
-    sistema_op = platform.system()
-    # CORREÇÃO: Mudar a fonte padrão para 'arial' para evitar erro se a cunia for removida
-    nome_fonte = data.get("texto_fonte", "arial")
-    caminho_fonte = FONT_PATHS.get(sistema_op, {}).get(
-        nome_fonte, FONT_PATHS["Windows"]["arial"]
-    )
-    nome_fonte_ass = os.path.splitext(os.path.basename(caminho_fonte))[0].replace(
-        "_", " "
-    )
+    # Configurações de estilo
+    nome_fonte = data.get("texto_fonte", "Arial")
     tamanho = data.get("texto_tamanho", 70)
     negrito = -1 if data.get("texto_negrito", False) else 0
     sublinhado = -1 if data.get("texto_sublinhado", False) else 0
-
-    # Tenta converter a cor hex selecionada para o formato ASS (BGR)
-    cor_secundaria_ass = "&H00FFFFFF"  # Valor padrão (branco)
+    
+    # Converte a cor principal para o formato BGR do ASS
     try:
         hex_limpo = cor_da_fonte_hex.lstrip("#")
         r, g, b = tuple(int(hex_limpo[i : i + 2], 16) for i in (0, 2, 4))
-        # Formato BGR (Blue-Green-Red) usado pelo .ass
-        cor_secundaria_ass = f"&H{b:02X}{g:02X}{r:02X}"
+        cor_primaria_ass = f"&HFF{b:02X}{g:02X}{r:02X}" # Adiciona Alpha (FF = opaco)
     except (ValueError, IndexError):
-        pass  # Mantém o branco padrão se a conversão falhar
+        cor_primaria_ass = "&HFFFFFFFF" # Branco opaco como padrão
 
-    # CORREÇÃO: Define as cores FORA do bloco if/else
-    cor_primaria = cor_secundaria_ass
-    cor_secundaria = cor_secundaria_ass
-    cor_outline = "&H000000"
-    cor_back = "&H00000000"
+    # Define as cores do efeito karaokê
+    cor_secundaria_ass = "&HFF00FFFF"  # Amarelo para a palavra destacada
+    cor_outline = "&HFF000000"       # Contorno preto
+    cor_back = "&H00000000"          # Sombra/Fundo transparente
 
-    if posicao == "inferior":
-        alignment_code = 2
-        margin_v = 150
-    else:
-        alignment_code = 5
-        margin_v = 10
+    alignment_code = 2 if posicao == "inferior" else 5
+    margin_v = 150 if posicao == "inferior" else 50
 
-    # Header do arquivo ASS
+    # Header do arquivo ASS com os estilos
     header = (
-        f"[Script Info]\nTitle: Legenda Sincronizada Estimada\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\n\n"
+        f"[Script Info]\nTitle: Legenda Sincronizada com Precisão\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\n\n"
         f"[V4+ Styles]\n"
         f"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
-        f"Style: Default,{nome_fonte_ass},{tamanho},{cor_primaria},{cor_secundaria},{cor_outline},{cor_back},{negrito},0,{sublinhado},0,100,100,0,0,1,2,2,{alignment_code},10,10,{margin_v},1\n\n"
+        f"Style: Default,{nome_fonte},{tamanho},{cor_primaria_ass},{cor_secundaria_ass},{cor_outline},{cor_back},{negrito},0,{sublinhado},0,100,100,0,0,1,2,2,{alignment_code},30,30,{margin_v},1\n\n"
         f"[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
     )
 
-    # Gerar diálogos
     dialogos = []
-    tempo_atual = 0
+    palavras_por_linha = 4 # Define quantas palavras aparecerão por linha na legenda
+    
+    # Agrupa as palavras em linhas
+    linhas = [word_timestamps[i:i + palavras_por_linha] for i in range(0, len(word_timestamps), palavras_por_linha)]
 
-    # Dividir texto em linhas (aproximadamente 5 palavras por linha)
-    palavras_por_linha = 5
-    for i in range(0, len(palavras), palavras_por_linha):
-        linha_palavras = palavras[i : i + palavras_por_linha]
-        linha_texto = " ".join(linha_palavras)
+    for linha in linhas:
+        if not linha:
+            continue
 
-        # Calcular tempo de início e fim para esta linha
-        inicio = formatar_tempo_ass(tempo_atual)
-        tempo_atual += len(linha_palavras) * tempo_por_palavra
-        fim = formatar_tempo_ass(tempo_atual)
+        start_time_linha = linha[0]['start']
+        end_time_linha = linha[-1]['end']
+        
+        texto_completo_linha = " ".join(p['word'].strip() for p in linha)
+        
+        # Cria a string de texto com as tags de tempo do karaokê
+        texto_karaoke = ""
+        for palavra in linha:
+            duracao_ms = int((palavra['end'] - palavra['start']) * 100) # Duração da palavra em centissegundos
+            texto_karaoke += f"{{\\k{duracao_ms}}}{palavra['word'].strip()} "
 
-        # Adicionar diálogo
-        dialogos.append(f"Dialogue: 0,{inicio},{fim},Default,,0,0,0,,{linha_texto}")
+        dialogos.append(
+            f"Dialogue: 0,{formatar_tempo_ass(start_time_linha)},{formatar_tempo_ass(end_time_linha)},Default,,0,0,0,,{texto_karaoke.strip()}"
+        )
 
     # Juntar tudo
     conteudo_ass = header + "\n".join(dialogos)
@@ -1053,9 +957,7 @@ def gerar_legenda_sincronizada_estimada(
     # Salvar arquivo temporário
     legenda_temp_dir = os.path.join(settings.MEDIA_ROOT, "legenda_temp")
     os.makedirs(legenda_temp_dir, exist_ok=True)
-    caminho_legenda = os.path.join(
-        legenda_temp_dir, f"legenda_estimada_{random.randint(1000,9999)}.ass"
-    )
+    caminho_legenda = os.path.join(legenda_temp_dir, f"legenda_precisa_{random.randint(1000,9999)}.ass")
 
     with open(caminho_legenda, "w", encoding="utf-8") as f:
         f.write(conteudo_ass)

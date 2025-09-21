@@ -5,17 +5,15 @@ from faster_whisper import WhisperModel
 from django.conf import settings
 
 # Define o modelo Whisper a ser usado. 'base' é um bom equilíbrio entre velocidade e precisão.
-# Para produção em Cloud Run, pode ser necessário ajustar para 'tiny' ou 'base-int8'
-# dependendo dos recursos disponíveis e da performance desejada.
 WHISPER_MODEL_SIZE = "base"
 _model = None
 
 def get_whisper_model():
-    """Carrega o modelo Whisper uma única vez."""
+    """Carrega o modelo Whisper uma única vez para reutilização."""
     global _model
     if _model is None:
-        # O dispositivo 'cuda' pode ser usado se houver GPU disponível, caso contrário 'cpu'
-        # Para Cloud Run, geralmente será 'cpu'
+        # Para produção no Cloud Run, 'cpu' e 'int8' são as melhores opções
+        # para equilibrar performance e consumo de recursos.
         _model = WhisperModel(WHISPER_MODEL_SIZE, device="cpu", compute_type="int8")
     return _model
 
@@ -27,18 +25,12 @@ def extract_audio_from_video(video_path):
     audio_temp_dir = os.path.join(settings.MEDIA_ROOT, "audio_temp")
     os.makedirs(audio_temp_dir, exist_ok=True)
     
-    # Cria um nome de arquivo temporário para o áudio
     audio_filename = os.path.basename(video_path).rsplit('.', 1)[0] + ".wav"
     audio_path = os.path.join(audio_temp_dir, audio_filename)
 
     cmd = [
-        "ffmpeg",
-        "-i", video_path,
-        "-vn",  # Desabilita o stream de vídeo
-        "-acodec", "pcm_s16le",  # Codec de áudio PCM de 16 bits (sem compressão)
-        "-ar", "16000",  # Taxa de amostragem de 16 kHz (ótimo para Whisper)
-        "-ac", "1",  # Mono
-        audio_path
+        "ffmpeg", "-i", video_path, "-vn", "-acodec", "pcm_s16le", 
+        "-ar", "16000", "-ac", "1", "-y", audio_path
     ]
     
     try:
@@ -47,22 +39,15 @@ def extract_audio_from_video(video_path):
     except subprocess.CalledProcessError as e:
         print(f"Erro ao extrair áudio: {e.stderr}")
         raise
-    except FileNotFoundError:
-        print("FFmpeg não encontrado. Certifique-se de que está instalado e no PATH.")
-        raise
 
 def transcribe_audio_to_srt(audio_path, language="pt"):
     """
-    Transcreve um arquivo de áudio para um arquivo SRT usando Faster Whisper.
-    Retorna o caminho para o arquivo SRT gerado.
+    Transcreve um arquivo de áudio para um arquivo SRT (formato de legenda simples).
     """
     model = get_whisper_model()
-    
     segments, info = model.transcribe(audio_path, language=language, beam_size=5)
-
     srt_temp_dir = os.path.join(settings.MEDIA_ROOT, "legenda_temp")
     os.makedirs(srt_temp_dir, exist_ok=True)
-    
     srt_filename = os.path.basename(audio_path).rsplit('.', 1)[0] + ".srt"
     srt_path = os.path.join(srt_temp_dir, srt_filename)
 
@@ -73,13 +58,38 @@ def transcribe_audio_to_srt(audio_path, language="pt"):
             f.write(f"{i + 1}\n")
             f.write(f"{start_time} --> {end_time}\n")
             f.write(f"{segment.text.strip()}\n\n")
-            
     return srt_path
 
+# ================================================================
+#          FUNÇÃO ADICIONADA PARA LEGENDAS PRECISAS
+# ================================================================
+def get_word_timestamps(audio_path, language="pt"):
+    """
+    Transcreve um áudio e retorna uma lista de palavras com seus tempos
+    de início e fim, essencial para a legenda karaokê.
+    """
+    model = get_whisper_model()
+    segments, info = model.transcribe(audio_path, language=language, word_timestamps=True)
+
+    all_words = []
+    for segment in segments:
+        for word in segment.words:
+            all_words.append({
+                'word': word.word,
+                'start': word.start,
+                'end': word.end
+            })
+    return all_words
+# ================================================================
+
 def format_timestamp(seconds):
-    """Formata segundos para o formato SRT HH:MM:SS,ms."""
-    milliseconds = int((seconds - int(seconds)) * 1000)
-    seconds = int(seconds)
-    minutes = seconds // 60
-    hours = minutes // 60
-    return f"{hours:02d}:{minutes % 60:02d}:{seconds % 60:02d},{milliseconds:03d}"
+    """Formata segundos para o formato SRT (HH:MM:SS,ms)."""
+    assert seconds >= 0, "non-negative timestamp expected"
+    milliseconds = round(seconds * 1000.0)
+    hours = milliseconds // 3_600_000
+    milliseconds %= 3_600_000
+    minutes = milliseconds // 60_000
+    milliseconds %= 60_000
+    seconds = milliseconds // 1_000
+    milliseconds %= 1_000
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{milliseconds:03d}"
