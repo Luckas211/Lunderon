@@ -73,15 +73,78 @@
 .form-text { font-size: 0.85rem; color: var(--color-text-light); margin-top: 8px; }
 
 /* Segmentos */
-#segments-list { display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; padding-right: 5px;}
-.segment-item { display: flex; align-items: center; padding: 12px; border: 1px solid var(--color-border); border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
-.segment-item:hover { background-color: var(--color-background-alt); border-color: var(--color-primary); }
-.segment-item:has(input:checked) { background-color: var(--color-secondary); border-color: var(--color-primary); }
-.segment-info { flex-grow: 1; margin-left: 12px; }
-.segment-info strong { display: block; font-size: 0.95rem; }
-.segment-info span { font-size: 0.85rem; color: var(--color-text-light); }
-.segment-duration { font-weight: 600; font-size: 0.9rem; background-color: var(--color-border); padding: 4px 8px; border-radius: 20px;}
-[data-theme="dark"] .segment-duration { background-color: var(--color-border-dark); }
+
+/* --- Lista de Segmentos (Cortes do YouTube) --- */
+#segments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* --- Barra de Rolagem Customizada --- */
+#segments-list::-webkit-scrollbar {
+    width: 8px;
+}
+#segments-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+#segments-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-border);
+    border-radius: 4px;
+}
+
+.segment-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.segment-item:hover {
+    background-color: var(--color-background-alt);
+    border-color: var(--color-primary);
+}
+
+/* Fundo do item quando selecionado (modo claro) */
+.segment-item:has(input:checked) {
+    background-color: var(--color-secondary);
+    border-color: var(--color-primary);
+}
+
+/* AJUSTE PARA DARK MODE: Fundo do item quando selecionado */
+[data-theme="dark"] .segment-item:has(input:checked) {
+    background-color: rgba(101, 91, 226, 0.15); /* Usa um tom roxo translúcido */
+}
+
+.segment-info {
+    flex-grow: 1;
+    margin-left: 12px;
+}
+
+.segment-info strong {
+    display: block;
+    font-size: 0.95rem;
+    color: var(--color-text-dark); /* Adapta-se automaticamente */
+}
+
+.segment-info span {
+    font-size: 0.85rem;
+    color: var(--color-text-light); /* Adapta-se automaticamente */
+}
+
+.segment-duration {
+    font-weight: 600;
+    font-size: 0.9rem;
+    background-color: var(--color-border); /* Adapta-se automaticamente */
+    padding: 4px 8px;
+    border-radius: 20px;
+}
 
 
 /* Estilos para Range Slider */
