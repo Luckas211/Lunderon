@@ -588,7 +588,6 @@ def delete_video_file(request, video_id):
     return redirect("meus_videos")
 
 
-# SUBSTITUA A SUA FUNÇÃO 'pagina_gerador' ATUAL POR ESTA VERSÃO COMPLETA
 @login_required
 def pagina_gerador(request):
     # --- LÓGICA DE VERIFICAÇÃO DE ASSINATURA E LIMITES ---
@@ -823,6 +822,31 @@ def pagina_gerador(request):
         form = GeradorForm()
     
     return render(request, "core/gerador.html", {"form": form})
+
+
+# ==============================================================================
+# VIEW DE PRÉ-VISUALIZAÇÃO (NOVA)
+# ==============================================================================
+@login_required
+def preview_video_base(request, categoria_id):
+    try:
+        categoria = get_object_or_404(CategoriaVideo, id=categoria_id)
+        video_base = get_valid_media_from_category(VideoBase, categoria)
+        
+        if not video_base:
+            return JsonResponse({"error": "Nenhum vídeo de base válido encontrado para esta categoria."}, status=404)
+        
+        # Gerar uma URL assinada temporária para o vídeo
+        presigned_url = generate_presigned_url(video_base.object_key, expiration=300) # 5 minutos
+        
+        if not presigned_url:
+            return JsonResponse({"error": "Falha ao gerar a URL de pré-visualização."}, status=500)
+            
+        return JsonResponse({"url": presigned_url})
+    
+    except Exception as e:
+        print(f"Erro na pré-visualização do vídeo: {e}")
+        return JsonResponse({"error": "Ocorreu um erro inesperado."}, status=500)
 
 
 @login_required
