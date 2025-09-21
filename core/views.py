@@ -315,6 +315,14 @@ def create_text_image(texto, cor_da_fonte_hex, data, posicao="centro"):
 
     cor_rgba = cor_da_fonte_hex
 
+    # Tenta converter a cor hexadecimal para uma tupla RGBA; usa branco em caso de erro.
+    try:
+        hex_limpo = cor_da_fonte_hex.lstrip("#")
+        r, g, b = tuple(int(hex_limpo[i:i+2], 16) for i in (0, 2, 4))
+        cor_rgba = (r, g, b, 255)  # Adiciona canal alfa para opacidade total
+    except (ValueError, IndexError, TypeError):
+        cor_rgba = (255, 255, 255, 255)  # Fallback para branco opaco
+
     draw.text(
         (x + 2, y + 2),
         texto_quebrado,
@@ -626,14 +634,21 @@ def pagina_gerador(request):
                     )
                     if duracao_audio > 0: duracao_video = duracao_audio
                     
-                    if data.get("legenda_sincronizada") and caminho_narrador_input:
-                        try:
-                            word_timestamps = get_word_timestamps(caminho_narrador_input)
-                            if word_timestamps:
-                                caminho_legenda_ass = gerar_legenda_karaoke_ass(
-                                    word_timestamps, data, data.get("cor_da_fonte", "#FFFFFF"), data.get("posicao_texto", "centro")
-                                )
-                        except Exception as e:
+                if data.get("legenda_sincronizada") and caminho_narrador_input:
+                    try:
+                        word_timestamps = get_word_timestamps(caminho_narrador_input)
+                        if word_timestamps:
+                            # Pega a nova cor do formulário
+                            cor_destaque_hex = data.get("cor_destaque_legenda", "#FFFF00") 
+                            
+                            caminho_legenda_ass = gerar_legenda_karaoke_ass(
+                                word_timestamps, 
+                                data, 
+                                data.get("cor_da_fonte", "#FFFFFF"), 
+                                cor_destaque_hex, # Passa a nova cor como argumento
+                                data.get("posicao_texto", "centro")
+                            )
+                    except Exception as e:
                             print(f"AVISO: Falha ao gerar legenda precisa: {e}")
                             messages.warning(request, "Não foi possível gerar a legenda precisa. O vídeo foi criado sem ela.")
                 
@@ -753,7 +768,7 @@ def pagina_gerador(request):
                     dados_para_salvar["loop"] = dados_para_salvar.pop("loop_video")
 
                 # CORREÇÃO: Adicionamos 'duracao_segundos' à lista de remoção
-                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom", "duracao_segundos"]
+                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom", "duracao_segundos", "cor_destaque_legenda"]
                 for chave in chaves_para_remover:
                     dados_para_salvar.pop(chave, None)
 
@@ -785,7 +800,7 @@ def pagina_gerador(request):
                 dados_para_salvar_erro = data.copy()
                 if "loop_video" in dados_para_salvar_erro:
                     dados_para_salvar_erro["loop"] = dados_para_salvar_erro.pop("loop_video")
-                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom"]
+                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom", "cor_destaque_legenda"]
                 for chave in chaves_para_remover:
                     dados_para_salvar_erro.pop(chave, None)
                 VideoGerado.objects.create(usuario=request.user, status="ERRO", **dados_para_salvar_erro)
@@ -890,31 +905,41 @@ def formatar_tempo_ass(segundos):
 # ================================================================
 # NOVA FUNÇÃO DE LEGENDA PRECISA (ESTILO KARAOKÊ)
 # ================================================================
-def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, posicao="centro"):
+def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, cor_destaque_hex, posicao="centro"):
     """
     Gera uma legenda .ASS com sincronização precisa por palavra (efeito karaokê)
     a partir dos timestamps extraídos pelo Whisper.
     """
-    # Configurações de estilo
+    # Configurações de estilo (esta parte não muda)
     nome_fonte = data.get("texto_fonte", "Arial")
     tamanho = data.get("texto_tamanho", 70)
     negrito = -1 if data.get("texto_negrito", False) else 0
     sublinhado = -1 if data.get("texto_sublinhado", False) else 0
     
-    # Converte a cor principal para o formato BGR do ASS
+    # Converte a cor principal (texto não dito) para o formato BGR do ASS
     try:
         hex_limpo = cor_da_fonte_hex.lstrip("#")
         r, g, b = tuple(int(hex_limpo[i : i + 2], 16) for i in (0, 2, 4))
-        cor_primaria_ass = f"&HFF{b:02X}{g:02X}{r:02X}" # Adiciona Alpha (FF = opaco)
+        # 👇 CORREÇÃO AQUI: Alpha trocado de &HFF para &H00 para ficar opaco
+        cor_primaria_ass = f"&H00{b:02X}{g:02X}{r:02X}"
     except (ValueError, IndexError):
-        cor_primaria_ass = "&HFFFFFFFF" # Branco opaco como padrão
+        cor_primaria_ass = "&H00FFFFFF" # Branco opaco como padrão
+
+    # Converte a cor de destaque (texto dito) para o formato BGR do ASS
+    try:
+        hex_limpo_destaque = cor_destaque_hex.lstrip("#")
+        r_s, g_s, b_s = tuple(int(hex_limpo_destaque[i:i+2], 16) for i in (0, 2, 4))
+        # 👇 CORREÇÃO AQUI: Alpha trocado de &HFF para &H00 para ficar opaco
+        cor_secundaria_ass = f"&H00{b_s:02X}{g_s:02X}{r_s:02X}"
+    except (ValueError, IndexError, TypeError):
+        cor_secundaria_ass = "&H0000FFFF" # Amarelo opaco como padrão
 
     # Define as cores do efeito karaokê
-    cor_secundaria_ass = "&HFF00FFFF"  # Amarelo para a palavra destacada
-    cor_outline = "&HFF000000"       # Contorno preto
-    cor_back = "&H00000000"          # Sombra/Fundo transparente
+    # 👇 CORREÇÃO AQUI: Contorno também precisa ser opaco
+    cor_outline = "&H00000000"       # Contorno preto opaco
+    cor_back = "&H80000000"          # Sombra/Fundo semi-transparente (opcional, para melhor leitura)
 
-    alignment_code = 2 if posicao == "inferior" else 5
+    alignment_code = 5 if posicao == "centro" else 2
     margin_v = 150 if posicao == "inferior" else 50
 
     # Header do arquivo ASS com os estilos
@@ -939,8 +964,6 @@ def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, posicao="
         start_time_linha = linha[0]['start']
         end_time_linha = linha[-1]['end']
         
-        texto_completo_linha = " ".join(p['word'].strip() for p in linha)
-        
         # Cria a string de texto com as tags de tempo do karaokê
         texto_karaoke = ""
         for palavra in linha:
@@ -963,6 +986,7 @@ def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, posicao="
         f.write(conteudo_ass)
 
     return caminho_legenda
+
 
 
 @require_POST

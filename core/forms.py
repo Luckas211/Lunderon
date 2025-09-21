@@ -216,6 +216,13 @@ class GeradorForm(forms.Form):
         initial='#FFFFFF',
         required=False
     )
+    cor_destaque_legenda = forms.ChoiceField(
+        choices=COR_FONTE_CHOICES,
+        label="Cor de Destaque da Legenda (Karaokê)",
+        initial='#FFFF00',
+        required=False,
+        help_text="A cor que a palavra assume quando é falada."
+    )
     texto_fonte = forms.ChoiceField(
         choices=FONTES_TEXTO,
         required=False,
