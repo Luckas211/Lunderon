@@ -42,8 +42,15 @@
     {% block header %}
     <header class="header">
         <div class="container header-container">
-            <a href="{% url 'index' %}" class="logo">LUNDERON</a>
-
+            
+            <a href="{% url 'index' %}" class="logo-3d" aria-label="Lunderon Home">
+                <div class="logo-icon">
+                    <div class="logo-shape shape-1"></div>
+                    <div class="logo-shape shape-2"></div>
+                    <div class="logo-shape shape-3"></div>
+                </div>
+                <span class="logo-text">Lunderon</span>
+            </a>
             <div class="nav-wrapper" id="nav-wrapper">
                 <nav class="main-nav" aria-label="Navegação principal">
                     <ul>
@@ -87,7 +94,14 @@
         <div class="container">
             <div class="footer-content">
                 <div class="footer-column">
-                    <a href="{% url 'index' %}" class="logo">LUNDERON</a>
+                    <a href="{% url 'index' %}" class="logo-3d" aria-label="Lunderon Home">
+                        <div class="logo-icon">
+                            <div class="logo-shape shape-1"></div>
+                            <div class="logo-shape shape-2"></div>
+                            <div class="logo-shape shape-3"></div>
+                        </div>
+                        <span class="logo-text">Lunderon</span>
+                    </a>
                     <p class="footer-about">
                         Potencialize seu marketing digital com vídeos profissionais gerados por IA. Alcance milhões de espectadores nas redes sociais, aumente seu engajamento e converta mais seguidores em clientes com conteúdo de alta qualidade e produção automatizada.
                     </p>

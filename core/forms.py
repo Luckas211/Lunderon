@@ -268,6 +268,7 @@ class GeradorForm(forms.Form):
         label="Categoria do Vídeo",
         required=False
     )
+    video_base_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     categoria_musica = forms.ModelChoiceField(
         queryset=CategoriaMusica.objects.all(),
         label="Categoria da Música",

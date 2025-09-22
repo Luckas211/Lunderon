@@ -80,6 +80,125 @@ main {
     padding-left: 20px;
     padding-right: 20px;
 }
+
+/* ==========================================================================
+   LOGO 3D - LUNDERON
+   ========================================================================== */
+
+/* --- Container Principal da Logo --- */
+.logo-3d {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+    /* Ativa o contexto 3D */
+    transform-style: preserve-3d;
+    perspective: 800px;
+}
+
+/* --- Ícone Abstrato (Container) --- */
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.4s cubic-bezier(.17,.67,.5,1.3);
+    /* Posição inicial levemente inclinada para o efeito 3D */
+    transform: rotateY(-25deg) rotateX(15deg);
+}
+
+.logo-3d:hover .logo-icon {
+    transform: rotateY(-10deg) rotateX(5deg) scale(1.1);
+}
+
+/* --- Formas que compõem o Ícone --- */
+.logo-shape {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 8px;
+    transition: all 0.4s cubic-bezier(.17,.67,.5,1.3);
+}
+
+/* Camada Traseira (Mais escura) */
+.logo-shape.shape-1 {
+    background: #4F46C3; /* Cor primária escura */
+    transform: translateZ(-12px) translateX(6px) skewX(20deg);
+    opacity: 0.8;
+}
+
+/* Camada do Meio */
+.logo-shape.shape-2 {
+    background: var(--color-primary); /* #655BE2 */
+    /* Clip-path cria a forma de seta/play */
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+    transform: translateZ(0px);
+}
+
+/* Camada da Frente (Mais clara, brilho) */
+.logo-shape.shape-3 {
+    background: linear-gradient(45deg, #a29dff, var(--color-primary));
+    transform: translateZ(6px) scale(0.9);
+    opacity: 0.6;
+    clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+/* Efeito de "explosão" no hover */
+.logo-3d:hover .shape-1 {
+    transform: translateZ(-20px) translateX(10px) skewX(20deg);
+}
+.logo-3d:hover .shape-3 {
+    transform: translateZ(15px) scale(0.9);
+}
+
+
+/* --- Texto "Lunderon" --- */
+.logo-text {
+    font-family: var(--font-family-base);
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--color-text-dark);
+    letter-spacing: -1.5px;
+    transition: all 0.4s cubic-bezier(.17,.67,.5,1.3);
+    
+    /* --- Efeito 3D empilhado com text-shadow --- */
+    text-shadow: 
+        1px 1px 0px #d1d5db,
+        2px 2px 0px #9ca3af,
+        3px 3px 0px #6b7280,
+        4px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Adaptação das sombras para o Tema Escuro */
+[data-theme="dark"] .logo-text {
+    color: var(--color-text-dark); /* #E2E8F0 */
+    text-shadow: 
+        1px 1px 0px #475569,
+        2px 2px 0px #334155,
+        3px 3px 0px #1e293b,
+        4px 4px 10px rgba(0, 0, 0, 0.3);
+}
+
+.logo-3d:hover .logo-text {
+    transform: translateZ(10px) translateX(-2px);
+    text-shadow: 
+        1px 1px 0px #d1d5db,
+        2px 2px 0px #9ca3af,
+        3px 3px 0px #6b7280,
+        4px 4px 0px #4b5563,
+        5px 5px 0px #374151,
+        6px 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .logo-3d:hover .logo-text {
+    text-shadow: 
+        1px 1px 0px #475569,
+        2px 2px 0px #334155,
+        3px 3px 0px #1e293b,
+        4px 4px 0px #0f172a,
+        5px 5px 0px #020617,
+        6px 6px 15px rgba(0, 0, 0, 0.4);
+}
 /* ==========================================================================
    2. Fundo 3D e Animações
    ========================================================================== */

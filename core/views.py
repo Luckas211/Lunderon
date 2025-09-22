@@ -653,7 +653,12 @@ def pagina_gerador(request):
                 
                 # --- LÓGICA PARA OBTER O VÍDEO DE FUNDO ---
                 if tipo_conteudo in ["narrador", "texto"]:
-                    video_base = get_valid_media_from_category(VideoBase, data["categoria_video"])
+                    video_base_id = data.get("video_base_id")
+                    if video_base_id:
+                        video_base = get_object_or_404(VideoBase, id=video_base_id)
+                    else:
+                        video_base = get_valid_media_from_category(VideoBase, data["categoria_video"])
+                    
                     if not video_base: raise Exception(f"Não foi possível encontrar um vídeo para a categoria '{data['categoria_video']}'.")
                     caminho_video_input = download_from_cloudflare(video_base.object_key, ".mp4")
                 
@@ -766,8 +771,8 @@ def pagina_gerador(request):
                 if "loop_video" in dados_para_salvar:
                     dados_para_salvar["loop"] = dados_para_salvar.pop("loop_video")
 
-                # CORREÇÃO: Adicionamos 'duracao_segundos' à lista de remoção
-                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom", "duracao_segundos", "cor_destaque_legenda"]
+                # CORREÇÃO: Adicionamos 'duracao_segundos' e 'video_base_id' à lista de remoção
+                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom", "duracao_segundos", "cor_destaque_legenda", "video_base_id"]
                 for chave in chaves_para_remover:
                     dados_para_salvar.pop(chave, None)
 
@@ -799,7 +804,7 @@ def pagina_gerador(request):
                 dados_para_salvar_erro = data.copy()
                 if "loop_video" in dados_para_salvar_erro:
                     dados_para_salvar_erro["loop"] = dados_para_salvar_erro.pop("loop_video")
-                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom", "cor_destaque_legenda"]
+                chaves_para_remover = ["tipo_conteudo", "categoria_video", "categoria_musica", "video_upload", "narrador_tom", "cor_destaque_legenda", "video_base_id"]
                 for chave in chaves_para_remover:
                     dados_para_salvar_erro.pop(chave, None)
                 VideoGerado.objects.create(usuario=request.user, status="ERRO", **dados_para_salvar_erro)
@@ -827,6 +832,29 @@ def pagina_gerador(request):
 # ==============================================================================
 # VIEW DE PRÉ-VISUALIZAÇÃO (NOVA)
 # ==============================================================================
+@login_required
+def videos_por_categoria(request, categoria_id):
+    try:
+        categoria = get_object_or_404(CategoriaVideo, id=categoria_id)
+        videos = VideoBase.objects.filter(categoria=categoria).exclude(object_key__isnull=True).exclude(object_key__exact='')
+        
+        videos_data = []
+        for video in videos:
+            presigned_url = generate_presigned_url(video.object_key, expiration=3600) # 1 hour
+            if presigned_url:
+                videos_data.append({
+                    'id': video.id,
+                    'url': presigned_url,
+                    'titulo': video.titulo
+                })
+
+        return JsonResponse({'videos': videos_data})
+
+    except Exception as e:
+        print(f"Erro ao buscar vídeos por categoria: {e}")
+        return JsonResponse({"error": "Ocorreu um erro inesperado."}, status=500)
+
+
 @login_required
 def preview_video_base(request, categoria_id):
     try:

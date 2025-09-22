@@ -30,6 +30,7 @@
 
         <form class="video-form" method="post" enctype="multipart/form-data" novalidate>
             {% csrf_token %}
+            {{ form.video_base_id }}
             <div class="video-form-wrapper">
                 {% if form.non_field_errors %}
                     <div class="alert alert-danger">
@@ -135,6 +136,12 @@
                     <div class="form-step" data-step-content="4">
                         <div class="step-header"><h3><i class="fas fa-photo-video"></i> Mídia de Fundo e Encerramento</h3></div>
                         <div class="form-field" id="field-categoria-video">{{ form.categoria_video.label_tag }} {{ form.categoria_video }}</div>
+                        <div class="form-field" id="video-gallery-container" style="display: none;">
+                            <label>Escolha um Vídeo:</label>
+                            <div id="video-gallery" class="video-gallery">
+                                <!-- Videos will be populated here by JavaScript -->
+                            </div>
+                        </div>
                         <div class="form-field" id="field-video-upload" style="display: none;">
                             <label for="{{ form.video_upload.id_for_label }}" class="custom-file-upload">
                                 {{ form.video_upload }}
@@ -170,14 +177,16 @@
 
     <main class="editor-main-content">
         <div class="preview-area">
-            <div class="preview-placeholder active">
-                <i class="fas fa-film"></i>
-                <h2>Preview do Vídeo</h2>
-                <p>Suas escolhas aparecerão aqui em tempo real.</p>
-            </div>
-            <div class="video-preview">
-                <video id="preview-video-element" class="video-element" muted loop playsinline></video>
-                <div id="preview-text-overlay" class="text-overlay"></div>
+            <div class="preview-wrapper">
+                <div class="preview-placeholder active">
+                    <i class="fas fa-film"></i>
+                    <h2>Preview do Vídeo</h2>
+                    <p>Suas escolhas aparecerão aqui em tempo real.</p>
+                </div>
+                <div class="video-preview">
+                    <video id="preview-video-element" class="video-element" muted loop playsinline></video>
+                    <div id="preview-text-overlay" class="text-overlay"></div>
+                </div>
             </div>
         </div>
     </main>
@@ -210,6 +219,7 @@ document.addEventListener('DOMContentLoaded', function() {
         textoNegrito: form.querySelector('input[name="texto_negrito"]'),
         textoSublinhado: form.querySelector('input[name="texto_sublinhado"]'),
         categoriaVideo: form.querySelector('select[name="categoria_video"]'),
+        videoBaseId: form.querySelector('[name="video_base_id"]'),
         videoUpload: form.querySelector('input[name="video_upload"]'),
     };
     
@@ -218,7 +228,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePreview() {
         // 1. Atualiza o texto
         const tipo = form.querySelector('input[name="tipo_conteudo"]:checked')?.value;
-        const texto = (tipo === 'texto') ? inputs.textoOverlay.value : inputs.narradorTexto.value;
+        let texto = '';
+        if (tipo === 'texto') {
+            texto = inputs.textoOverlay.value;
+        }
+        // O texto do narrador não é exibido na pré-visualização para evitar quebra de layout.
         textOverlay.innerText = texto;
 
         // 2. Atualiza estilos do texto
@@ -234,41 +248,101 @@ document.addEventListener('DOMContentLoaded', function() {
         textOverlay.classList.toggle('align-bottom', posicao === 'inferior');
     }
 
+    const videoGalleryContainer = document.getElementById('video-gallery-container');
+    const videoGallery = document.getElementById('video-gallery');
+
     async function updatePreviewVideo() {
         const tipo = form.querySelector('input[name="tipo_conteudo"]:checked')?.value;
         let videoUrl = null;
 
         if (tipo === 'vendedor') {
+            videoGalleryContainer.style.display = 'none';
             const file = inputs.videoUpload.files[0];
             if (file) {
                 videoUrl = URL.createObjectURL(file);
             }
         } else {
             const categoriaId = inputs.categoriaVideo.value;
+            videoGallery.innerHTML = ''; // Limpa a galeria
+            inputs.videoBaseId.value = ''; // Limpa o video selecionado
+
             if (!categoriaId) {
-                 // Se nenhuma categoria for selecionada, reseta o vídeo
+                videoGalleryContainer.style.display = 'none';
                 videoElement.src = '';
                 videoElement.classList.remove('visible');
                 previewPlaceholder.classList.remove('hidden');
                 return;
             }
+
+            videoGalleryContainer.style.display = 'block';
+            videoGallery.innerHTML = '<p>Carregando vídeos...</p>';
+            
             try {
-                const response = await fetch(`/api/preview-video/${categoriaId}/`);
-                if (!response.ok) throw new Error('Falha ao buscar vídeo');
+                const response = await fetch(`/api/videos-por-categoria/${categoriaId}/`);
+                if (!response.ok) throw new Error('Falha ao buscar vídeos da categoria');
                 const data = await response.json();
-                videoUrl = data.url;
+                console.log('Videos data:', data); // DEBUG: Mostra os dados recebidos
+                
+                videoGallery.innerHTML = ''; // Limpa a mensagem de carregando
+
+                if (data.videos && data.videos.length > 0) {
+                    // Popula a galeria
+                    data.videos.forEach(video => {
+                        const item = document.createElement('div');
+                        item.classList.add('video-gallery-item');
+                        item.dataset.videoId = video.id;
+                        item.dataset.videoUrl = video.url;
+
+                        const videoThumb = document.createElement('video');
+                        videoThumb.src = video.url + '#t=0.5';
+                        videoThumb.preload = 'metadata';
+                        videoThumb.muted = true;
+
+                        const title = document.createElement('div');
+                        title.classList.add('video-title');
+                        title.textContent = video.titulo;
+
+                        item.appendChild(videoThumb);
+                        item.appendChild(title);
+                        videoGallery.appendChild(item);
+
+                        item.addEventListener('click', () => {
+                            document.querySelectorAll('.video-gallery-item.selected').forEach(el => el.classList.remove('selected'));
+                            item.classList.add('selected');
+                            inputs.videoBaseId.value = video.id;
+                            
+                            videoUrl = video.url;
+                            if (videoUrl) {
+                                previewPlaceholder.classList.add('hidden');
+                                videoElement.src = videoUrl;
+                                videoElement.load();
+                                videoElement.play().catch(e => console.log("Autoplay bloqueado."));
+                                videoElement.classList.add('visible');
+                            }
+                        });
+                    });
+
+                    // Seleciona o primeiro video por padrão
+                    const firstVideoItem = videoGallery.querySelector('.video-gallery-item');
+                    if (firstVideoItem) {
+                        firstVideoItem.click();
+                    }
+
+                } else {
+                    videoGallery.innerHTML = '<p>Nenhum vídeo encontrado para esta categoria.</p>';
+                }
+
             } catch (error) {
-                console.error("Erro no preview do vídeo:", error);
-                videoElement.classList.remove('visible');
-                previewPlaceholder.classList.remove('hidden');
+                console.error("Erro ao buscar galeria de vídeos:", error);
+                videoGallery.innerHTML = '<p>Erro ao carregar vídeos.</p>';
             }
         }
         
-        if (videoUrl) {
+        if (tipo === 'vendedor' && videoUrl) {
             previewPlaceholder.classList.add('hidden');
             videoElement.src = videoUrl;
             videoElement.load();
-            videoElement.play().catch(e => console.log("Autoplay bloqueado, o que é normal."));
+            videoElement.play().catch(e => console.log("Autoplay bloqueado."));
             videoElement.classList.add('visible');
         }
     }
