@@ -1481,52 +1481,7 @@ def editar_perfil(request):
 
 
 
-@require_POST
-@csrf_exempt
-def get_youtube_segments(request):
-    """
-    Recebe a URL de um vídeo do YouTube e retorna os capítulos (segments)
-    para serem usados no formulário de cortes.
-    """
-    try:
-        data = json.loads(request.body)
-        url = data.get('url')
-        if not url:
-            return JsonResponse({'error': 'URL não fornecida.'}, status=400)
 
-        # Opções para o yt-dlp para extrair informações sem baixar o vídeo
-        ydl_opts = {
-            'quiet': True,
-            'dump_json': True,
-            'skip_download': True,
-        }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info_dict = ydl.extract_info(url, download=False)
-            chapters = info_dict.get('chapters', [])
-
-            if not chapters:
-                # Se não houver capítulos, podemos talvez criar segmentos de X em X minutos?
-                # Por enquanto, vamos retornar uma mensagem clara.
-                return JsonResponse({'message': 'Este vídeo não contém capítulos (cortes pré-definidos). A funcionalidade de detecção automática de cenas ainda não está disponível.'}, status=200)
-
-            segments = []
-            for chapter in chapters:
-                start_time = chapter.get('start_time')
-                end_time = chapter.get('end_time')
-                if start_time is not None and end_time is not None:
-                    segments.append({
-                        'start': start_time,
-                        'end': end_time,
-                        'duration': end_time - start_time,
-                        'title': chapter.get('title', 'Segmento sem nome'),
-                    })
-
-            return JsonResponse({'segments': segments})
-
-    except Exception as e:
-        print(f"Erro ao obter segmentos do YouTube: {e}")
-        return JsonResponse({'error': 'Não foi possível analisar a URL do YouTube. Verifique se o link é válido.'}, status=500)
 
 
 @login_required
@@ -2117,10 +2072,10 @@ def cancelar_assinatura_admin(request, assinatura_id):
 @login_required
 @require_POST
 @csrf_exempt
-def get_youtube_segments(request):
+def get_youtube_most_replayed_segments(request):
     """
     Endpoint AJAX que recebe uma URL do YouTube, busca a página
-    e extrai os timestamps dos segmentos "mais repetidos".
+    e extrai os timestamps dos segmentos "mais repetidos", evitando duplicatas.
     """
     try:
         data = json.loads(request.body)
@@ -2132,10 +2087,9 @@ def get_youtube_segments(request):
         response = requests.get(youtube_url, headers=headers)
         response.raise_for_status()
 
-        # Regex para encontrar o objeto ytInitialData, que contém os dados da página
-        match = re.search(r'window\["ytInitialData"\] = ({.*?});', response.text)
+        # Regex para encontrar o objeto ytInitialData
+        match = re.search(r'window["ytInitialData"] = ({.*?});', response.text)
         if not match:
-            # Fallback para um segundo padrão comum
             match = re.search(r'var ytInitialData = ({.*?});', response.text)
 
         if not match:
@@ -2143,7 +2097,7 @@ def get_youtube_segments(request):
 
         initial_data = json.loads(match.group(1))
         
-        # Navega pela complexa estrutura do JSON para encontrar os marcadores
+        # Navega pela estrutura do JSON para encontrar os marcadores
         decorations = []
         mutations = initial_data.get('frameworkUpdates', {}).get('entityBatchUpdate', {}).get('mutations', [])
         for mutation in mutations:
@@ -2157,24 +2111,32 @@ def get_youtube_segments(request):
             return JsonResponse({'segments': [], 'message': 'Nenhum segmento "mais repetido" foi encontrado para este vídeo.'})
 
         segments = []
+        processed_ranges = set()  # Conjunto para rastrear intervalos já adicionados
+
         for deco in decorations:
             if deco.get('label', {}).get('runs', [{}])[0].get('text') == 'Mais repetidos':
                 start_ms = int(deco.get('visibleTimeRangeStartMillis', 0))
                 end_ms = int(deco.get('visibleTimeRangeEndMillis', 0))
                 
-                segments.append({
-                    'start': start_ms / 1000.0,
-                    'end': end_ms / 1000.0,
-                    'duration': (end_ms - start_ms) / 1000.0
-                })
+                time_range_key = (start_ms, end_ms)
+
+                # Adiciona o segmento apenas se o intervalo de tempo for único
+                if time_range_key not in processed_ranges:
+                    segments.append({
+                        'start': start_ms / 1000.0,
+                        'end': end_ms / 1000.0,
+                        'duration': (end_ms - start_ms) / 1000.0
+                    })
+                    processed_ranges.add(time_range_key)
 
         return JsonResponse({'segments': sorted(segments, key=lambda x: x['start'])})
 
     except requests.RequestException as e:
         return JsonResponse({'error': f'Erro ao buscar a URL do YouTube: {e}'}, status=500)
     except Exception as e:
-        print(f"Erro em get_youtube_segments: {e}")
+        print(f"Erro em get_youtube_most_replayed_segments: {e}")
         return JsonResponse({'error': 'Ocorreu um erro inesperado ao analisar o vídeo.'}, status=500)
+
 
 
 @login_required

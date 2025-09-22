@@ -43,7 +43,7 @@ urlpatterns = [
     # Endpoints AJAX
     path('api/estimativa-narracao/', views.estimativa_narracao, name='estimativa_narracao'),
     path('api/preview-voz/<str:nome_da_voz>/', views.preview_voz, name='preview_voz'),
-    path('api/youtube-segments/', views.get_youtube_segments, name='get_youtube_segments'),
+    path('api/youtube-segments/', views.get_youtube_most_replayed_segments, name='get_youtube_segments'),
     path('api/videos-por-categoria/<int:categoria_id>/', views.videos_por_categoria, name='videos_por_categoria'),
     path('api/preview-video/<int:categoria_id>/', views.preview_video_base, name='preview_video_base'), # NOVA ROTA
 

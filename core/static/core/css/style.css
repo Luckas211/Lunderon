@@ -815,57 +815,7 @@ main {
    CSS Específico para a página "Como Funciona" - Versão Centralizada
    ========================================================================== */
 
-.how-it-works-section {
-    background-color: var(--color-background-alt);
-    border-top: 1px solid var(--color-border);
-    border-bottom: 1px solid var(--color-border);
-    padding: 100px 0;
-}
 
-.how-it-works-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: center;
-}
-
-.how-it-works-row:not(:last-child) {
-    margin-bottom: 100px;
-}
-
-/* Inverte a ordem das colunas para o layout alternado */
-.how-it-works-row.row-reversed {
-    grid-template-areas: "content visual";
-}
-
-.how-it-works-row.row-reversed .how-it-works-visual {
-    grid-area: visual;
-}
-
-.how-it-works-row.row-reversed .how-it-works-content {
-    grid-area: content;
-}
-
-/* --- Coluna Visual com Ícone Animado --- */
-.how-it-works-visual {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.visual-icon {
-    width: 200px;
-    height: 200px;
-    background: var(--gradient-primary);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 5rem;
-    box-shadow: var(--shadow-xl);
-    animation: gentle-float 6s ease-in-out infinite;
-}
 
 [data-theme="dark"] .visual-icon {
     box-shadow: 0 20px 30px -10px rgba(0,0,0,0.5);
@@ -2295,4 +2245,155 @@ textarea.form-input {
 
 
 
+/* ==========================================================================
+   Seção: Como Funciona (How It Works)
+   ========================================================================== */
 
+.how-it-works-section {
+    padding: 80px 0;
+    background-color: var(--color-background-alt);
+    overflow-x: hidden; /* Evita barras de rolagem por causa das rotações */
+}
+
+.how-it-works-row {
+    display: flex;
+    align-items: center;
+    gap: 60px;
+    margin-bottom: 100px;
+}
+
+.how-it-works-row:last-child {
+    margin-bottom: 0;
+}
+
+.how-it-works-row.row-reversed {
+    flex-direction: row-reverse;
+}
+
+.how-it-works-visual,
+.how-it-works-content {
+    flex: 1;
+}
+
+/* ... (o resto dos estilos para texto, títulos, etc., continua o mesmo) ... */
+
+.how-it-works-content .step-indicator {
+    display: inline-block;
+    padding: 4px 12px;
+    background-color: var(--color-primary);
+    color: #FFF;
+    font-weight: 700;
+    font-size: 0.9rem;
+    border-radius: 20px;
+    margin-bottom: 16px;
+}
+
+.how-it-works-content .step-title {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+    color: var(--color-text-dark);
+}
+
+.how-it-works-content .step-description {
+    font-size: 1.1rem;
+    color: var(--color-text-light);
+    margin-bottom: 24px;
+}
+
+.how-it-works-content .feature-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.how-it-works-content .feature-list li {
+    margin-bottom: 12px;
+    font-size: 1rem;
+    color: var(--color-text-light);
+}
+
+
+/* ==========================================================================
+   CSS CORRIGIDO PARA AS IMAGENS (Estilo de Cards)
+   ========================================================================== */
+
+/* --- 1. Estilo BASE para TODOS os contêineres ("cards") --- */
+[class^="visual-icon"] {
+    position: relative;
+    background: none; /* Removemos o fundo de gradiente */
+    border-radius: 16px; /* Apenas um leve arredondamento */
+    
+    /* Sombra para dar profundidade ao card */
+    box-shadow: var(--shadow-xl);
+    
+    /* Adiciona perspectiva para o efeito 3D na rotação */
+    perspective: 1200px;
+    
+    /* Efeito de transição suave para o hover */
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                box-shadow 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+
+/* --- 2. Estilo da IMAGEM dentro de QUALQUER um dos cards --- */
+[class^="visual-icon"] img {
+    width: 100%;
+    height: auto;
+    display: block; /* Remove espaços extras abaixo da imagem */
+    border-radius: 12px; /* Arredonda a imagem */
+    border: 1px solid var(--color-border); /* Adiciona uma borda sutil */
+    
+    /* Transição para a animação de hover */
+    transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+
+/* --- 3. Estilos ESPECÍFICOS e rotação para cada imagem --- */
+
+/* Card 1: Rotacionado para a esquerda */
+.visual-icon1 img {
+    transform: rotateY(15deg) rotateX(5deg) scale(0.95);
+}
+
+/* Card 2: Central, um pouco maior para dar destaque */
+.visual-icon2 img {
+    transform: scale(1);
+}
+
+/* Card 3: Rotacionado para a direita */
+.visual-icon3 img {
+    transform: rotateY(-15deg) rotateX(5deg) scale(0.95);
+}
+
+
+/* --- 4. Efeito de HOVER (Interação) --- */
+
+/* Ao passar o mouse no contêiner, ele levanta */
+[class^="visual-icon"]:hover {
+    box-shadow: var(--shadow-2xl);
+    transform: translateY(-12px);
+}
+
+/* A imagem dentro dele volta ao normal (reta e um pouco maior) */
+[class^="visual-icon"]:hover img {
+    transform: rotate(0) scale(1.05);
+}
+
+
+/* ==========================================================================
+   Responsividade
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .how-it-works-row,
+    .how-it-works-row.row-reversed {
+        flex-direction: column;
+        gap: 40px;
+        margin-bottom: 60px;
+    }
+
+    /* Remove as rotações em telas pequenas para uma melhor leitura */
+    .visual-icon1 img,
+    .visual-icon3 img {
+        transform: none;
+    }
+}
