@@ -710,21 +710,38 @@ def pagina_gerador(request):
                 if caminho_narrador_input: inputs_adicionais.append(caminho_narrador_input)
                 for f in inputs_adicionais: cmd.extend(["-i", f])
                 
-                video_chain = "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1"
+                # --- CORREÇÃO: Lógica de construção da cadeia de filtros de vídeo refatorada ---
+                video_chain_parts = []
+                current_stream = "[0:v]"
+                
+                # 1. Escala e Pad
+                video_chain_parts.append(f"{current_stream}scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1[v_scaled]")
+                current_stream = "[v_scaled]"
+
+                # 2. Legendas (se houver)
                 if caminho_legenda_ass:
                     caminho_legenda_ffmpeg = caminho_legenda_ass.replace('\\', '/').replace(':', '\\:')
                     caminho_fontes_projeto_ffmpeg = os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts').replace('\\', '/').replace(':', '\\:')
-                    video_chain += f",ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'"
-                
+                    video_chain_parts.append(f"{current_stream}ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'[v_subtitled]")
+                    current_stream = "[v_subtitled]"
+
+                # 3. Marca d'água (se não for assinante)
                 if not assinatura_ativa:
                     caminho_fonte_marca_dagua_ffmpeg = os.path.join(settings.BASE_DIR, 'core', 'static', 'fonts', 'AlfaSlabOne-Regular.ttf').replace('\\', '/').replace(':', '\\:')
-                    video_chain += f",drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5"
+                    video_chain_parts.append(f"{current_stream}drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5[v_watermarked]")
+                    current_stream = "[v_watermarked]"
 
-                final_video_stream = "[v]"
+                # 4. Overlay de texto estático (se houver)
                 if caminho_imagem_texto:
-                    video_chain += f"[base];[base][1:v]overlay=(W-w)/2:(H-h)/2[v]"
+                    video_chain_parts.append(f"{current_stream}[1:v]overlay=(W-w)/2:(H-h)/2[final_v]")
+                    final_video_stream = "[final_v]"
                 else:
-                    video_chain += "[v]"
+                    # Se não houver mais filtros, apenas copia o último stream para a saída final
+                    video_chain_parts.append(f"{current_stream}copy[final_v]")
+                    final_video_stream = "[final_v]"
+                
+                video_chain = ";".join(video_chain_parts)
+                # --- FIM DA CORREÇÃO ---
 
                 volume_musica_decimal = data.get("volume_musica", 50) / 100.0
                 music_input_index = 1 + (1 if caminho_imagem_texto else 0)

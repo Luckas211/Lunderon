@@ -241,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const previewWidth = previewWrapper.getBoundingClientRect().width;
         const scaleFactor = previewWidth / finalVideoWidth;
         
-        const originalFontSize = parseInt(inputs.textoTamanho.value, 10);
+        const originalFontSize = parseInt(inputs.textoTamanho.value, 10) || 70; // Fallback para 70
         const scaledFontSize = originalFontSize * scaleFactor;
 
         textOverlay.style.color = inputs.corDaFonte.value;
