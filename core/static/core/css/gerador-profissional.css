@@ -554,8 +554,10 @@
 }
 
 .preview-wrapper {
+    height: 100%;
+    max-height: 700px; /* Altura máxima do celular */
     width: 100%;
-    max-width: 340px; /* Largura do celular */
+    max-width: 440px; /* Largura do celular */
     aspect-ratio: 9 / 19.5; /* Proporção de um celular moderno */
     background-color: #111;
     border-radius: 40px; /* Bordas arredondadas do celular */

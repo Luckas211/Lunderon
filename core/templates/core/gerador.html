@@ -206,6 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewPlaceholder = document.querySelector('.preview-placeholder');
     const videoElement = document.getElementById('preview-video-element');
     const textOverlay = document.getElementById('preview-text-overlay');
+    const previewWrapper = document.querySelector('.preview-wrapper');
 
     // Campos do formulário que afetam o preview
     const inputs = {
@@ -235,10 +236,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // O texto do narrador não é exibido na pré-visualização para evitar quebra de layout.
         textOverlay.innerText = texto;
 
-        // 2. Atualiza estilos do texto
+        // 2. Atualiza estilos do texto com escala
+        const finalVideoWidth = 1080; // Largura do vídeo final em pixels
+        const previewWidth = previewWrapper.getBoundingClientRect().width;
+        const scaleFactor = previewWidth / finalVideoWidth;
+        
+        const originalFontSize = parseInt(inputs.textoTamanho.value, 10);
+        const scaledFontSize = originalFontSize * scaleFactor;
+
         textOverlay.style.color = inputs.corDaFonte.value;
         textOverlay.style.fontFamily = `'${inputs.textoFonte.options[inputs.textoFonte.selectedIndex].text}', sans-serif`;
-        textOverlay.style.fontSize = `${inputs.textoTamanho.value}px`;
+        textOverlay.style.fontSize = `${scaledFontSize}px`;
         textOverlay.style.fontWeight = inputs.textoNegrito.checked ? 'bold' : 'normal';
         textOverlay.style.textDecoration = inputs.textoSublinhado.checked ? 'underline' : 'none';
         
