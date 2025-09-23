@@ -638,22 +638,21 @@ def pagina_gerador(request):
 
     # --- LÓGICA DO FORMULÁRIO ---
     if request.method == "POST":
+        # Inicializa todas as variáveis de caminho para evitar NameError no finally
+        caminho_video_input = None
+        caminho_narrador_input = None
+        caminho_legenda_ass = None
+        caminho_imagem_texto = None
+        caminho_tela_final = None
+        caminho_musica_input = None
+        caminho_video_temp = None
+        caminho_tela_final_video = None
+        lista_concat_path = None
+        caminho_video_final_concatenado = None
+
         form = GeradorForm(request.POST, request.FILES)
         if form.is_valid():
             data = form.cleaned_data
-
-            # Inicializa todas as variáveis de caminho para evitar NameError no finally
-            caminho_video_input = None
-            caminho_narrador_input = None
-            caminho_legenda_ass = None
-            caminho_imagem_texto = None
-            caminho_tela_final = None
-            caminho_musica_input = None
-            caminho_video_temp = None
-            caminho_tela_final_video = None
-            lista_concat_path = None
-            caminho_video_final_concatenado = None
-
             try:
                 tipo_conteudo = data.get("tipo_conteudo")
                 duracao_video = data.get("duracao_segundos", 30)
@@ -857,7 +856,7 @@ def pagina_gerador(request):
                 cmd.append(caminho_video_temp)
 
                 subprocess.run(
-                    cmd, check=True, capture_output=True, text=True, encoding="utf-8"
+                    cmd, check=True, capture_output=True
                 )
 
                 sucesso_upload = False
@@ -900,8 +899,6 @@ def pagina_gerador(request):
                         cmd_tela_final,
                         check=True,
                         capture_output=True,
-                        text=True,
-                        encoding="utf-8",
                     )
 
                     with tempfile.NamedTemporaryFile(delete=False, suffix="_final_concat.mp4") as temp_f_concat:
@@ -922,7 +919,7 @@ def pagina_gerador(request):
                     ]
 
                     subprocess.run(
-                        cmd_concat, check=True, capture_output=True, text=True, encoding="utf-8"
+                        cmd_concat, check=True, capture_output=True
                     )
 
                     with open(caminho_video_final_concatenado, "rb") as video_file_concat:
@@ -2445,7 +2442,7 @@ def cortes_youtube_view(request):
                         caminho_video_local_final
                     ])
                     
-                    subprocess.run(cmd, check=True, capture_output=True, text=True, encoding='utf-8')
+                    subprocess.run(cmd, check=True, capture_output=True)
 
                     if not upload_to_r2(caminho_video_local_final, object_key_r2):
                         raise Exception("Falha no upload do corte para o Cloudflare R2.")
