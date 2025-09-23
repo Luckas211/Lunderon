@@ -9,8 +9,14 @@ import requests
 from urllib.parse import urlparse
 import os
 
-import boto3
-from botocore.exceptions import ClientError
+from .utils import (
+    verificar_arquivo_existe_no_r2,
+    generate_presigned_url,
+    download_from_cloudflare,
+    upload_to_r2,
+    upload_fileobj_to_r2,
+    delete_from_r2,
+)
 from django.conf import settings
 
 import re
@@ -86,33 +92,7 @@ def _get_user_video_usage(user):
 
 
 
-def verificar_arquivo_existe_no_r2(object_key):
-    """
-    Verifica se um arquivo realmente existe no Cloudflare R2 antes de tentar baixar
-    """
-    try:
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
 
-        # Tenta obter os metadados do objeto
-        s3_client.head_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=object_key)
-        return True
-    except ClientError as e:
-        error_code = e.response["Error"].get("Code", "Unknown")
-        if error_code == "404":
-            print(f"Arquivo não encontrado no R2: {object_key}")
-            return False
-        else:
-            print(f"Erro ao verificar arquivo no R2 {object_key}: {e}")
-            return False
-    except Exception as e:
-        print(f"Erro inesperado ao verificar arquivo no R2 {object_key}: {e}")
-        return False
 
 
 def get_valid_media_from_category(model, category):
@@ -436,126 +416,7 @@ def meus_videos(request):
     return render(request, "core/meus_videos.html", context)
 
 
-def generate_presigned_url(object_key, expiration=3600):
-    """
-    Gera uma URL assinada temporária para um objeto no Cloudflare R2
-    """
-    try:
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
 
-        url = s3_client.generate_presigned_url(
-            "get_object",
-            Params={"Bucket": settings.AWS_STORAGE_BUCKET_NAME, "Key": object_key},
-            ExpiresIn=expiration,
-        )
-        return url
-    except ClientError as e:
-        print(f"Erro ao gerar URL assinada: {e}")
-        return None
-
-
-def download_from_cloudflare(url_or_key, extension):
-    """
-    Faz download de um arquivo do Cloudflare R2
-    Suporta tanto URLs públicas quanto chaves de objeto (para URLs assinadas)
-    """
-    try:
-        # Verificar se o parâmetro é válido
-        if not url_or_key:
-            print(f"Erro: url_or_key é None ou vazio")
-            return None
-
-        # Se for uma chave de objeto (não uma URL completa), gera URL assinada
-        if not url_or_key.startswith("http"):
-            download_url = generate_presigned_url(url_or_key)
-        else:
-            download_url = url_or_key
-
-        if not download_url:
-            print(f"Erro: não foi possível gerar URL de download para {url_or_key}")
-            return None
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        }
-        response = requests.get(download_url, stream=True, headers=headers)
-        response.raise_for_status()
-
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=extension)
-
-        with open(temp_file.name, "wb") as f:
-            for chunk in response.iter_content(chunk_size=8192):
-                f.write(chunk)
-
-        return temp_file.name
-    except Exception as e:
-        print(f"Erro ao baixar {url_or_key}: {e}")
-        return None
-
-
-def upload_to_r2(caminho_arquivo_local, object_key):
-    """
-    Faz o upload de um arquivo para o bucket R2 principal.
-    """
-    try:
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
-        s3_client.upload_file(
-            caminho_arquivo_local, settings.AWS_STORAGE_BUCKET_NAME, object_key
-        )
-        return True
-    except ClientError as e:
-        print(f"Erro no upload para o R2: {e}")
-        return False
-
-
-def upload_fileobj_to_r2(file_obj, object_key):
-    """
-    Faz o upload de um objeto tipo arquivo (stream) para o bucket R2 principal.
-    """
-    try:
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
-        s3_client.upload_fileobj(file_obj, settings.AWS_STORAGE_BUCKET_NAME, object_key)
-        return True
-    except ClientError as e:
-        print(f"Erro no upload de stream para o R2: {e}")
-        return False
-
-
-def delete_from_r2(object_key):
-    """
-    Apaga um arquivo do bucket R2 principal.
-    """
-    try:
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
-        s3_client.delete_object(Bucket=settings.AWS_STORAGE_BUCKET_NAME, Key=object_key)
-        return True
-    except ClientError as e:
-        print(f"Erro ao apagar do R2: {e}")
-        return False
 
 
 @login_required
@@ -600,435 +461,179 @@ def delete_video_file(request, video_id):
     return redirect("meus_videos")
 
 
-@login_required
-def pagina_gerador(request):
-    # --- LÓGICA DE VERIFICAÇÃO DE ASSINATURA E LIMITES ---
-    videos_criados, limite_videos_mes, assinatura_ativa = _get_user_video_usage(
-        request.user
-    )
+def processar_geracao_video(video_gerado_id, data, user, assinatura_ativa, limite_testes_config=0):
+    video = get_object_or_404(VideoGerado, id=video_gerado_id)
 
-    if assinatura_ativa:
-        if videos_criados >= limite_videos_mes:
-            messages.error(
-                request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês."
+    caminho_video_input = None
+    caminho_narrador_input = None
+    caminho_legenda_ass = None
+    caminho_imagem_texto = None
+    caminho_tela_final = None
+    caminho_musica_input = None
+    caminho_video_temp = None
+    caminho_tela_final_video = None
+    lista_concat_path = None
+    caminho_video_final_concatenado = None
+
+    try:
+        tipo_conteudo = data.get("tipo_conteudo")
+        duracao_video = data.get("duracao_segundos", 30)
+
+        if (tipo_conteudo == "narrador" or tipo_conteudo == "vendedor") and data.get("narrador_texto"):
+            caminho_narrador_input, _, duracao_audio = gerar_audio_e_tempos(
+                data["narrador_texto"],
+                data["narrador_voz"],
+                data["narrador_velocidade"],
             )
-            return redirect("meu_perfil")
-    else:
-        try:
-            limite_testes_config = int(
-                Configuracao.objects.get(nome="LIMITE_TESTES_GRATIS").valor
-            )
-        except (Configuracao.DoesNotExist, ValueError):
-            limite_testes_config = 0
+            if duracao_audio > 0:
+                duracao_video = duracao_audio
 
-        if request.user.testes_gratis_utilizados >= limite_testes_config:
-            messages.warning(
-                request,
-                f"Você já utilizou seus {limite_testes_config} testes grátis. Assine um plano para continuar.",
-            )
-            return redirect("planos")
-        else:
-            if request.method == "GET":
-                testes_restantes = (
-                    limite_testes_config - request.user.testes_gratis_utilizados
-                )
-                messages.info(
-                    request, f"Teste grátis: {testes_restantes} vídeo(s) restante(s)."
-                )
-
-    # --- LÓGICA DO FORMULÁRIO ---
-    if request.method == "POST":
-        # Inicializa todas as variáveis de caminho para evitar NameError no finally
-        caminho_video_input = None
-        caminho_narrador_input = None
-        caminho_legenda_ass = None
-        caminho_imagem_texto = None
-        caminho_tela_final = None
-        caminho_musica_input = None
-        caminho_video_temp = None
-        caminho_tela_final_video = None
-        lista_concat_path = None
-        caminho_video_final_concatenado = None
-
-        form = GeradorForm(request.POST, request.FILES)
-        if form.is_valid():
-            data = form.cleaned_data
+        if data.get("legenda_sincronizada") and caminho_narrador_input:
             try:
-                tipo_conteudo = data.get("tipo_conteudo")
-                duracao_video = data.get("duracao_segundos", 30)
-
-                if (
-                    tipo_conteudo == "narrador" or tipo_conteudo == "vendedor"
-                ) and data.get("narrador_texto"):
-                    caminho_narrador_input, _, duracao_audio = gerar_audio_e_tempos(
-                        data["narrador_texto"],
-                        data["narrador_voz"],
-                        data["narrador_velocidade"],
-                    )
-                    if duracao_audio > 0:
-                        duracao_video = duracao_audio
-
-                if data.get("legenda_sincronizada") and caminho_narrador_input:
-                    try:
-                        word_timestamps = get_word_timestamps(caminho_narrador_input)
-                        if word_timestamps:
-                            cor_destaque_hex = data.get("cor_destaque_legenda", "#FFFF00")
-                            caminho_legenda_ass = gerar_legenda_karaoke_ass(
-                                word_timestamps,
-                                data,
-                                data.get("cor_da_fonte", "#FFFFFF"),
-                                cor_destaque_hex,
-                                data.get("posicao_texto", "centro"),
-                            )
-                    except Exception as e:
-                        print(f"AVISO: Falha ao gerar legenda precisa: {e}")
-                        messages.warning(
-                            request,
-                            "Não foi possível gerar a legenda precisa. O vídeo foi criado sem ela.",
-                        )
-
-                if tipo_conteudo in ["narrador", "texto"]:
-                    video_base_id = data.get("video_base_id")
-                    if video_base_id:
-                        video_base = get_object_or_404(VideoBase, id=video_base_id)
-                    else:
-                        video_base = get_valid_media_from_category(
-                            VideoBase, data["categoria_video"]
-                        )
-
-                    if not video_base:
-                        raise Exception(
-                            f"Não foi possível encontrar um vídeo para a categoria '{data['categoria_video']}'."
-                        )
-                    caminho_video_input = download_from_cloudflare(
-                        video_base.object_key, ".mp4"
-                    )
-
-                elif tipo_conteudo == "vendedor":
-                    video_upload = data.get("video_upload") or request.FILES.get(
-                        "video_upload"
-                    )
-                    if video_upload:
-                        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_f:
-                            for chunk in video_upload.chunks():
-                                temp_f.write(chunk)
-                            caminho_video_input = temp_f.name
-                    else:
-                        raise Exception(
-                            "Você precisa enviar um vídeo para o modo vendedor."
-                        )
-
-                if tipo_conteudo == "texto" and data.get("texto_overlay"):
-                    caminho_imagem_texto = create_text_image(
-                        data["texto_overlay"],
-                        data.get("cor_da_fonte", "#FFFFFF"),
+                word_timestamps = get_word_timestamps(caminho_narrador_input)
+                if word_timestamps:
+                    cor_destaque_hex = data.get("cor_destaque_legenda", "#FFFF00")
+                    caminho_legenda_ass = gerar_legenda_karaoke_ass(
+                        word_timestamps,
                         data,
+                        data.get("cor_da_fonte", "#FFFFFF"),
+                        cor_destaque_hex,
                         data.get("posicao_texto", "centro"),
                     )
+            except Exception as e:
+                print(f"AVISO: Falha ao gerar legenda precisa: {e}")
 
-                musica_base = get_valid_media_from_category(
-                    MusicaBase, data["categoria_musica"]
-                )
-                if not musica_base:
-                    raise Exception(
-                        f"Não foi possível encontrar uma música para a categoria '{data['categoria_musica']}'."
-                    )
-                caminho_musica_input = download_from_cloudflare(
-                    musica_base.object_key, ".mp3"
-                )
+        if tipo_conteudo in ["narrador", "texto"]:
+            video_base_id = data.get("video_base_id")
+            if video_base_id:
+                video_base = get_object_or_404(VideoBase, id=video_base_id)
+            else:
+                video_base = get_valid_media_from_category(VideoBase, data["categoria_video"])
 
-                if data.get("texto_tela_final"):
-                    opcoes_tela_final = {
-                        "texto_fonte": data.get("texto_fonte", "arial"),
-                        "texto_tamanho": data.get("texto_tamanho", 80),
-                        "texto_negrito": data.get("texto_negrito", False),
-                        "texto_sublinhado": data.get("texto_sublinhado", False),
-                    }
-                    caminho_tela_final = create_text_image(
-                        data["texto_tela_final"], "#FFFFFF", opcoes_tela_final, "centro"
-                    )
+            if not video_base:
+                raise Exception(f"Não foi possível encontrar um vídeo para a categoria '{data['categoria_video']}'.")
+            caminho_video_input = download_from_cloudflare(video_base.object_key, ".mp4")
 
-                if not caminho_video_input or not caminho_musica_input:
-                    raise Exception(
-                        "Erro ao obter os arquivos de mídia necessários para a geração."
-                    )
+        elif tipo_conteudo == "vendedor":
+            video_upload = data.get("video_upload")
+            if video_upload:
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_f:
+                    for chunk in video_upload.chunks():
+                        temp_f.write(chunk)
+                    caminho_video_input = temp_f.name
+            else:
+                raise Exception("Você precisa enviar um vídeo para o modo vendedor.")
 
-                if not caminho_video_input: # Add this check
-                    raise Exception("Tipo de conteúdo de vídeo inválido ou não fornecido.")
+        if tipo_conteudo == "texto" and data.get("texto_overlay"):
+            caminho_imagem_texto = create_text_image(
+                data["texto_overlay"],
+                data.get("cor_da_fonte", "#FFFFFF"),
+                data,
+                data.get("posicao_texto", "centro"),
+            )
 
-                # --- PREPARAÇÃO PARA O FFmpeg ---
-                nome_base = f"video_{request.user.id}_{random.randint(10000, 99999)}"
-                nome_arquivo_final = f"{nome_base}.mp4"
-                object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
-                
-                with tempfile.NamedTemporaryFile(delete=False, suffix="_temp.mp4") as temp_f:
-                    caminho_video_temp = temp_f.name
+        musica_base = get_valid_media_from_category(MusicaBase, data["categoria_musica"])
+        if not musica_base:
+            raise Exception(f"Não foi possível encontrar uma música para a categoria '{data['categoria_musica']}'.")
+        caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
 
-                # --- PROCESSAMENTO COM FFmpeg ---
-                cmd = ["ffmpeg", "-y"]
-                if tipo_conteudo == "narrador" or data.get("loop_video", False):
-                    cmd.extend(["-stream_loop", "-1", "-i", caminho_video_input])
-                else:
-                    cmd.extend(["-i", caminho_video_input])
+        if data.get("texto_tela_final"):
+            opcoes_tela_final = {
+                "texto_fonte": data.get("texto_fonte", "arial"),
+                "texto_tamanho": data.get("texto_tamanho", 80),
+                "texto_negrito": data.get("texto_negrito", False),
+                "texto_sublinhado": data.get("texto_sublinhado", False),
+            }
+            caminho_tela_final = create_text_image(data["texto_tela_final"], "#FFFFFF", opcoes_tela_final, "centro")
 
-                inputs_adicionais = [caminho_musica_input]
-                if caminho_imagem_texto:
-                    inputs_adicionais.insert(0, caminho_imagem_texto)
-                if caminho_narrador_input:
-                    inputs_adicionais.append(caminho_narrador_input)
-                for f in inputs_adicionais:
-                    cmd.extend(["-i", f])
+        if not caminho_video_input or not caminho_musica_input:
+            raise Exception("Erro ao obter os arquivos de mídia necessários para a geração.")
 
-                video_chain_parts = []
-                current_stream = "[0:v]"
-                video_chain_parts.append(
-                    f"{current_stream}scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1[v_scaled]"
-                )
-                current_stream = "[v_scaled]"
+        nome_base = f"video_{user.id}_{random.randint(10000, 99999)}"
+        nome_arquivo_final = f"{nome_base}.mp4"
+        object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix="_temp.mp4") as temp_f:
+            caminho_video_temp = temp_f.name
 
-                if caminho_legenda_ass:
-                    caminho_legenda_ffmpeg = caminho_legenda_ass.replace("\\", "/").replace(":", "\\:")
-                    caminho_fontes_projeto_ffmpeg = os.path.join(settings.BASE_DIR, "core", "static", "fonts").replace("\\", "/").replace(":", "\\:")
-                    video_chain_parts.append(
-                        f"{current_stream}ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'[v_subtitled]"
-                    )
-                    current_stream = "[v_subtitled]"
+        cmd = ["ffmpeg", "-y"]
+        if tipo_conteudo == "narrador" or data.get("loop_video", False):
+            cmd.extend(["-stream_loop", "-1", "-i", caminho_video_input])
+        else:
+            cmd.extend(["-i", caminho_video_input])
 
-                if not assinatura_ativa:
-                    caminho_fonte_marca_dagua_ffmpeg = os.path.join(settings.BASE_DIR, "core", "static", "fonts", "AlfaSlabOne-Regular.ttf").replace("\\", "/").replace(":", "\\:")
-                    video_chain_parts.append(
-                        f"{current_stream}drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5[v_watermarked]"
-                    )
-                    current_stream = "[v_watermarked]"
+        inputs_adicionais = [caminho_musica_input]
+        if caminho_imagem_texto:
+            inputs_adicionais.insert(0, caminho_imagem_texto)
+        if caminho_narrador_input:
+            inputs_adicionais.append(caminho_narrador_input)
+        for f in inputs_adicionais:
+            cmd.extend(["-i", f])
 
-                if caminho_imagem_texto:
-                    video_chain_parts.append(
-                        f"{current_stream}[1:v]overlay=(W-w)/2:(H-h)/2[final_v]"
-                    )
-                    final_video_stream = "[final_v]"
-                else:
-                    video_chain_parts.append(f"{current_stream}copy[final_v]")
-                    final_video_stream = "[final_v]"
+        video_chain_parts = []
+        current_stream = "[0:v]"
+        video_chain_parts.append(f"{current_stream}scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1[v_scaled]")
+        current_stream = "[v_scaled]"
 
-                video_chain = ";".join(video_chain_parts)
-                volume_musica_decimal = data.get("volume_musica", 50) / 100.0
-                music_input_index = 1 + (1 if caminho_imagem_texto else 0)
+        if caminho_legenda_ass:
+            caminho_legenda_ffmpeg = caminho_legenda_ass.replace("\\", "/").replace(":", "\\:")
+            caminho_fontes_projeto_ffmpeg = os.path.join(settings.BASE_DIR, "core", "static", "fonts").replace("\\", "/").replace(":", "\\:")
+            video_chain_parts.append(f"{current_stream}ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'[v_subtitled]")
+            current_stream = "[v_subtitled]"
 
-                if caminho_narrador_input:
-                    narrator_input_index = music_input_index + 1
-                    audio_chain = (
-                        f"[{music_input_index}:a]loudnorm[musica_norm];[{narrator_input_index}:a]loudnorm[narrador_norm];"
-                        f"[musica_norm]volume={volume_musica_decimal}[musica_final];[narrador_norm]volume=1.0[narrador_final];"
-                        f"[musica_final][narrador_final]amix=inputs=2:duration=longest[aout]"
-                    )
-                else:
-                    audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]"
+        if not assinatura_ativa:
+            caminho_fonte_marca_dagua_ffmpeg = os.path.join(settings.BASE_DIR, "core", "static", "fonts", "AlfaSlabOne-Regular.ttf").replace("\\", "/").replace(":", "\\:")
+            video_chain_parts.append(f"{current_stream}drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5[v_watermarked]")
+            current_stream = "[v_watermarked]"
 
-                filter_complex_str = f"{video_chain};{audio_chain}"
-                cmd.extend(
-                    [
-                        "-filter_complex",
-                        filter_complex_str,
-                        "-map",
-                        final_video_stream,
-                        "-map",
-                        "[aout]",
-                        "-t",
-                        str(duracao_video),
-                    ]
-                )
-                cmd.extend(
-                    [
-                        "-c:v",
-                        "libx264",
-                        "-pix_fmt",
-                        "yuv420p",
-                        "-preset",
-                        "medium",
-                        "-crf",
-                        "20",
-                        "-c:a",
-                        "aac",
-                        "-b:a",
-                        "192k",
-                    ]
-                )
-                cmd.append(caminho_video_temp)
+        if caminho_imagem_texto:
+            video_chain_parts.append(f"{current_stream}[1:v]overlay=(W-w)/2:(H-h)/2[final_v]")
+            final_video_stream = "[final_v]"
+        else:
+            video_chain_parts.append(f"{current_stream}copy[final_v]")
+            final_video_stream = "[final_v]"
 
-                subprocess.run(
-                    cmd, check=True, capture_output=True
-                )
+        video_chain = ";".join(video_chain_parts)
+        volume_musica_decimal = data.get("volume_musica", 50) / 100.0
+        music_input_index = 1 + (1 if caminho_imagem_texto else 0)
 
-                sucesso_upload = False
-                if caminho_tela_final:
-                    with tempfile.NamedTemporaryFile(delete=False, suffix="_endscreen.mp4") as temp_f:
-                        caminho_tela_final_video = temp_f.name
-                    
-                    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix="_concat.txt", encoding="utf-8") as temp_f:
-                        lista_concat_path = temp_f.name
-                        temp_f.write(f"file '{caminho_video_temp.replace(os.sep, '/')}'\n")
-                        temp_f.write(f"file '{caminho_tela_final_video.replace(os.sep, '/')}'\n")
+        if caminho_narrador_input:
+            narrator_input_index = music_input_index + 1
+            audio_chain = (f"[{music_input_index}:a]loudnorm[musica_norm];[{narrator_input_index}:a]loudnorm[narrador_norm];" + f"[musica_norm]volume={volume_musica_decimal}[musica_final];[narrador_norm]volume=1.0[narrador_final];" + f"[musica_final][narrador_final]amix=inputs=2:duration=longest[aout]")
+        else:
+            audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]"
 
-                    cmd_tela_final = [
-                        "ffmpeg",
-                        "-y",
-                        "-loop",
-                        "1",
-                        "-t",
-                        "3",
-                        "-i",
-                        caminho_tela_final,
-                        "-f",
-                        "lavfi",
-                        "-t",
-                        "3",
-                        "-i",
-                        "anullsrc=channel_layout=stereo:sample_rate=44100",
-                        "-c:v",
-                        "libx264",
-                        "-pix_fmt",
-                        "yuv420p",
-                        "-c:a",
-                        "aac",
-                        "-b:a",
-                        "192k",
-                        "-shortest",
-                        caminho_tela_final_video,
-                    ]
-                    subprocess.run(
-                        cmd_tela_final,
-                        check=True,
-                        capture_output=True,
-                    )
+    except Exception as e:
+        video.status = "ERRO"
+        video.save()
+        print(f"!!!!!!!!!! ERRO AO PROCESSAR VÍDEO ID {video_gerado_id} !!!!!!!!!!")
+        print(f"Exceção: {e}")
+        if isinstance(e, subprocess.CalledProcessError):
+            print(f"Erro FFMPEG: {e.stderr.decode('utf-8') if e.stderr else 'N/A'}")
 
-                    with tempfile.NamedTemporaryFile(delete=False, suffix="_final_concat.mp4") as temp_f_concat:
-                        caminho_video_final_concatenado = temp_f_concat.name
-
-                    cmd_concat = [
-                        "ffmpeg",
-                        "-y",
-                        "-f",
-                        "concat",
-                        "-safe",
-                        "0",
-                        "-i",
-                        lista_concat_path,
-                        "-c",
-                        "copy",
-                        caminho_video_final_concatenado, # Output to a temporary file
-                    ]
-
-                    subprocess.run(
-                        cmd_concat, check=True, capture_output=True
-                    )
-
-                    with open(caminho_video_final_concatenado, "rb") as video_file_concat:
-                        sucesso_upload = upload_fileobj_to_r2(video_file_concat, object_key_r2)
-                else:
-                    with open(caminho_video_temp, "rb") as video_file:
-                        sucesso_upload = upload_fileobj_to_r2(video_file, object_key_r2)
-
-                if not sucesso_upload:
-                    raise Exception("Falha no upload para o Cloudflare R2.")
-
-                # --- Lógica de salvar no Banco de Dados ---
-                dados_para_salvar = data.copy()
-                if "loop_video" in dados_para_salvar:
-                    dados_para_salvar["loop"] = dados_para_salvar.pop("loop_video")
-
-                chaves_para_remover = [
-                    "tipo_conteudo",
-                    "categoria_video",
-                    "categoria_musica",
-                    "video_upload",
-                    "narrador_tom",
-                    "duracao_segundos",
-                    "cor_destaque_legenda",
-                    "video_base_id",
-                ]
-                for chave in chaves_para_remover:
-                    dados_para_salvar.pop(chave, None)
-
-                VideoGerado.objects.create(
-                    usuario=request.user,
-                    status="CONCLUIDO",
-                    arquivo_final=object_key_r2,
-                    duracao_segundos=int(duracao_video),
-                    **dados_para_salvar,
-                )
-
-                if not assinatura_ativa:
-                    request.user.testes_gratis_utilizados += 1
-                    request.user.save()
-                    testes_restantes_apos_uso = limite_testes_config - request.user.testes_gratis_utilizados
-                    if testes_restantes_apos_uso > 0:
-                        messages.success(
-                            request,
-                            f"Vídeo gerado com sucesso! Testes grátis restantes: {testes_restantes_apos_uso}",
-                        )
-                    else:
-                        messages.success(
-                            request,
-                            "Vídeo gerado com sucesso! Seus testes grátis acabaram. Assine um plano para continuar.",
-                        )
-                else:
-                    messages.success(request, "Vídeo gerado com sucesso!")
-
-                return redirect("meus_videos")
-
-            except (subprocess.CalledProcessError, Exception) as e:
-                messages.error(request, "Ocorreu um erro ao gerar seu vídeo.")
-                if isinstance(e, subprocess.CalledProcessError):
-                    print(f"Erro no FFmpeg: {e.stderr}")
-                else:
-                    print(f"Erro geral na geração: {e}")
-
-                dados_para_salvar_erro = data.copy()
-                if "loop_video" in dados_para_salvar_erro:
-                    dados_para_salvar_erro["loop"] = dados_para_salvar_erro.pop(
-                        "loop_video"
-                    )
-                chaves_para_remover = [
-                    "tipo_conteudo",
-                    "categoria_video",
-                    "categoria_musica",
-                    "video_upload",
-                    "narrador_tom",
-                    "cor_destaque_legenda",
-                    "video_base_id",
-                ]
-                for chave in chaves_para_remover:
-                    dados_para_salvar_erro.pop(chave, None)
-                VideoGerado.objects.create(
-                    usuario=request.user, status="ERRO", **dados_para_salvar_erro
-                )
-
-            finally:
-                arquivos_para_limpar = [
-                    caminho_video_input,
-                    caminho_musica_input,
-                    caminho_narrador_input,
-                    caminho_legenda_ass,
-                    caminho_imagem_texto,
-                    caminho_tela_final,
-                    caminho_video_temp,
-                    caminho_tela_final_video,
-                    lista_concat_path,
-                    caminho_video_final_concatenado, # Add this
-                ]
-                for path in arquivos_para_limpar:
-                    if path and os.path.exists(path):
-                        try:
-                            os.remove(path)
-                        except Exception as e_clean:
-                            print(f"Erro ao remover arquivo temporário {path}: {e_clean}")
-
-    else:
-        form = GeradorForm()
-
-    return render(request, "core/gerador.html", {"form": form})
-
-
+    finally:
+        # Lista de todos os caminhos de arquivos temporários que podem ter sido criados
+        caminhos_para_limpar = [
+            caminho_video_input,
+            caminho_narrador_input,
+            caminho_legenda_ass,
+            caminho_imagem_texto,
+            caminho_tela_final,
+            caminho_musica_input,
+            caminho_video_temp,
+            caminho_tela_final_video,
+            lista_concat_path,
+            caminho_video_final_concatenado,
+        ]
+        print("--- Iniciando limpeza de arquivos temporários ---")
+        for caminho in caminhos_para_limpar:
+            if caminho and os.path.exists(caminho):
+                try:
+                    os.remove(caminho)
+                    print(f"Arquivo temporário removido: {caminho}")
+                except OSError as err:
+                    print(f"Erro ao remover arquivo temporário {caminho}: {err}")
+        print("--- Limpeza de arquivos temporários finalizada ---")
 
 
 # ==============================================================================
@@ -2322,39 +1927,184 @@ def get_youtube_most_replayed_segments(request):
 
 
 
+def processar_corte_youtube(video_gerado_id, youtube_url, segment, musica_base_id, volume_musica, gerar_legendas):
+    video = get_object_or_404(VideoGerado, id=video_gerado_id)
+    temp_dir = os.path.join(settings.MEDIA_ROOT, "youtube_cuts_temp")
+    os.makedirs(temp_dir, exist_ok=True)
+
+    caminho_video_segmento = None
+    caminho_audio_extraido = None
+    caminho_legenda_srt = None
+    caminho_video_local_final = None
+    caminho_musica_input = None  # Adicionado
+
+    try:
+        # Baixa a música de fundo
+        if musica_base_id:
+            musica_base = get_object_or_404(MusicaBase, id=musica_base_id)
+            caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
+            if not caminho_musica_input:
+                raise Exception("Falha ao baixar a música de fundo para o processamento do corte.")
+
+        segment_filename_template = os.path.join(temp_dir, f'segment_{video.usuario.id}_{random.randint(1000, 9999)}.%(ext)s')
+        
+        ydl_opts = {
+            'format': 'bestvideo[height<=1080][fps=60]+bestaudio/bestvideo[height<=1080]+bestaudio/best',
+            'outtmpl': segment_filename_template,
+            'download_ranges': yt_dlp.utils.download_range_func(None, [(segment['start'], segment['end'])]), 
+            'force_keyframes_at_cuts': True,
+            'merge_output_format': 'mp4',
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=True)
+            caminho_video_segmento = ydl.prepare_filename(info)
+
+        if not caminho_video_segmento or not os.path.exists(caminho_video_segmento):
+            raise Exception("yt-dlp não baixou o arquivo do segmento.")
+
+        if gerar_legendas:
+            caminho_audio_extraido = extract_audio_from_video(caminho_video_segmento)
+            caminho_legenda_srt = transcribe_audio_to_srt(caminho_audio_extraido)
+
+        nome_base = f"corte_{video.usuario.id}_{random.randint(10000, 99999)}"
+        nome_arquivo_final = f"{nome_base}.mp4"
+        caminho_video_local_final = os.path.join(settings.MEDIA_ROOT, "videos_gerados", nome_arquivo_final)
+        object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
+        os.makedirs(os.path.dirname(caminho_video_local_final), exist_ok=True)
+
+        cmd = ["ffmpeg", "-y", "-i", caminho_video_segmento]
+        if caminho_musica_input:
+             cmd.extend(["-i", caminho_musica_input])
+        
+        video_filters = "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1"
+        if caminho_legenda_srt:
+            escaped_srt_path = caminho_legenda_srt.replace('\\', '/').replace(':', '\\:')
+            style_options = "FontName=impact,FontSize=24,PrimaryColour=&H00FFFFFF,Bold=-1,MarginV=60,BorderStyle=3,Outline=2,Shadow=1"
+            video_filters += f",subtitles='{escaped_srt_path}':force_style='{style_options}'"
+        
+        filter_complex_parts = [f"{video_filters}[v]"]
+        
+        if caminho_musica_input:
+            audio_filters = (f"[0:a]loudnorm[audio_original_norm];" +
+                             f"[1:a]loudnorm[audio_musica_norm];" +
+                             f"[audio_musica_norm]volume={volume_musica}[audio_musica_final];" +
+                             f"[audio_original_norm][audio_musica_final]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]")
+            filter_complex_parts.append(audio_filters)
+            filter_complex_str = ";".join(filter_complex_parts)
+            cmd.extend(["-filter_complex", filter_complex_str, "-map", "[v]", "-map", "[audio_mix]"])
+        else: # No music
+            cmd.extend(["-vf", video_filters, "-map", "0:v", "-map", "0:a?"])
+
+        cmd.extend(["-c:v", "libx264", "-preset", "fast", "-crf", "23", "-r", "60", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-shortest", caminho_video_local_final])
+        
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+        if not upload_to_r2(caminho_video_local_final, object_key_r2):
+            raise Exception("Falha no upload do corte para o Cloudflare R2.")
+
+        video.status = "CONCLUIDO"
+        video.arquivo_final = object_key_r2
+        video.save()
+
+    except Exception as e:
+        video.status = "ERRO"
+        video.save()
+        print(f"Erro ao processar segmento: {e}")
+        if isinstance(e, subprocess.CalledProcessError): 
+            print(f"FFMPEG Error: {e.stderr}")
+    finally:
+        for path in [caminho_video_segmento, caminho_audio_extraido, caminho_legenda_srt, caminho_video_local_final, caminho_musica_input]:
+            if path and os.path.exists(path):
+                os.remove(path)
+
+
+@login_required
+def pagina_gerador(request):
+    """
+    Página para gerar um novo vídeo.
+    Refatorado para usar processamento em segundo plano e evitar timeouts.
+    """
+    videos_criados, limite_videos, assinatura = _get_user_video_usage(request.user)
+
+    if not assinatura or assinatura.status != 'ativo':
+        messages.warning(request, "Você precisa de um plano ativo para gerar vídeos.")
+        return redirect("planos")
+
+    if videos_criados >= limite_videos:
+        messages.error(request, f"Você atingiu seu limite de {limite_videos} vídeos por mês.")
+        return redirect("meu_perfil")
+
+    if request.method == 'POST':
+        form = GeradorForm(request.POST, request.FILES)
+        if form.is_valid():
+            data = form.cleaned_data
+            
+            video_gerado = VideoGerado.objects.create(
+                usuario=request.user,
+                status='PROCESSANDO',
+                duracao_segundos=data.get('duracao_segundos', 30),
+                loop=data.get('loop_video', False),
+                plano_de_fundo=data.get('plano_de_fundo', 'normal'),
+                volume_musica=data.get('volume_musica', 70),
+                texto_overlay=data.get('texto_overlay', ''),
+                narrador_texto=data.get('narrador_texto', ''),
+                texto_tela_final=data.get('texto_tela_final', ''),
+                posicao_texto=data.get('posicao_texto', 'centro'),
+                cor_da_fonte=data.get('cor_da_fonte', '#FFFFFF'),
+                texto_fonte=data.get('texto_fonte', 'arial'),
+                texto_tamanho=data.get('texto_tamanho', 50),
+                texto_negrito=data.get('texto_negrito', False),
+                texto_sublinhado=data.get('texto_sublinhado', False),
+                legenda_sincronizada=data.get('legenda_sincronizada', False),
+                narrador_voz=data.get('narrador_voz', 'pt-BR-Wavenet-B'),
+                narrador_velocidade=data.get('narrador_velocidade', 100),
+                narrador_tom=data.get('narrador_tom', 0.0)
+            )
+
+            import threading
+            
+            thread = threading.Thread(
+                target=processar_geracao_video,
+                args=(video_gerado.id, data, request.user, assinatura)
+            )
+            thread.start()
+            
+            messages.success(request, "Seu vídeo começou a ser processado! Ele aparecerá em 'Meus Vídeos' em breve.")
+            return redirect('meus_videos')
+        else:
+            messages.error(request, "Houve um erro no formulário. Por favor, verifique os dados inseridos.")
+    else:
+        form = GeradorForm()
+
+    context = {
+        'form': form,
+        'videos_restantes': limite_videos - videos_criados,
+        'limite_videos_mes': limite_videos,
+    }
+    return render(request, 'core/gerador.html', context)
+
+
 @login_required
 def cortes_youtube_view(request):
-    """
-    View principal para a página de geração de cortes do YouTube, com lógica de planos atualizada.
-    """
-    # --- LÓGICA DE VERIFICAÇÃO ATUALIZADA ---
-    
-    # 1. Verifica se o usuário tem QUALQUER plano ativo. A mensagem foi corrigida.
     if not request.user.plano_ativo:
         messages.warning(request, "Esta funcionalidade está disponível apenas para assinantes.")
         return redirect("planos")
 
-    # 2. Busca o limite de vídeos do plano específico do usuário e o uso atual.
     videos_criados, limite_videos_mes, _ = _get_user_video_usage(request.user)
 
-    # 3. Verifica se o usuário já atingiu o limite do seu plano.
-    if videos_criados >= limite_videos_mes:
+    if limite_videos_mes is not None and videos_criados >= limite_videos_mes:
         messages.error(request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês.")
         return redirect("meu_perfil")
     
-    # --- FIM DA ATUALIZAÇÃO ---
-
     if request.method == 'POST':
         form = CortesYouTubeForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
             youtube_url = data['youtube_url']
             selected_segments = json.loads(data['segments'])
-            volume_musica = data.get('volume_musica', 20) / 100.0
-            gerar_legendas = data.get('gerar_legendas', False)
             
-            # A verificação agora usa o limite correto vindo do plano do usuário
-            if (videos_criados + len(selected_segments)) > limite_videos_mes:
+            if limite_videos_mes is not None and (videos_criados + len(selected_segments)) > limite_videos_mes:
                 messages.error(request, f"A criação de {len(selected_segments)} cortes excederia seu limite mensal de {limite_videos_mes} vídeos.")
                 return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
 
@@ -2362,118 +2112,41 @@ def cortes_youtube_view(request):
             if not musica_base:
                 messages.error(request, f"Não foi possível encontrar uma música válida para a categoria '{data['categoria_musica']}'.")
                 return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
-            
-            caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
-            if not caminho_musica_input:
-                messages.error(request, "Erro ao baixar a música de fundo.")
-                return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
 
-            videos_gerados_count = 0
-            temp_dir = os.path.join(settings.MEDIA_ROOT, "youtube_cuts_temp")
-            os.makedirs(temp_dir, exist_ok=True)
-
-            for segment in selected_segments:
-                caminho_video_segmento = None
-                caminho_audio_extraido = None
-                caminho_legenda_srt = None
-                caminho_video_local_final = None
-                try:
-                    segment_filename_template = os.path.join(temp_dir, f'segment_{request.user.id}_{random.randint(1000, 9999)}.%(ext)s')
-                    
-                    ydl_opts = {
-                        'format': 'bestvideo[height<=1080][fps=60]+bestaudio/bestvideo[height<=1080]+bestaudio/best',
-                        'outtmpl': segment_filename_template,
-                        'download_ranges': yt_dlp.utils.download_range_func(None, [(segment['start'], segment['end'])]), 
-                        'force_keyframes_at_cuts': True,
-                        'merge_output_format': 'mp4',
-                    }
-
-                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                        info = ydl.extract_info(youtube_url, download=True)
-                        caminho_video_segmento = ydl.prepare_filename(info)
-
-                    if not caminho_video_segmento or not os.path.exists(caminho_video_segmento):
-                        raise Exception("yt-dlp não baixou o arquivo do segmento.")
-
-                    if gerar_legendas:
-                        caminho_audio_extraido = extract_audio_from_video(caminho_video_segmento)
-                        caminho_legenda_srt = transcribe_audio_to_srt(caminho_audio_extraido)
-
-                    nome_base = f"corte_{request.user.id}_{random.randint(10000, 99999)}"
-                    nome_arquivo_final = f"{nome_base}.mp4"
-                    caminho_video_local_final = os.path.join(settings.MEDIA_ROOT, "videos_gerados", nome_arquivo_final)
-                    object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
-                    os.makedirs(os.path.dirname(caminho_video_local_final), exist_ok=True)
-
-                    cmd = [
-                        "ffmpeg", "-y", 
-                        "-i", caminho_video_segmento, 
-                        "-i", caminho_musica_input,
-                    ]
-                    if caminho_legenda_srt:
-                        cmd.extend(["-i", caminho_legenda_srt])
-
-                    video_filters = "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1"
-                    if caminho_legenda_srt:
-                        escaped_srt_path = caminho_legenda_srt.replace('\\', '/').replace(':', '\\:')
-                        style_options = "FontName=impact,FontSize=8,PrimaryColour=&H00FFFFFF,Bold=-1,MarginV=60"
-                        video_filters += f",subtitles='{escaped_srt_path}':force_style='{style_options}'"
-                    
-                    audio_filters = (
-                        f"[0:a]loudnorm[audio_original_norm];"
-                        f"[1:a]loudnorm[audio_musica_norm];"
-                        f"[audio_musica_norm]volume={volume_musica}[audio_musica_final];"
-                        f"[audio_original_norm][audio_musica_final]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]"
+            try:
+                import threading
+                for segment in selected_segments:
+                    video_gerado = VideoGerado.objects.create(
+                        usuario=request.user,
+                        status='PROCESSANDO',
+                        narrador_texto=f"Corte do vídeo: {youtube_url}",
+                        texto_overlay=f"Início: {segment['start']}s",
                     )
-                    
-                    filter_complex_str = f"[0:v]{video_filters}[v];{audio_filters}"
 
-                    cmd.extend([
-                        "-filter_complex", filter_complex_str,
-                        "-map", "[v]", 
-                        "-map", "[audio_mix]",
-                        "-c:v", "libx264",
-                        "-preset", "fast",
-                        "-crf", "23",
-                        "-r", "60",
-                        "-pix_fmt", "yuv420p", 
-                        "-c:a", "aac", "-b:a", "192k", 
-                        "-shortest",
-                        caminho_video_local_final
-                    ])
-                    
-                    subprocess.run(cmd, check=True, capture_output=True)
-
-                    if not upload_to_r2(caminho_video_local_final, object_key_r2):
-                        raise Exception("Falha no upload do corte para o Cloudflare R2.")
-
-                    VideoGerado.objects.create(
-                        usuario=request.user, status="CONCLUIDO", arquivo_final=object_key_r2,
-                        duracao_segundos=int(segment['duration']),
-                        narrador_texto=f"Corte de: {youtube_url} ({segment['start']:.1f}s - {segment['end']:.1f}s)"
+                    thread = threading.Thread(
+                        target=processar_corte_youtube,
+                        args=(
+                            video_gerado.id,
+                            youtube_url,
+                            segment,
+                            musica_base.id,  # Passando o ID da música
+                            data['volume_musica'],
+                            data['gerar_legendas']
+                        )
                     )
-                    videos_gerados_count += 1
+                    thread.start()
 
-                except Exception as e:
-                    print(f"Erro ao processar segmento: {e}")
-                    if isinstance(e, subprocess.CalledProcessError): 
-                        print(f"FFMPEG Error: {e.stderr}")
-                finally:
-                    for path in [caminho_video_segmento, caminho_audio_extraido, caminho_legenda_srt, caminho_video_local_final]:
-                        if path and os.path.exists(path):
-                            os.remove(path)
+                messages.success(request, f"{len(selected_segments)} cortes foram enviados para processamento. Eles aparecerão em 'Meus Vídeos' em breve.")
+                return redirect('meus_videos')
 
-            if caminho_musica_input and os.path.exists(caminho_musica_input): 
-                os.remove(caminho_musica_input)
+            except Exception as e:
+                messages.error(request, f"Ocorreu um erro ao iniciar o processamento dos cortes: {e}")
 
-            if videos_gerados_count > 0:
-                messages.success(request, f"{videos_gerados_count} corte(s) de vídeo gerado(s) com sucesso!")
-            else:
-                messages.error(request, "Não foi possível gerar nenhum corte. Tente novamente ou contate o suporte.")
-            
-            return redirect("meus_videos")
+    else: # GET request
+        form = CortesYouTubeForm()
 
-    form = CortesYouTubeForm()
-    # Passa para o template o número de vídeos que o usuário ainda pode criar
-    context = {'form': form, 'videos_restantes': limite_videos_mes - videos_criados}
+    context = {
+        'form': form,
+        'videos_restantes': (limite_videos_mes - videos_criados) if videos_criados is not None and limite_videos_mes is not None else 'Ilimitado',
+    }
     return render(request, 'core/cortes_youtube.html', context)
