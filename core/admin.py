@@ -93,10 +93,42 @@ class VideoBaseAdmin(admin.ModelAdmin):
     list_display = ('titulo', 'categoria', 'object_key', 'get_video_url')
     readonly_fields = ('get_video_url',)
     actions = [corrigir_object_keys, recalc_urls]
-    
+    change_form_template = "admin/core/videobase/change_form.html"
+    fields = ('categoria', 'arquivo_video')
+
     def get_video_url(self, obj):
         return obj.video_url if hasattr(obj, 'video_url') else 'N/A'
     get_video_url.short_description = 'URL do Vídeo'
+
+    def add_view(self, request, form_url='', extra_context=None):
+        if request.method == 'POST':
+            files = request.FILES.getlist('arquivo_video_multiple')
+            titles = request.POST.getlist('titulos_customizados')
+            categoria_id = request.POST.get('categoria')
+
+            if files and categoria_id:
+                try:
+                    categoria = CategoriaVideo.objects.get(pk=categoria_id)
+                    
+                    for file, title in zip_longest(files, titles, fillvalue=None):
+                        final_title = title if (title and title.strip()) else os.path.splitext(file.name)[0]
+                        
+                        video = VideoBase(
+                            titulo=final_title,
+                            categoria=categoria,
+                            arquivo_video=file
+                        )
+                        video.save()
+                    
+                    self.message_user(request, f"{len(files)} vídeos foram adicionados com sucesso à categoria '{categoria.nome}'.")
+                    return redirect(reverse('admin:core_videobase_changelist'))
+                
+                except CategoriaVideo.DoesNotExist:
+                    self.message_user(request, "Erro: A categoria selecionada não foi encontrada.", level='error')
+                except Exception as e:
+                    self.message_user(request, f"Ocorreu um erro inesperado: {e}", level='error')
+
+        return super().add_view(request, form_url, extra_context)
 
 @admin.register(MusicaBase)
 class MusicaBaseAdmin(admin.ModelAdmin):
