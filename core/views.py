@@ -461,100 +461,78 @@ def delete_video_file(request, video_id):
     return redirect("meus_videos")
 
 
-def processar_geracao_video(video_gerado_id, data, user, assinatura_ativa, limite_testes_config=0):
+def processar_geracao_video(video_gerado_id, data, user_id, assinatura_id, limite_testes_config=0):
     video = get_object_or_404(VideoGerado, id=video_gerado_id)
+    user = get_object_or_404(Usuario, id=user_id)
+    assinatura_ativa = None
+    if assinatura_id:
+        assinatura_ativa = get_object_or_404(Assinatura, id=assinatura_id)
 
-    caminho_video_input = None
-    caminho_narrador_input = None
-    caminho_legenda_ass = None
-    caminho_imagem_texto = None
-    caminho_tela_final = None
-    caminho_musica_input = None
-    caminho_video_temp = None
-    caminho_tela_final_video = None
-    lista_concat_path = None
-    caminho_video_final_concatenado = None
+    # Inicializa os caminhos dos arquivos temporários
+    caminhos_para_limpar = []
 
     try:
         tipo_conteudo = data.get("tipo_conteudo")
-        duracao_video = data.get("duracao_segundos", 30)
+        duracao_video = data.get("duracao_segundos") or 30
 
+        caminho_narrador_input = None
         if (tipo_conteudo == "narrador" or tipo_conteudo == "vendedor") and data.get("narrador_texto"):
             caminho_narrador_input, _, duracao_audio = gerar_audio_e_tempos(
                 data["narrador_texto"],
                 data["narrador_voz"],
                 data["narrador_velocidade"],
             )
-            if duracao_audio > 0:
-                duracao_video = duracao_audio
+            if caminho_narrador_input:
+                caminhos_para_limpar.append(caminho_narrador_input)
+                if duracao_audio > 0:
+                    duracao_video = duracao_audio
 
+        caminho_legenda_ass = None
         if data.get("legenda_sincronizada") and caminho_narrador_input:
             try:
                 word_timestamps = get_word_timestamps(caminho_narrador_input)
                 if word_timestamps:
-                    cor_destaque_hex = data.get("cor_destaque_legenda", "#FFFF00")
                     caminho_legenda_ass = gerar_legenda_karaoke_ass(
-                        word_timestamps,
-                        data,
-                        data.get("cor_da_fonte", "#FFFFFF"),
-                        cor_destaque_hex,
-                        data.get("posicao_texto", "centro"),
+                        word_timestamps, data, data.get("cor_da_fonte", "#FFFFFF"), 
+                        data.get("cor_destaque_legenda", "#FFFF00"), data.get("posicao_texto", "centro")
                     )
+                    caminhos_para_limpar.append(caminho_legenda_ass)
             except Exception as e:
                 print(f"AVISO: Falha ao gerar legenda precisa: {e}")
 
+        caminho_video_input = None
         if tipo_conteudo in ["narrador", "texto"]:
-            video_base_id = data.get("video_base_id")
-            if video_base_id:
-                video_base = get_object_or_404(VideoBase, id=video_base_id)
-            else:
-                video_base = get_valid_media_from_category(VideoBase, data["categoria_video"])
-
+            video_base = get_valid_media_from_category(VideoBase, data["categoria_video"])
             if not video_base:
                 raise Exception(f"Não foi possível encontrar um vídeo para a categoria '{data['categoria_video']}'.")
             caminho_video_input = download_from_cloudflare(video_base.object_key, ".mp4")
-
         elif tipo_conteudo == "vendedor":
-            video_upload = data.get("video_upload")
-            if video_upload:
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_f:
-                    for chunk in video_upload.chunks():
-                        temp_f.write(chunk)
-                    caminho_video_input = temp_f.name
+            video_upload_key = data.get("video_upload_key")
+            if video_upload_key:
+                caminho_video_input = download_from_cloudflare(video_upload_key, ".mp4")
             else:
-                raise Exception("Você precisa enviar um vídeo para o modo vendedor.")
+                raise Exception("Nenhuma 'video_upload_key' foi fornecida para o tipo de conteúdo 'vendedor'.")
+        caminhos_para_limpar.append(caminho_video_input)
 
+        caminho_imagem_texto = None
         if tipo_conteudo == "texto" and data.get("texto_overlay"):
             caminho_imagem_texto = create_text_image(
-                data["texto_overlay"],
-                data.get("cor_da_fonte", "#FFFFFF"),
-                data,
-                data.get("posicao_texto", "centro"),
+                data["texto_overlay"], data.get("cor_da_fonte", "#FFFFFF"), data, data.get("posicao_texto", "centro")
             )
+            caminhos_para_limpar.append(caminho_imagem_texto)
 
         musica_base = get_valid_media_from_category(MusicaBase, data["categoria_musica"])
         if not musica_base:
             raise Exception(f"Não foi possível encontrar uma música para a categoria '{data['categoria_musica']}'.")
         caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
-
-        if data.get("texto_tela_final"):
-            opcoes_tela_final = {
-                "texto_fonte": data.get("texto_fonte", "arial"),
-                "texto_tamanho": data.get("texto_tamanho", 80),
-                "texto_negrito": data.get("texto_negrito", False),
-                "texto_sublinhado": data.get("texto_sublinhado", False),
-            }
-            caminho_tela_final = create_text_image(data["texto_tela_final"], "#FFFFFF", opcoes_tela_final, "centro")
+        caminhos_para_limpar.append(caminho_musica_input)
 
         if not caminho_video_input or not caminho_musica_input:
             raise Exception("Erro ao obter os arquivos de mídia necessários para a geração.")
 
-        nome_base = f"video_{user.id}_{random.randint(10000, 99999)}"
-        nome_arquivo_final = f"{nome_base}.mp4"
-        object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
-        
         with tempfile.NamedTemporaryFile(delete=False, suffix="_temp.mp4") as temp_f:
             caminho_video_temp = temp_f.name
+        caminhos_para_limpar.append(caminho_video_temp)
 
         cmd = ["ffmpeg", "-y"]
         if tipo_conteudo == "narrador" or data.get("loop_video", False):
@@ -563,12 +541,9 @@ def processar_geracao_video(video_gerado_id, data, user, assinatura_ativa, limit
             cmd.extend(["-i", caminho_video_input])
 
         inputs_adicionais = [caminho_musica_input]
-        if caminho_imagem_texto:
-            inputs_adicionais.insert(0, caminho_imagem_texto)
-        if caminho_narrador_input:
-            inputs_adicionais.append(caminho_narrador_input)
-        for f in inputs_adicionais:
-            cmd.extend(["-i", f])
+        if caminho_imagem_texto: inputs_adicionais.insert(0, caminho_imagem_texto)
+        if caminho_narrador_input: inputs_adicionais.append(caminho_narrador_input)
+        for f in inputs_adicionais: cmd.extend(["-i", f])
 
         video_chain_parts = []
         current_stream = "[0:v]"
@@ -583,7 +558,7 @@ def processar_geracao_video(video_gerado_id, data, user, assinatura_ativa, limit
 
         if not assinatura_ativa:
             caminho_fonte_marca_dagua_ffmpeg = os.path.join(settings.BASE_DIR, "core", "static", "fonts", "AlfaSlabOne-Regular.ttf").replace("\\", "/").replace(":", "\\:")
-            video_chain_parts.append(f"{current_stream}drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20:shadowx=2:shadowy=2:shadowcolor=black@0.5[v_watermarked]")
+            video_chain_parts.append(f"{current_stream}drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20[v_watermarked]")
             current_stream = "[v_watermarked]"
 
         if caminho_imagem_texto:
@@ -603,6 +578,19 @@ def processar_geracao_video(video_gerado_id, data, user, assinatura_ativa, limit
         else:
             audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]"
 
+        cmd.extend(["-filter_complex", f"{video_chain};{audio_chain}", "-map", final_video_stream, "-map", "[aout]"])
+        cmd.extend(["-c:v", "libx264", "-preset", "fast", "-crf", "23", "-r", "30", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-t", str(duracao_video), caminho_video_temp])
+
+        subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+        object_key_r2 = f"videos_gerados/video_{user.id}_{random.randint(10000, 99999)}.mp4"
+        if not upload_to_r2(caminho_video_temp, object_key_r2):
+            raise Exception("Falha no upload do vídeo final para o Cloudflare R2.")
+
+        video.status = "CONCLUIDO"
+        video.arquivo_final = object_key_r2
+        video.save()
+
     except Exception as e:
         video.status = "ERRO"
         video.save()
@@ -612,19 +600,6 @@ def processar_geracao_video(video_gerado_id, data, user, assinatura_ativa, limit
             print(f"Erro FFMPEG: {e.stderr.decode('utf-8') if e.stderr else 'N/A'}")
 
     finally:
-        # Lista de todos os caminhos de arquivos temporários que podem ter sido criados
-        caminhos_para_limpar = [
-            caminho_video_input,
-            caminho_narrador_input,
-            caminho_legenda_ass,
-            caminho_imagem_texto,
-            caminho_tela_final,
-            caminho_musica_input,
-            caminho_video_temp,
-            caminho_tela_final_video,
-            lista_concat_path,
-            caminho_video_final_concatenado,
-        ]
         print("--- Iniciando limpeza de arquivos temporários ---")
         for caminho in caminhos_para_limpar:
             if caminho and os.path.exists(caminho):
@@ -2019,6 +1994,105 @@ def processar_corte_youtube(video_gerado_id, youtube_url, segment, musica_base_i
                 os.remove(path)
 
 
+
+# ==============================================================================
+# ASYNCHRONOUS TASK HANDLING (Cloud Tasks)
+# ==============================================================================
+
+@csrf_exempt
+@require_POST
+def process_video_task(request):
+    """
+    Worker view that receives tasks from Google Cloud Tasks and executes them.
+    This endpoint is intended to be called only by Cloud Tasks.
+    """
+    is_cloud_task_request = "X-Cloudtasks-Queuename" in request.headers
+    if not is_cloud_task_request and not settings.DEBUG:
+        print("WARNING: Unauthorized attempt to access process_video_task endpoint.")
+        return HttpResponse("Unauthorized", status=403)
+
+    try:
+        payload = json.loads(request.body.decode())
+        task_name = payload.get("task_name")
+        args = payload.get("args", [])
+        kwargs = payload.get("kwargs", {})
+
+        print(f"INFO: Received task '{task_name}'")
+
+        if task_name == "processar_geracao_video":
+            processar_geracao_video(*args, **kwargs)
+        elif task_name == "processar_corte_youtube":
+            processar_corte_youtube(*args, **kwargs)
+        else:
+            print(f"ERROR: Unknown task name '{task_name}'")
+            return HttpResponse(f"Unknown task: {task_name}", status=400)
+
+        return HttpResponse("Task processed successfully.", status=200)
+
+    except json.JSONDecodeError:
+        print("ERROR: Invalid JSON in task payload.")
+        return HttpResponse("Invalid JSON payload", status=400)
+    except Exception as e:
+        print(f"ERROR: Unhandled exception processing task: {e}")
+        return HttpResponse(f"Error processing task: {e}", status=500)
+
+def enqueue_video_task(task_name, *args, **kwargs):
+    """
+    Enqueues a video processing task to Google Cloud Tasks or runs it locally.
+    """
+    if settings.DEBUG:
+        print(f"DEBUG MODE: Running task '{task_name}' in a background thread.")
+        import threading
+        
+        target_func = None
+        if task_name == "processar_geracao_video":
+            target_func = processar_geracao_video
+        elif task_name == "processar_corte_youtube":
+            target_func = processar_corte_youtube
+
+        if target_func:
+            thread = threading.Thread(target=target_func, args=args, kwargs=kwargs)
+            thread.start()
+        else:
+            print(f"DEBUG ERROR: Unknown task name '{task_name}'")
+        return
+
+    if not tasks_v2:
+        raise ImportError("Google Cloud Tasks library is not installed. Cannot enqueue tasks.")
+
+    try:
+        client = tasks_v2.CloudTasksClient()
+
+        project = settings.GOOGLE_CLOUD_PROJECT
+        queue = settings.GOOGLE_CLOUD_TASKS_QUEUE
+        location = settings.GOOGLE_CLOUD_REGION
+        url = settings.CLOUD_RUN_URL + reverse('process_video_task')
+
+        parent = client.queue_path(project, location, queue)
+
+        payload = {
+            "task_name": task_name,
+            "args": args,
+            "kwargs": kwargs,
+        }
+
+        task = {
+            "http_request": {
+                "http_method": tasks_v2.HttpMethod.POST,
+                "url": url,
+                "headers": {"Content-type": "application/json"},
+                "body": json.dumps(payload).encode(),
+            },
+            'dispatch_deadline': duration_pb2.Duration(seconds=3600)
+        }
+
+        client.create_task(parent=parent, task=task)
+        print(f"INFO: Task '{task_name}' enqueued successfully to queue '{queue}'.")
+
+    except Exception as e:
+        print(f"FATAL: Could not enqueue task. Error: {e}")
+        raise
+
 @login_required
 def pagina_gerador(request):
     """
@@ -2040,10 +2114,23 @@ def pagina_gerador(request):
         if form.is_valid():
             data = form.cleaned_data
             
+            video_upload = data.get("video_upload")
+            if video_upload:
+                try:
+                    temp_object_key = f"uploaded_videos_temp/{request.user.id}_{uuid.uuid4().hex}.mp4"
+                    upload_fileobj_to_r2(video_upload, temp_object_key)
+                    data['video_upload_key'] = temp_object_key
+                except Exception as e:
+                    messages.error(request, f"Falha ao fazer upload do vídeo: {e}")
+                    return redirect('pagina_gerador')
+            
+            if 'video_upload' in data:
+                del data['video_upload']
+
             video_gerado = VideoGerado.objects.create(
                 usuario=request.user,
                 status='PROCESSANDO',
-                duracao_segundos=data.get('duracao_segundos', 30),
+                duracao_segundos=data.get('duracao_segundos') or 30,
                 loop=data.get('loop_video', False),
                 plano_de_fundo=data.get('plano_de_fundo', 'normal'),
                 volume_musica=data.get('volume_musica', 70),
@@ -2062,16 +2149,22 @@ def pagina_gerador(request):
                 narrador_tom=data.get('narrador_tom', 0.0)
             )
 
-            import threading
-            
-            thread = threading.Thread(
-                target=processar_geracao_video,
-                args=(video_gerado.id, data, request.user, assinatura)
-            )
-            thread.start()
-            
-            messages.success(request, "Seu vídeo começou a ser processado! Ele aparecerá em 'Meus Vídeos' em breve.")
-            return redirect('meus_videos')
+            try:
+                enqueue_video_task(
+                    "processar_geracao_video",
+                    video_gerado.id,
+                    data,
+                    request.user.id,
+                    assinatura.id if assinatura else None
+                )
+                messages.success(request, "Seu vídeo começou a ser processado! Ele aparecerá em 'Meus Vídeos' em breve.")
+                return redirect('meus_videos')
+            except Exception as e:
+                video_gerado.status = 'ERRO'
+                video_gerado.save()
+                print(f"ERROR: Failed to enqueue video generation task. {e}")
+                messages.error(request, "Ocorreu um erro ao enviar seu vídeo para processamento. Por favor, tente novamente.")
+                return redirect('pagina_gerador')
         else:
             messages.error(request, "Houve um erro no formulário. Por favor, verifique os dados inseridos.")
     else:
@@ -2114,7 +2207,6 @@ def cortes_youtube_view(request):
                 return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
 
             try:
-                import threading
                 for segment in selected_segments:
                     video_gerado = VideoGerado.objects.create(
                         usuario=request.user,
@@ -2123,18 +2215,15 @@ def cortes_youtube_view(request):
                         texto_overlay=f"Início: {segment['start']}s",
                     )
 
-                    thread = threading.Thread(
-                        target=processar_corte_youtube,
-                        args=(
-                            video_gerado.id,
-                            youtube_url,
-                            segment,
-                            musica_base.id,  # Passando o ID da música
-                            data['volume_musica'],
-                            data['gerar_legendas']
-                        )
+                    enqueue_video_task(
+                        "processar_corte_youtube",
+                        video_gerado.id,
+                        youtube_url,
+                        segment,
+                        musica_base.id,
+                        data['volume_musica'],
+                        data['gerar_legendas']
                     )
-                    thread.start()
 
                 messages.success(request, f"{len(selected_segments)} cortes foram enviados para processamento. Eles aparecerão em 'Meus Vídeos' em breve.")
                 return redirect('meus_videos')

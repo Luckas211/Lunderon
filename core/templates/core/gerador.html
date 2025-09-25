@@ -411,10 +411,53 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     function toggleFieldsByContentType(selectedType) {
-        form.querySelector('[data-content-type="texto"]').style.display = selectedType === 'texto' ? 'block' : 'none';
-        form.querySelector('[data-content-type="narrador,vendedor"]').style.display = (selectedType === 'narrador' || selectedType === 'vendedor') ? 'block' : 'none';
-        form.querySelector('#field-video-upload').style.display = selectedType === 'vendedor' ? 'block' : 'none';
-        form.querySelector('#field-categoria-video').style.display = selectedType === 'vendedor' ? 'none' : 'block';
+        const fieldGroups = {
+            texto: form.querySelector('[data-content-type="texto"]'),
+            narrador: form.querySelector('[data-content-type="narrador,vendedor"]'),
+            upload: form.querySelector('#field-video-upload'),
+            categoria: form.querySelector('#field-categoria-video')
+        };
+
+        const inputs = {
+            textoOverlay: form.querySelector('[name="texto_overlay"]'),
+            narradorTexto: form.querySelector('[name="narrador_texto"]'),
+            videoUpload: form.querySelector('[name="video_upload"]'),
+            categoriaVideo: form.querySelector('select[name="categoria_video"]'),
+            duracaoSegundos: form.querySelector('[name="duracao_segundos"]')
+        };
+
+        // Reset all: hide field groups and disable inputs
+        for (const key in fieldGroups) {
+            if (fieldGroups[key]) fieldGroups[key].style.display = 'none';
+        }
+        for (const key in inputs) {
+            if (inputs[key]) inputs[key].disabled = true;
+        }
+
+        // Enable based on selection
+        if (selectedType === 'texto') {
+            fieldGroups.texto.style.display = 'block';
+            fieldGroups.categoria.style.display = 'block';
+            inputs.textoOverlay.disabled = false;
+            inputs.duracaoSegundos.disabled = false;
+            inputs.categoriaVideo.disabled = false;
+            if(inputs.narradorTexto) inputs.narradorTexto.value = ''; // Clear other text fields
+
+        } else if (selectedType === 'narrador') {
+            fieldGroups.narrador.style.display = 'block';
+            fieldGroups.categoria.style.display = 'block';
+            inputs.narradorTexto.disabled = false;
+            inputs.categoriaVideo.disabled = false;
+            if(inputs.textoOverlay) inputs.textoOverlay.value = '';
+
+        } else if (selectedType === 'vendedor') {
+            fieldGroups.narrador.style.display = 'block';
+            fieldGroups.upload.style.display = 'block';
+            inputs.narradorTexto.disabled = false;
+            inputs.videoUpload.disabled = false;
+            if(inputs.textoOverlay) inputs.textoOverlay.value = '';
+            if(inputs.categoriaVideo) inputs.categoriaVideo.value = '';
+        }
     }
 
     inputs.tipoConteudo.forEach(radio => radio.addEventListener('change', (e) => {

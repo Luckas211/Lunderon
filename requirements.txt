@@ -9,3 +9,6 @@ scipy==1.11.1
 soundfile==0.12.1
 ffmpeg-python==0.2.0
 faster-whisper==0.10.0
+google-cloud-tasks
+google-api-python-client
+google-auth-httplib2

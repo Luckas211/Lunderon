@@ -47,6 +47,9 @@ urlpatterns = [
     path('api/videos-por-categoria/<int:categoria_id>/', views.videos_por_categoria, name='videos_por_categoria'),
     path('api/preview-video/<int:categoria_id>/', views.preview_video_base, name='preview_video_base'), # NOVA ROTA
 
+    # Rota para o worker do Cloud Tasks
+    path('tasks/process-video/', views.process_video_task, name='process_video_task'),
+
     # Rotas de Pagamento
     path('criar-checkout/<int:plano_id>/', views.criar_checkout_session, name='criar_checkout_session'),
 
