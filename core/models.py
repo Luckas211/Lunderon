@@ -208,7 +208,7 @@ class VideoGerado(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PROCESSANDO")
     arquivo_final = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho do vídeo gerado (local ou R2)")
     criado_em = models.DateTimeField(auto_now_add=True)
-    duracao_segundos = models.IntegerField(default=30)
+    duracao_segundos = models.IntegerField(blank=True, null=True)
     loop = models.BooleanField(default=False)
     plano_de_fundo = models.CharField(max_length=10, default="normal")
     volume_musica = models.IntegerField(default=70)

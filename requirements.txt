@@ -12,3 +12,5 @@ faster-whisper==0.10.0
 google-cloud-tasks
 google-api-python-client
 google-auth-httplib2
+gunicorn
+python-decouple
