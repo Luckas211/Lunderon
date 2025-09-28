@@ -14,3 +14,15 @@ class MediaStorage(S3Boto3Storage):
         if "?" in url:
             url = url.split("?")[0]
         return url
+
+class StaticStorage(S3Boto3Storage):
+    location = "static"
+    custom_domain = settings.CLOUDFLARE_R2_PUBLIC_URL
+
+    def url(self, name):
+        # Retorna a URL pública sem assinatura
+        url = super().url(name)
+        # Remove parâmetros de assinatura se existirem
+        if "?" in url:
+            url = url.split("?")[0]
+        return url

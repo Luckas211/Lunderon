@@ -16,9 +16,18 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # --- Configurações de Segurança ---
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-default-key-for-dev')
-DEBUG = env.bool('DEBUG', default=True)
+# DEBUG é False por padrão. Ative com DEBUG=True no seu .env para desenvolvimento.
+DEBUG = env.bool('DEBUG', default=False)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['.ngrok-free.app', 'localhost', '127.0.0.1', '35.198.0.107'])
+# Em produção, o host é configurado via CLOUD_RUN_URL.
+# Em desenvolvimento, 'localhost' e '127.0.0.1' são permitidos.
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
+SERVICE_URL = env('CLOUD_RUN_URL', default=None)
+if SERVICE_URL:
+    from urllib.parse import urlparse
+    hostname = urlparse(SERVICE_URL).hostname
+    if hostname:
+        ALLOWED_HOSTS.append(hostname)
 
 
 # --- Aplicações e Middlewares ---
@@ -101,8 +110,8 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
-# Configuração para servir arquivos estáticos em produção com WhiteNoise
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# Usa o backend personalizado para servir arquivos estáticos do R2 em produção.
+STATICFILES_STORAGE = 'core.storage.StaticStorage'
 
 # --- Configurações de Autenticação ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

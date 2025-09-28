@@ -202,19 +202,30 @@ document.addEventListener('DOMContentLoaded', function() {
                     const startTime = new Date(segment.start * 1000).toISOString().substr(14, 5);
                     const endTime = new Date(segment.end * 1000).toISOString().substr(14, 5);
                     
+                    const DURATION_LIMIT = 180; // 3 minutos
+                    const isOverLimit = segment.duration > DURATION_LIMIT;
+
                     const segmentElement = document.createElement('div');
                     segmentElement.className = 'segment-item';
-                    
-                    // 4. Estrutura do item da lista atualizada com o botão de prévia
+                    if (isOverLimit) {
+                        segmentElement.classList.add('disabled');
+                    }
+
+                    let warningMessage = '';
+                    if (isOverLimit) {
+                        warningMessage = `<small class="text-danger d-block">Duração excede 3 min.</small>`;
+                    }
+
                     segmentElement.innerHTML = `
                         <label class="segment-checkbox">
-                           <input class="form-check-input" type="checkbox" value='${JSON.stringify(segment)}' id="segment-${index}" checked>
+                           <input class="form-check-input" type="checkbox" value='${JSON.stringify(segment)}' id="segment-${index}" ${isOverLimit ? 'disabled' : 'checked'}>
                         </label>
                         <div class="segment-info">
                             <strong>Corte ${index + 1}</strong>
                             <span>${startTime} - ${endTime}</span>
+                            ${warningMessage}
                         </div>
-                        <span class="segment-duration">${Math.round(segment.duration)}s</span>
+                        <span class="segment-duration ${isOverLimit ? 'text-danger' : ''}">${Math.round(segment.duration)}s</span>
                         <button type="button" class="btn-preview" data-start="${segment.start}" data-end="${segment.end}" title="Assistir prévia">
                             <i class="fas fa-play"></i>
                         </button>
@@ -305,3 +316,21 @@ document.addEventListener('DOMContentLoaded', function() {
 </style>
 
 {% endblock %}
+<style>
+    .segment-item.disabled {
+        opacity: 0.6;
+        background-color: #f8f9fa;
+        border-left: 3px solid #dc3545;
+        padding-left: 10px;
+    }
+    .segment-item.disabled .segment-info strong {
+        text-decoration: line-through;
+    }
+    .text-danger {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .d-block {
+        display: block;
+    }
+</style>

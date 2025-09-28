@@ -16,11 +16,9 @@ VOZES_KOKORO = [
 
 # Opções de velocidade para a narração
 VELOCIDADE_NARRACAO = [
-    (80, 'Lenta (80%)'),
-    (90, 'Um pouco lenta (90%)'),
-    (100, 'Normal (100%)'),
-    (110, 'Um pouco rápida (110%)'),
-    (120, 'Rápida (120%)'),
+    ('85', 'Lenta'),
+    ('100', 'Normal'),
+    ('115', 'Rápida'),
 ]
 
 # --- CORREÇÃO APLICADA AQUI ---
@@ -257,9 +255,10 @@ class GeradorForm(forms.Form):
     )
     narrador_velocidade = forms.ChoiceField(
         choices=VELOCIDADE_NARRACAO,
-        initial=100,
+        initial='100',
         required=False,
-        label="Velocidade da Narração"
+        label="Velocidade da Narração",
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
 
     # 4. MÍDIA DE FUNDO E DURAÇÃO

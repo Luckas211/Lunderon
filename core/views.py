@@ -2219,7 +2219,41 @@ def pagina_gerador(request):
         form = GeradorForm(request.POST, request.FILES)
         if form.is_valid():
             data = form.cleaned_data
-            
+
+            # --- INÍCIO DA VALIDAÇÃO DE LIMITE DE CARACTERES ---
+            narrador_texto = data.get("narrador_texto", "")
+            if narrador_texto:  # Só valida se houver texto de narração
+                # O valor vem como string do formulário, ex: '85', '100', '115'
+                velocidade_str = data.get("narrador_velocidade", "100")
+                
+                # Converte para int para a lógica de comparação e para passar para a função de áudio
+                try:
+                    velocidade = int(velocidade_str)
+                except (ValueError, TypeError):
+                    velocidade = 100 # Fallback seguro
+
+                # Define os limites de caracteres com base na velocidade
+                if velocidade <= 85:  # Lenta
+                    limite_chars = 2000
+                    nome_velocidade = "lenta"
+                elif velocidade <= 100:  # Normal
+                    limite_chars = 2600
+                    nome_velocidade = "normal"
+                else:  # Rápida (maior que 100)
+                    limite_chars = 3200
+                    nome_velocidade = "rápida"
+
+                if len(narrador_texto) > limite_chars:
+                    messages.error(request, f"O texto da narração excedeu o limite de {limite_chars} caracteres para a velocidade {nome_velocidade}. Por favor, reduza o texto.")
+                    # Re-renderiza a página com os dados do formulário e a mensagem de erro
+                    context = {
+                        'form': form,
+                        'videos_restantes': limite_videos - videos_criados,
+                        'limite_videos_mes': limite_videos,
+                    }
+                    return render(request, 'core/gerador.html', context)
+            # --- FIM DA VALIDAÇÃO ---
+
             video_upload = data.get("video_upload")
             if video_upload:
                 try:
@@ -2302,6 +2336,15 @@ def cortes_youtube_view(request):
             data = form.cleaned_data
             youtube_url = data['youtube_url']
             selected_segments = json.loads(data['segments'])
+
+            # --- INÍCIO DA VALIDAÇÃO DE DURAÇÃO DO CORTE ---
+            for segment in selected_segments:
+                if segment.get('duration', 0) > 180:
+                    messages.error(request, f"O corte que começa em {segment['start']:.0f}s tem duração maior que 3 minutos e não pode ser processado. Por favor, desmarque-o e tente novamente.")
+                    # Recarrega a página mantendo o estado do formulário
+                    form = CortesYouTubeForm(initial=data)
+                    return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': (limite_videos_mes - videos_criados) if videos_criados is not None and limite_videos_mes is not None else 'Ilimitado'})
+            # --- FIM DA VALIDAÇÃO ---
             
             if limite_videos_mes is not None and (videos_criados + len(selected_segments)) > limite_videos_mes:
                 messages.error(request, f"A criação de {len(selected_segments)} cortes excederia seu limite mensal de {limite_videos_mes} vídeos.")

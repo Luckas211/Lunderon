@@ -83,7 +83,10 @@
                             <div class="form-field" id="field-narrador-texto">{{ form.narrador_texto.label_tag }} {{ form.narrador_texto }}</div>
                             <div class="text-counter-wrapper">
                                 <div class="estimativa-narracao"><i class="fas fa-clock"></i> Digite para ver a estimativa</div>
-                                <div class="text-counter">0/1500</div>
+                                <div class="text-counter" id="char-counter-container">
+                                    <span id="current-chars">0</span> / <span id="char-limit">2600</span>
+                                    <small id="char-limit-info" class="d-block">(Limite para velocidade Normal)</small>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -495,9 +498,44 @@ document.addEventListener('DOMContentLoaded', function() {
     const counterElement = form.querySelector('.text-counter');
     const uploadTextLabel = form.querySelector('#upload-text-label');
 
+    // --- INÍCIO DA LÓGICA DO CONTADOR DE CARACTERES DINÂMICO ---
+    const charCountContainer = document.getElementById('char-counter-container');
+    const currentCharSpan = document.getElementById('current-chars');
+    const charLimitSpan = document.getElementById('char-limit');
+    const submitButton = form.querySelector('button[type="submit"]');
+
+    function updateCharCounter() {
+        const texto = textoNarracao.value;
+        const velocidade = parseInt(selectVelocidade.value, 10) || 100;
+        let limite_chars;
+
+        if (velocidade <= 85) { // Lenta
+            limite_chars = 2000;
+        } else if (velocidade <= 100) { // Normal
+            limite_chars = 2600;
+        } else { // Rápida
+            limite_chars = 3200;
+        }
+
+        currentCharSpan.textContent = texto.length;
+        charLimitSpan.textContent = limite_chars;
+
+        if (texto.length > limite_chars) {
+            charCountContainer.classList.add('limit-exceeded');
+            submitButton.disabled = true;
+        } else {
+            charCountContainer.classList.remove('limit-exceeded');
+            submitButton.disabled = false;
+        }
+    }
+
+    textoNarracao.addEventListener('input', updateCharCounter);
+    selectVelocidade.addEventListener('change', updateCharCounter);
+    // --- FIM DA LÓGICA DO CONTADOR ---
+
     const calcularEstimativa = async () => {
         const texto = textoNarracao.value;
-        counterElement.textContent = `${texto.length}/1500`;
+        counterElement.textContent = `${texto.length}/2600`;
         if (!texto.trim()) {
             estimativaElement.innerHTML = '<i class="fas fa-clock"></i> Digite para ver a estimativa';
             return;
