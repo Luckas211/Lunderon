@@ -24,4 +24,4 @@ RUN python manage.py collectstatic --noinput
 # 8. Comando para iniciar seu servidor web de produção
 #    O Cloud Run define a variável de ambiente $PORT, que usamos aqui.
 #    --timeout 0 desativa o timeout do worker do gunicorn, deixando o Cloud Run gerenciar o tempo limite da requisição
-CMD exec gunicorn gerador_videos.wsgi:application --bind "0.0.0.0:$PORT" --workers 1 --threads 8 --timeout 0
+CMD exec gunicorn gerador_videos.wsgi:application --bind "0.0.0.0:$PORT" --threads 8 --timeout 3600

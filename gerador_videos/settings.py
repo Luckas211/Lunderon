@@ -147,5 +147,13 @@ AWS_QUERYSTRING_AUTH = False
 # URL pública para acesso aos arquivos
 CLOUDFLARE_R2_PUBLIC_URL = env('CLOUDFLARE_R2_PUBLIC_URL')
 
+# ================================================================
+# CONFIGURAÇÕES DO GOOGLE CLOUD (PARA TASKS E DEPLOY)
+# ================================================================
+GOOGLE_CLOUD_PROJECT = env('GOOGLE_CLOUD_PROJECT', default='')
+GOOGLE_CLOUD_TASKS_QUEUE = env('GOOGLE_CLOUD_TASKS_QUEUE', default='')
+GOOGLE_CLOUD_REGION = env('GOOGLE_CLOUD_REGION', default='')
+CLOUD_RUN_URL = env('CLOUD_RUN_URL', default='')
+
 # Usar R2 para arquivos de mídia
 DEFAULT_FILE_STORAGE = 'core.storage.MediaStorage'
