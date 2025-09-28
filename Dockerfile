@@ -18,7 +18,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 6. Copie o resto do seu código para o contêiner
 COPY . .
 
-# 7. Comando para iniciar seu servidor web de produção
-#    --workers e --threads podem ser ajustados com base nos recursos da sua instância do Cloud Run
+# 7. Colete os arquivos estáticos para o WhiteNoise servir
+RUN python manage.py collectstatic --noinput
+
+# 8. Comando para iniciar seu servidor web de produção
+#    O Cloud Run define a variável de ambiente $PORT, que usamos aqui.
 #    --timeout 0 desativa o timeout do worker do gunicorn, deixando o Cloud Run gerenciar o tempo limite da requisição
-CMD ["gunicorn", "gerador_videos.wsgi:application", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--timeout", "0"]
+CMD exec gunicorn gerador_videos.wsgi:application --bind "0.0.0.0:$PORT" --workers 1 --threads 8 --timeout 0

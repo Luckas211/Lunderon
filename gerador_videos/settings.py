@@ -18,13 +18,7 @@ environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-default-key-for-dev')
 DEBUG = env.bool('DEBUG', default=True)
 
-ALLOWED_HOSTS = [
-    '2404696ba4d1.ngrok-free.app',
-    '35.198.0.107',
-    '.ngrok-free.app', # O ponto no início permite qualquer subdomínio do ngrok
-    'localhost',
-    '127.0.0.1',
-]
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['.ngrok-free.app', 'localhost', '127.0.0.1', '35.198.0.107'])
 
 
 # --- Aplicações e Middlewares ---
@@ -42,6 +36,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -103,8 +98,11 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, 'core', 'static'),
 ]
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+# Configuração para servir arquivos estáticos em produção com WhiteNoise
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # --- Configurações de Autenticação ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -138,16 +136,16 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 
 # Configurações do Cloudflare R2
-AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID', default='c0f6776951242e8c3f2bef3c60c0eed6')
-AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY', default='d0ce1c3ff104bdcbeb91e9123663998c7501753a9dda5c691fb002ebf0ac6b88')
-AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME', default='lunderon-media')
-AWS_S3_ENDPOINT_URL = env('AWS_S3_ENDPOINT_URL', default='https://3fddc59e590406a84dfd3e372ba35d96.r2.cloudflarestorage.com')
-AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME', default='auto')
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_ENDPOINT_URL = env('AWS_S3_ENDPOINT_URL')
+AWS_S3_REGION_NAME = env('AWS_S3_REGION_NAME', default='auto') # 'auto' é um valor seguro para manter como default
 AWS_DEFAULT_ACL = 'public-read'
 AWS_QUERYSTRING_AUTH = False
 
 # URL pública para acesso aos arquivos
-CLOUDFLARE_R2_PUBLIC_URL = 'https://pub-3dda7bdab5c943c586466db6577c00e1.r2.dev'
+CLOUDFLARE_R2_PUBLIC_URL = env('CLOUDFLARE_R2_PUBLIC_URL')
 
 # Usar R2 para arquivos de mídia
 DEFAULT_FILE_STORAGE = 'core.storage.MediaStorage'

@@ -199,13 +199,8 @@ class MusicaBase(BaseMedia):
 # VÍDEOS GERADOS (SEM ALTERAÇÕES NECESSÁRIAS)
 # ================================================================
 class VideoGerado(models.Model):
-    STATUS_CHOICES = [
-        ("PROCESSANDO", "Processando"),
-        ("CONCLUIDO", "Concluído"),
-        ("ERRO", "Erro"),
-    ]
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PROCESSANDO")
+    status = models.CharField(max_length=50, default="PROCESSANDO")
     arquivo_final = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho do vídeo gerado (local ou R2)")
     criado_em = models.DateTimeField(auto_now_add=True)
     duracao_segundos = models.IntegerField(blank=True, null=True)
@@ -228,6 +223,8 @@ class VideoGerado(models.Model):
     caminho_audio_narrador = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho do áudio de narração gerado")
     caminho_legenda_ass = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho da legenda ASS gerada")
     caminho_imagem_texto = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho da imagem de texto gerada")
+    mensagem_erro = models.TextField(blank=True, null=True)
+    notificacao_vista = models.BooleanField(default=True)
 
     def __str__(self):
         return f"Vídeo de {self.usuario.username} - {self.status}"
