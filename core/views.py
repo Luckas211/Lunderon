@@ -43,14 +43,6 @@ from django.http import HttpResponse
 from django.conf import settings
 from django.contrib import messages
 from PIL import Image, ImageDraw, ImageFont
-from .forms import (
-    GeradorForm,
-    CadastroUsuarioForm,
-    AdminUsuarioForm,
-    CortesYouTubeForm,
-    ConfiguracaoForm,
-    EditarAssinaturaForm,
-)
 
 from .models import (
     Assinatura,
@@ -963,6 +955,7 @@ def verificar_email(request, token):
         return redirect('login')
 
 def cadastre_se(request):
+    from .forms import CadastroUsuarioForm
     if request.method == "POST":
         form = CadastroUsuarioForm(request.POST)
         if form.is_valid():
@@ -1423,6 +1416,7 @@ def cancelar_assinatura(request, id):
 @login_required
 @user_passes_test(is_admin)
 def editar_assinatura(request, id):
+    from .forms import EditarAssinaturaForm
     assinatura = get_object_or_404(Assinatura, id=id)
     if request.method == "POST":
         form = EditarAssinaturaForm(request.POST, instance=assinatura)
@@ -1490,6 +1484,7 @@ def admin_usuarios(request):
 @login_required
 @user_passes_test(is_admin)
 def editar_usuario(request, user_id):
+    from .forms import AdminUsuarioForm
     user = get_object_or_404(Usuario, id=user_id)
     assinatura = (
         Assinatura.objects.filter(usuario=user).order_by("-data_inicio").first()
@@ -1593,6 +1588,7 @@ def admin_configuracoes(request):
 @login_required
 @user_passes_test(is_admin)
 def adicionar_configuracao(request):
+    from .forms import ConfiguracaoForm
     if request.method == "POST":
         form = ConfiguracaoForm(request.POST)
         if form.is_valid():
@@ -1608,6 +1604,7 @@ def adicionar_configuracao(request):
 @login_required
 @user_passes_test(is_admin)
 def editar_configuracao(request, id):
+    from .forms import ConfiguracaoForm
     config = get_object_or_404(Configuracao, id=id)
     if request.method == "POST":
         form = ConfiguracaoForm(request.POST, instance=config)
@@ -2201,6 +2198,7 @@ def enqueue_video_task(task_name, *args, **kwargs):
 
 @login_required
 def pagina_gerador(request):
+    from .forms import GeradorForm
     """
     Página para gerar um novo vídeo.
     Refatorado para usar processamento em segundo plano e evitar timeouts.
@@ -2320,6 +2318,7 @@ def pagina_gerador(request):
 
 @login_required
 def cortes_youtube_view(request):
+    from .forms import CortesYouTubeForm
     if not request.user.plano_ativo:
         messages.warning(request, "Esta funcionalidade está disponível apenas para assinantes.")
         return redirect("planos")

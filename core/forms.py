@@ -253,9 +253,10 @@ class GeradorForm(forms.Form):
         required=False,
         label="Voz do Narrador"
     )
-    narrador_velocidade = forms.ChoiceField(
+    narrador_velocidade = forms.TypedChoiceField(
         choices=VELOCIDADE_NARRACAO,
-        initial='100',
+        coerce=int,
+        initial=100,
         required=False,
         label="Velocidade da Narração",
         widget=forms.Select(attrs={'class': 'form-select'})

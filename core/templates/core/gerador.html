@@ -32,6 +32,7 @@
             {% csrf_token %}
             {{ form.video_base_id }}
             <div class="video-form-wrapper">
+                <div id="form-notifications" style="margin-bottom: 1rem;"></div>
                 {% if form.non_field_errors %}
                     <div class="alert alert-danger">
                     {% for error in form.non_field_errors %}
@@ -81,11 +82,25 @@
                         <div class="secao-conteudo" data-content-type="narrador,vendedor">
                             <div class="step-header"><h3><i class="fas fa-comment-dots"></i> Conteúdo da Narração</h3></div>
                             <div class="form-field" id="field-narrador-texto">{{ form.narrador_texto.label_tag }} {{ form.narrador_texto }}</div>
-                            <div class="text-counter-wrapper">
-                                <div class="estimativa-narracao"><i class="fas fa-clock"></i> Digite para ver a estimativa</div>
-                                <div class="text-counter" id="char-counter-container">
-                                    <span id="current-chars">0</span> / <span id="char-limit">2600</span>
-                                    <small id="char-limit-info" class="d-block">(Limite para velocidade Normal)</small>
+                            <div id="narration-info-box" class="info-box">
+                                {% with initial_speed=form.narrador_velocidade.initial|default:'100'|add:0 %}
+                                <div class="info-box-line">
+                                    <i class="fas fa-keyboard"></i>
+                                    <span>Contagem: <strong id="current-chars">0</strong> / 
+                                    <strong id="char-limit">
+                                        {% if initial_speed <= 85 %}2000{% elif initial_speed <= 100 %}2600{% else %}3200{% endif %}
+                                    </strong> caracteres</span>
+                                </div>
+                                <div class="info-box-line">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                    <span id="speed-info">Velocidade: <strong id="speed-name">
+                                        {% if initial_speed <= 85 %}Lenta{% elif initial_speed <= 100 %}Normal{% else %}Rápida{% endif %}
+                                    </strong></span>
+                                </div>
+                                {% endwith %}
+                                <div class="info-box-line">
+                                    <i class="fas fa-clock"></i>
+                                    <span id="time-estimation">Digite para ver a estimativa</span>
                                 </div>
                             </div>
                         </div>
@@ -492,55 +507,63 @@ document.addEventListener('DOMContentLoaded', function() {
         form.querySelector('button[type="submit"]').disabled = true;
     });
 
+    // --- INÍCIO DA LÓGICA DE INFORMAÇÃO DA NARRAÇÃO (Refatorado) ---
     const textoNarracao = inputs.narradorTexto;
     const selectVelocidade = form.querySelector('[name="narrador_velocidade"]');
-    const estimativaElement = form.querySelector('.estimativa-narracao');
-    const counterElement = form.querySelector('.text-counter');
-    const uploadTextLabel = form.querySelector('#upload-text-label');
-
-    // --- INÍCIO DA LÓGICA DO CONTADOR DE CARACTERES DINÂMICO ---
-    const charCountContainer = document.getElementById('char-counter-container');
-    const currentCharSpan = document.getElementById('current-chars');
-    const charLimitSpan = document.getElementById('char-limit');
     const submitButton = form.querySelector('button[type="submit"]');
 
-    function updateCharCounter() {
+    // Elementos da nova caixa de informação
+    const narrationInfoBox = document.getElementById('narration-info-box');
+    const currentCharSpan = document.getElementById('current-chars');
+    const charLimitSpan = document.getElementById('char-limit');
+    const speedInfoSpan = document.getElementById('speed-info');
+    const timeEstimationSpan = document.getElementById('time-estimation');
+
+    const updateNarrationInfo = async () => {
+        // 1. Obter valores atuais
         const texto = textoNarracao.value;
         const velocidade = parseInt(selectVelocidade.value, 10) || 100;
-        let limite_chars;
 
+        // 2. Determinar limites e nomes com base na velocidade
+        let limite_chars;
+        let nome_velocidade;
         if (velocidade <= 85) { // Lenta
             limite_chars = 2000;
+            nome_velocidade = "Lenta";
         } else if (velocidade <= 100) { // Normal
             limite_chars = 2600;
+            nome_velocidade = "Normal";
         } else { // Rápida
             limite_chars = 3200;
+            nome_velocidade = "Rápida";
         }
 
+        // 3. Atualizar a UI com os novos limites e nomes
         currentCharSpan.textContent = texto.length;
         charLimitSpan.textContent = limite_chars;
+        speedInfoSpan.innerHTML = `Velocidade: <strong>${nome_velocidade}</strong>`;
+
+        // 4. Validar limite e atualizar estilo/botão
+        const notificationDiv = document.getElementById('form-notifications');
+        let notificationHTML = '';
 
         if (texto.length > limite_chars) {
-            charCountContainer.classList.add('limit-exceeded');
+            narrationInfoBox.classList.add('limit-exceeded');
             submitButton.disabled = true;
+            notificationHTML = `<div class="alert alert-danger">Você excedeu o limite de ${limite_chars} caracteres para a velocidade ${nome_velocidade}!</div>`;
         } else {
-            charCountContainer.classList.remove('limit-exceeded');
+            narrationInfoBox.classList.remove('limit-exceeded');
             submitButton.disabled = false;
+            notificationHTML = `<div class="alert alert-info">O limite de caracteres para a velocidade ${nome_velocidade} é ${limite_chars}.</div>`;
         }
-    }
+        notificationDiv.innerHTML = notificationHTML;
 
-    textoNarracao.addEventListener('input', updateCharCounter);
-    selectVelocidade.addEventListener('change', updateCharCounter);
-    // --- FIM DA LÓGICA DO CONTADOR ---
-
-    const calcularEstimativa = async () => {
-        const texto = textoNarracao.value;
-        counterElement.textContent = `${texto.length}/2600`;
+        // 5. Calcular e exibir a estimativa de tempo (se houver texto)
         if (!texto.trim()) {
-            estimativaElement.innerHTML = '<i class="fas fa-clock"></i> Digite para ver a estimativa';
+            timeEstimationSpan.textContent = 'Digite para ver a estimativa';
             return;
         }
-        const velocidade = parseInt(selectVelocidade.value, 10) || 100;
+
         try {
             const response = await fetch("{% url 'estimativa_narracao' %}", {
                 method: 'POST',
@@ -548,11 +571,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ texto, velocidade })
             });
             const data = await response.json();
-            estimativaElement.innerHTML = `<i class="fas fa-clock"></i> Estimativa: ${data.duracao_segundos.toFixed(1)}s`;
-        } catch (error) { console.error('Erro na estimativa:', error); }
+            if (response.ok) {
+                timeEstimationSpan.textContent = `Estimativa: ${data.duracao_segundos.toFixed(1)}s`;
+            } else {
+                timeEstimationSpan.textContent = 'Erro na estimativa';
+            }
+        } catch (error) {
+            console.error('Erro na estimativa:', error);
+            timeEstimationSpan.textContent = 'Erro na estimativa';
+        }
     };
-    textoNarracao.addEventListener('input', calcularEstimativa);
-    selectVelocidade.addEventListener('change', calcularEstimativa);
+
+    // Adicionar os listeners
+    textoNarracao.addEventListener('input', updateNarrationInfo);
+    selectVelocidade.addEventListener('change', updateNarrationInfo);
 
     inputs.videoUpload.addEventListener('change', function() {
         uploadTextLabel.textContent = this.files.length > 0 ? this.files[0].name : 'Clique para escolher um vídeo';
@@ -567,6 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateAvailableSteps();
     goToStep(0);
     updatePreview();
+    updateNarrationInfo(); // Garante que a caixa de info inicie com os valores corretos
 });
 </script>
 {% endblock %}
