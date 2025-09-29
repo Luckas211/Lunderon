@@ -69,20 +69,24 @@ def _get_user_video_usage(user):
     o limite do seu plano e o objeto da assinatura.
     """
     # Usar select_related('plano') otimiza a consulta, evitando uma busca extra no banco de dados.
-    assinatura_ativa = Assinatura.objects.filter(usuario=user, status="ativo").select_related('plano').first()
-    
+    assinatura_ativa = (
+        Assinatura.objects.filter(usuario=user, status="ativo")
+        .select_related("plano")
+        .first()
+    )
+
     limite_videos_mes = 0
     if assinatura_ativa:
         limite_videos_mes = assinatura_ativa.plano.limite_videos_mensal
 
     trinta_dias_atras = timezone.now() - timedelta(days=30)
-    videos_criados = VideoGerado.objects.filter(
-        usuario=user, criado_em__gte=trinta_dias_atras
-    ).exclude(status='ERRO').count()
+    videos_criados = (
+        VideoGerado.objects.filter(usuario=user, criado_em__gte=trinta_dias_atras)
+        .exclude(status="ERRO")
+        .count()
+    )
 
     return videos_criados, limite_videos_mes, assinatura_ativa
-
-
 
 
 def get_valid_media_from_category(model, category):
@@ -131,7 +135,8 @@ VOZES_KOKORO = {
     "pt-BR-Wavenet-D": "pf_dora",
     "pt-BR-Wavenet-B": "pm_alex",
     "pt-BR-Neural2-B": "pm_santa",
- }
+}
+
 
 def gerar_audio_e_tempos(
     texto, voz, velocidade, obter_tempos=False
@@ -234,6 +239,7 @@ FONT_PATHS = {
     },
 }
 
+
 def create_text_image(texto, cor_da_fonte_hex, data, posicao="centro"):
     target_size = (1080, 1920)
     w, h = target_size
@@ -283,7 +289,7 @@ def create_text_image(texto, cor_da_fonte_hex, data, posicao="centro"):
     # Tenta converter a cor hexadecimal para uma tupla RGBA; usa branco em caso de erro.
     try:
         hex_limpo = cor_da_fonte_hex.lstrip("#")
-        r, g, b = tuple(int(hex_limpo[i:i+2], 16) for i in (0, 2, 4))
+        r, g, b = tuple(int(hex_limpo[i : i + 2], 16) for i in (0, 2, 4))
         cor_rgba = (r, g, b, 255)  # Adiciona canal alfa para opacidade total
     except (ValueError, IndexError, TypeError):
         cor_rgba = (255, 255, 255, 255)  # Fallback para branco opaco
@@ -384,17 +390,29 @@ def preview_voz(request, nome_da_voz):
 @login_required
 def meus_videos(request):
     # --- LÓGICA DE NOTIFICAÇÃO ---
-    videos_para_notificar = VideoGerado.objects.filter(usuario=request.user, notificacao_vista=False)
+    videos_para_notificar = VideoGerado.objects.filter(
+        usuario=request.user, notificacao_vista=False
+    )
     for video in videos_para_notificar:
-        if video.status == 'CONCLUIDO':
+        if video.status == "CONCLUIDO":
             # Tenta usar o texto do narrador ou o texto de overlay para dar um título mais útil
             titulo_video = video.narrador_texto or video.texto_overlay or "sem título"
-            messages.success(request, f'Boas notícias! O seu vídeo "{ (titulo_video[:30] + '...') if len(titulo_video) > 30 else titulo_video }" foi gerado com sucesso.')
-        elif video.status == 'ERRO':
+            messages.success(
+                request,
+                f'Boas notícias! O seu vídeo "{ (titulo_video[:30] + '...') if len(titulo_video) > 30 else titulo_video }" foi gerado com sucesso.',
+            )
+        elif video.status == "ERRO":
             # Limita a mensagem de erro para não poluir a tela do usuário
-            mensagem_curta = (video.mensagem_erro[:75] + '...') if video.mensagem_erro and len(video.mensagem_erro) > 75 else "Erro desconhecido"
-            messages.error(request, f'Ops! Houve um problema ao gerar seu vídeo. Detalhes: {mensagem_curta}')
-    
+            mensagem_curta = (
+                (video.mensagem_erro[:75] + "...")
+                if video.mensagem_erro and len(video.mensagem_erro) > 75
+                else "Erro desconhecido"
+            )
+            messages.error(
+                request,
+                f"Ops! Houve um problema ao gerar seu vídeo. Detalhes: {mensagem_curta}",
+            )
+
     # Marca as notificações como vistas para não serem exibidas novamente
     if videos_para_notificar.exists():
         videos_para_notificar.update(notificacao_vista=True)
@@ -404,9 +422,11 @@ def meus_videos(request):
 
     # --- LÓGICA ATUALIZADA ---
     # A lógica de busca do limite foi substituída pela função auxiliar.
-    
-    videos_criados_no_mes, limite_videos_mes, assinatura = _get_user_video_usage(request.user)
-    
+
+    videos_criados_no_mes, limite_videos_mes, assinatura = _get_user_video_usage(
+        request.user
+    )
+
     uso_percentual = 0
     if limite_videos_mes > 0:
         # Calcula a porcentagem de uso
@@ -420,9 +440,6 @@ def meus_videos(request):
         "uso_percentual": uso_percentual,
     }
     return render(request, "core/meus_videos.html", context)
-
-
-
 
 
 @login_required
@@ -465,7 +482,11 @@ def delete_video_file(request, video_id):
         messages.warning(request, "O arquivo de vídeo já havia sido excluído.")
 
     return redirect("meus_videos")
-def processar_geracao_video(video_gerado_id, data, user_id, assinatura_id, limite_testes_config=0):
+
+
+def processar_geracao_video(
+    video_gerado_id, data, user_id, assinatura_id, limite_testes_config=0
+):
     video = get_object_or_404(VideoGerado, id=video_gerado_id)
     user = get_object_or_404(Usuario, id=user_id)
     assinatura_ativa = None
@@ -480,7 +501,9 @@ def processar_geracao_video(video_gerado_id, data, user_id, assinatura_id, limit
         duracao_video = data.get("duracao_segundos") or 30
 
         caminho_narrador_input = None
-        if (tipo_conteudo == "narrador" or tipo_conteudo == "vendedor") and data.get("narrador_texto"):
+        if (tipo_conteudo == "narrador" or tipo_conteudo == "vendedor") and data.get(
+            "narrador_texto"
+        ):
             caminho_narrador_input, _, duracao_audio = gerar_audio_e_tempos(
                 data["narrador_texto"],
                 data["narrador_voz"],
@@ -497,8 +520,11 @@ def processar_geracao_video(video_gerado_id, data, user_id, assinatura_id, limit
                 word_timestamps = get_word_timestamps(caminho_narrador_input)
                 if word_timestamps:
                     caminho_legenda_ass = gerar_legenda_karaoke_ass(
-                        word_timestamps, data, data.get("cor_da_fonte", "#FFFFFF"), 
-                        data.get("cor_destaque_legenda", "#FFFF00"), data.get("posicao_texto", "centro")
+                        word_timestamps,
+                        data,
+                        data.get("cor_da_fonte", "#FFFFFF"),
+                        data.get("cor_destaque_legenda", "#FFFF00"),
+                        data.get("posicao_texto", "centro"),
                     )
                     caminhos_para_limpar.append(caminho_legenda_ass)
             except Exception as e:
@@ -513,43 +539,64 @@ def processar_geracao_video(video_gerado_id, data, user_id, assinatura_id, limit
                     # Prioriza a escolha de vídeo específica do usuário
                     video_base = VideoBase.objects.get(id=video_base_id)
                     if not verificar_arquivo_existe_no_r2(video_base.object_key):
-                        print(f"AVISO: O vídeo escolhido (ID: {video_base_id}) não foi encontrado no armazenamento. Um vídeo aleatório será selecionado.")
+                        print(
+                            f"AVISO: O vídeo escolhido (ID: {video_base_id}) não foi encontrado no armazenamento. Um vídeo aleatório será selecionado."
+                        )
                         video_base = None  # Força o fallback para um vídeo aleatório
                 except VideoBase.DoesNotExist:
-                    print(f"AVISO: O VideoBase com ID {video_base_id} não foi encontrado. Um vídeo aleatório da categoria será selecionado.")
+                    print(
+                        f"AVISO: O VideoBase com ID {video_base_id} não foi encontrado. Um vídeo aleatório da categoria será selecionado."
+                    )
                     video_base = None  # Força o fallback
-            
-            if not video_base:
-                # Fallback: se nenhum ID foi fornecido ou se o vídeo escolhido não for válido, seleciona um aleatório
-                video_base = get_valid_media_from_category(VideoBase, data["categoria_video"])
 
             if not video_base:
-                raise Exception(f"Não foi possível encontrar um vídeo de fundo válido para a categoria '{data['categoria_video']}'.")
-            
-            caminho_video_input = download_from_cloudflare(video_base.object_key, ".mp4")
+                # Fallback: se nenhum ID foi fornecido ou se o vídeo escolhido não for válido, seleciona um aleatório
+                video_base = get_valid_media_from_category(
+                    VideoBase, data["categoria_video"]
+                )
+
+            if not video_base:
+                raise Exception(
+                    f"Não foi possível encontrar um vídeo de fundo válido para a categoria '{data['categoria_video']}'."
+                )
+
+            caminho_video_input = download_from_cloudflare(
+                video_base.object_key, ".mp4"
+            )
         elif tipo_conteudo == "vendedor":
             video_upload_key = data.get("video_upload_key")
             if video_upload_key:
                 caminho_video_input = download_from_cloudflare(video_upload_key, ".mp4")
             else:
-                raise Exception("Nenhuma 'video_upload_key' foi fornecida para o tipo de conteúdo 'vendedor'.")
+                raise Exception(
+                    "Nenhuma 'video_upload_key' foi fornecida para o tipo de conteúdo 'vendedor'."
+                )
         caminhos_para_limpar.append(caminho_video_input)
 
         caminho_imagem_texto = None
         if tipo_conteudo == "texto" and data.get("texto_overlay"):
             caminho_imagem_texto = create_text_image(
-                data["texto_overlay"], data.get("cor_da_fonte", "#FFFFFF"), data, data.get("posicao_texto", "centro")
+                data["texto_overlay"],
+                data.get("cor_da_fonte", "#FFFFFF"),
+                data,
+                data.get("posicao_texto", "centro"),
             )
             caminhos_para_limpar.append(caminho_imagem_texto)
 
-        musica_base = get_valid_media_from_category(MusicaBase, data["categoria_musica"])
+        musica_base = get_valid_media_from_category(
+            MusicaBase, data["categoria_musica"]
+        )
         if not musica_base:
-            raise Exception(f"Não foi possível encontrar uma música para a categoria '{data['categoria_musica']}'.")
+            raise Exception(
+                f"Não foi possível encontrar uma música para a categoria '{data['categoria_musica']}'."
+            )
         caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
         caminhos_para_limpar.append(caminho_musica_input)
 
         if not caminho_video_input or not caminho_musica_input:
-            raise Exception("Erro ao obter os arquivos de mídia necessários para a geração.")
+            raise Exception(
+                "Erro ao obter os arquivos de mídia necessários para a geração."
+            )
 
         with tempfile.NamedTemporaryFile(delete=False, suffix="_temp.mp4") as temp_f:
             caminho_video_temp = temp_f.name
@@ -562,35 +609,64 @@ def processar_geracao_video(video_gerado_id, data, user_id, assinatura_id, limit
             cmd.extend(["-i", caminho_video_input])
 
         inputs_adicionais = [caminho_musica_input]
-        if caminho_imagem_texto: inputs_adicionais.insert(0, caminho_imagem_texto)
-        if caminho_narrador_input: inputs_adicionais.append(caminho_narrador_input)
-        for f in inputs_adicionais: cmd.extend(["-i", f])
+        if caminho_imagem_texto:
+            inputs_adicionais.insert(0, caminho_imagem_texto)
+        if caminho_narrador_input:
+            inputs_adicionais.append(caminho_narrador_input)
+        for f in inputs_adicionais:
+            cmd.extend(["-i", f])
 
         video_chain_parts = []
         current_stream = "[0:v]"
-        video_chain_parts.append(f"{current_stream}scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1[v_scaled]")
+        video_chain_parts.append(
+            f"{current_stream}scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1[v_scaled]"
+        )
         current_stream = "[v_scaled]"
 
         if caminho_legenda_ass:
             if platform.system() == "Windows":
                 # On Windows, escape the colon and use forward slashes
-                caminho_legenda_ffmpeg = caminho_legenda_ass.replace('\\', '/').replace(':', '\\:')
-                caminho_fontes_projeto_ffmpeg = os.path.join(settings.BASE_DIR, "core", "static", "fonts").replace('\\', '/').replace(':', '\\')
+                caminho_legenda_ffmpeg = caminho_legenda_ass.replace("\\", "/").replace(
+                    ":", "\\:"
+                )
+                caminho_fontes_projeto_ffmpeg = (
+                    os.path.join(settings.BASE_DIR, "core", "static", "fonts")
+                    .replace("\\", "/")
+                    .replace(":", "\\")
+                )
             else:
                 # On Linux/macOS, paths are simpler
                 caminho_legenda_ffmpeg = caminho_legenda_ass
-                caminho_fontes_projeto_ffmpeg = os.path.join(settings.BASE_DIR, "core", "static", "fonts")
+                caminho_fontes_projeto_ffmpeg = os.path.join(
+                    settings.BASE_DIR, "core", "static", "fonts"
+                )
 
-            video_chain_parts.append(f"{current_stream}ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'[v_subtitled]")
+            video_chain_parts.append(
+                f"{current_stream}ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'[v_subtitled]"
+            )
             current_stream = "[v_subtitled]"
 
         if not assinatura_ativa:
-            caminho_fonte_marca_dagua_ffmpeg = os.path.join(settings.BASE_DIR, "core", "static", "fonts", "AlfaSlabOne-Regular.ttf").replace("\\", "/").replace(":", "\\\\")
-            video_chain_parts.append(f"{current_stream}drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20[v_watermarked]")
+            caminho_fonte_marca_dagua_ffmpeg = (
+                os.path.join(
+                    settings.BASE_DIR,
+                    "core",
+                    "static",
+                    "fonts",
+                    "AlfaSlabOne-Regular.ttf",
+                )
+                .replace("\\", "/")
+                .replace(":", "\\\\")
+            )
+            video_chain_parts.append(
+                f"{current_stream}drawtext=fontfile='{caminho_fonte_marca_dagua_ffmpeg}':text='Lunderon':fontsize=70:fontcolor=white@0.7:x=w-text_w-20:y=h-text_h-20[v_watermarked]"
+            )
             current_stream = "[v_watermarked]"
 
         if caminho_imagem_texto:
-            video_chain_parts.append(f"{current_stream}[1:v]overlay=(W-w)/2:(H-h)/2[final_v]")
+            video_chain_parts.append(
+                f"{current_stream}[1:v]overlay=(W-w)/2:(H-h)/2[final_v]"
+            )
             final_video_stream = "[final_v]"
         else:
             video_chain_parts.append(f"{current_stream}copy[final_v]")
@@ -602,16 +678,51 @@ def processar_geracao_video(video_gerado_id, data, user_id, assinatura_id, limit
 
         if caminho_narrador_input:
             narrator_input_index = music_input_index + 1
-            audio_chain = (f"[{music_input_index}:a]loudnorm[musica_norm];[{narrator_input_index}:a]loudnorm[narrador_norm];" + f"[musica_norm]volume={volume_musica_decimal}[musica_final];[narrador_norm]volume=1.0[narrador_final];" + f"[musica_final][narrador_final]amix=inputs=2:duration=longest[aout]")
+            audio_chain = (
+                f"[{music_input_index}:a]loudnorm[musica_norm];[{narrator_input_index}:a]loudnorm[narrador_norm];"
+                + f"[musica_norm]volume={volume_musica_decimal}[musica_final];[narrador_norm]volume=1.0[narrador_final];"
+                + f"[musica_final][narrador_final]amix=inputs=2:duration=longest[aout]"
+            )
         else:
             audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]"
 
-        cmd.extend(["-filter_complex", f"{video_chain};{audio_chain}", "-map", final_video_stream, "-map", "[aout]"])
-        cmd.extend(["-c:v", "libx264", "-preset", "fast", "-crf", "23", "-r", "30", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-t", str(duracao_video), caminho_video_temp])
+        cmd.extend(
+            [
+                "-filter_complex",
+                f"{video_chain};{audio_chain}",
+                "-map",
+                final_video_stream,
+                "-map",
+                "[aout]",
+            ]
+        )
+        cmd.extend(
+            [
+                "-c:v",
+                "libx264",
+                "-preset",
+                "fast",
+                "-crf",
+                "28",
+                "-r",
+                "30",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+                "-t",
+                str(duracao_video),
+                caminho_video_temp,
+            ]
+        )
 
         subprocess.run(cmd, check=True, capture_output=True, text=True)
 
-        object_key_r2 = f"videos_gerados/video_{user.id}_{random.randint(10000, 99999)}.mp4"
+        object_key_r2 = (
+            f"videos_gerados/video_{user.id}_{random.randint(10000, 99999)}.mp4"
+        )
         if not upload_to_r2(caminho_video_temp, object_key_r2):
             raise Exception("Falha no upload do vídeo final para o Cloudflare R2.")
 
@@ -649,19 +760,23 @@ def processar_geracao_video(video_gerado_id, data, user_id, assinatura_id, limit
 def videos_por_categoria(request, categoria_id):
     try:
         categoria = get_object_or_404(CategoriaVideo, id=categoria_id)
-        videos = VideoBase.objects.filter(categoria=categoria).exclude(object_key__isnull=True).exclude(object_key__exact='')
-        
+        videos = (
+            VideoBase.objects.filter(categoria=categoria)
+            .exclude(object_key__isnull=True)
+            .exclude(object_key__exact="")
+        )
+
         videos_data = []
         for video in videos:
-            presigned_url = generate_presigned_url(video.object_key, expiration=3600) # 1 hour
+            presigned_url = generate_presigned_url(
+                video.object_key, expiration=3600
+            )  # 1 hour
             if presigned_url:
-                videos_data.append({
-                    'id': video.id,
-                    'url': presigned_url,
-                    'titulo': video.titulo
-                })
+                videos_data.append(
+                    {"id": video.id, "url": presigned_url, "titulo": video.titulo}
+                )
 
-        return JsonResponse({'videos': videos_data})
+        return JsonResponse({"videos": videos_data})
 
     except Exception as e:
         print(f"Erro ao buscar vídeos por categoria: {e}")
@@ -673,18 +788,27 @@ def preview_video_base(request, categoria_id):
     try:
         categoria = get_object_or_404(CategoriaVideo, id=categoria_id)
         video_base = get_valid_media_from_category(VideoBase, categoria)
-        
+
         if not video_base:
-            return JsonResponse({"error": "Nenhum vídeo de base válido encontrado para esta categoria."}, status=404)
-        
+            return JsonResponse(
+                {
+                    "error": "Nenhum vídeo de base válido encontrado para esta categoria."
+                },
+                status=404,
+            )
+
         # Gerar uma URL assinada temporária para o vídeo
-        presigned_url = generate_presigned_url(video_base.object_key, expiration=300) # 5 minutos
-        
+        presigned_url = generate_presigned_url(
+            video_base.object_key, expiration=300
+        )  # 5 minutos
+
         if not presigned_url:
-            return JsonResponse({"error": "Falha ao gerar a URL de pré-visualização."}, status=500)
-            
+            return JsonResponse(
+                {"error": "Falha ao gerar a URL de pré-visualização."}, status=500
+            )
+
         return JsonResponse({"url": presigned_url})
-    
+
     except Exception as e:
         print(f"Erro na pré-visualização do vídeo: {e}")
         return JsonResponse({"error": "Ocorreu um erro inesperado."}, status=500)
@@ -766,10 +890,13 @@ def formatar_tempo_ass(segundos):
     cs = int((segundos - int(segundos)) * 100)
     return f"{h}:{m:02d}:{s:02d}.{cs:02d}"
 
+
 # ================================================================
 # NOVA FUNÇÃO DE LEGENDA PRECISA (ESTILO KARAOKÊ)
 # ================================================================
-def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, cor_destaque_hex, posicao="centro"):
+def gerar_legenda_karaoke_ass(
+    word_timestamps, data, cor_da_fonte_hex, cor_destaque_hex, posicao="centro"
+):
     """
     Gera uma legenda .ASS com sincronização precisa por palavra (efeito karaokê)
     a partir dos timestamps extraídos pelo Whisper.
@@ -779,7 +906,7 @@ def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, cor_desta
     tamanho = data.get("texto_tamanho", 70)
     negrito = -1 if data.get("texto_negrito", False) else 0
     sublinhado = -1 if data.get("texto_sublinhado", False) else 0
-    
+
     # Converte a cor principal (texto não dito) para o formato BGR do ASS
     try:
         hex_limpo = cor_da_fonte_hex.lstrip("#")
@@ -787,21 +914,23 @@ def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, cor_desta
         # 👇 CORREÇÃO AQUI: Alpha trocado de &HFF para &H00 para ficar opaco
         cor_primaria_ass = f"&H00{b:02X}{g:02X}{r:02X}"
     except (ValueError, IndexError):
-        cor_primaria_ass = "&H00FFFFFF" # Branco opaco como padrão
+        cor_primaria_ass = "&H00FFFFFF"  # Branco opaco como padrão
 
     # Converte a cor de destaque (texto dito) para o formato BGR do ASS
     try:
         hex_limpo_destaque = cor_destaque_hex.lstrip("#")
-        r_s, g_s, b_s = tuple(int(hex_limpo_destaque[i:i+2], 16) for i in (0, 2, 4))
+        r_s, g_s, b_s = tuple(int(hex_limpo_destaque[i : i + 2], 16) for i in (0, 2, 4))
         # 👇 CORREÇÃO AQUI: Alpha trocado de &HFF para &H00 para ficar opaco
         cor_secundaria_ass = f"&H00{b_s:02X}{g_s:02X}{r_s:02X}"
     except (ValueError, IndexError, TypeError):
-        cor_secundaria_ass = "&H0000FFFF" # Amarelo opaco como padrão
+        cor_secundaria_ass = "&H0000FFFF"  # Amarelo opaco como padrão
 
     # Define as cores do efeito karaokê
     # 👇 CORREÇÃO AQUI: Contorno também precisa ser opaco
-    cor_outline = "&H00000000"       # Contorno preto opaco
-    cor_back = "&H80000000"          # Sombra/Fundo semi-transparente (opcional, para melhor leitura)
+    cor_outline = "&H00000000"  # Contorno preto opaco
+    cor_back = (
+        "&H80000000"  # Sombra/Fundo semi-transparente (opcional, para melhor leitura)
+    )
 
     alignment_code = 5 if posicao == "centro" else 2
     margin_v = 150 if posicao == "inferior" else 50
@@ -816,22 +945,27 @@ def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, cor_desta
     )
 
     dialogos = []
-    palavras_por_linha = 4 # Define quantas palavras aparecerão por linha na legenda
-    
+    palavras_por_linha = 4  # Define quantas palavras aparecerão por linha na legenda
+
     # Agrupa as palavras em linhas
-    linhas = [word_timestamps[i:i + palavras_por_linha] for i in range(0, len(word_timestamps), palavras_por_linha)]
+    linhas = [
+        word_timestamps[i : i + palavras_por_linha]
+        for i in range(0, len(word_timestamps), palavras_por_linha)
+    ]
 
     for linha in linhas:
         if not linha:
             continue
 
-        start_time_linha = linha[0]['start']
-        end_time_linha = linha[-1]['end']
-        
+        start_time_linha = linha[0]["start"]
+        end_time_linha = linha[-1]["end"]
+
         # Cria a string de texto com as tags de tempo do karaokê
         texto_karaoke = ""
         for palavra in linha:
-            duracao_ms = int((palavra['end'] - palavra['start']) * 100) # Duração da palavra em centissegundos
+            duracao_ms = int(
+                (palavra["end"] - palavra["start"]) * 100
+            )  # Duração da palavra em centissegundos
             texto_karaoke += f"{'{k'}{duracao_ms}}}{palavra['word'].strip()} "
 
         dialogos.append(
@@ -848,7 +982,6 @@ def gerar_legenda_karaoke_ass(word_timestamps, data, cor_da_fonte_hex, cor_desta
         caminho_legenda = temp_f.name
 
     return caminho_legenda
-
 
 
 @require_POST
@@ -933,8 +1066,8 @@ def verificar_email(request, token):
         user = Usuario.objects.get(email_verification_token=token)
     except Usuario.DoesNotExist:
         # 2. Se não encontrar, o link é inválido.
-        messages.error(request, 'Link de verificação inválido ou já utilizado.')
-        return redirect('login')
+        messages.error(request, "Link de verificação inválido ou já utilizado.")
+        return redirect("login")
 
     # 3. Verifica se o token não expirou (a lógica está em utils.py)
     if is_token_valid(user, token):
@@ -947,15 +1080,22 @@ def verificar_email(request, token):
 
         # 5. Loga o usuário automaticamente e o envia para o painel.
         login(request, user)
-        messages.success(request, 'E-mail verificado com sucesso! Bem-vindo(a) à Lunderon.')
-        return redirect('meu_perfil')
+        messages.success(
+            request, "E-mail verificado com sucesso! Bem-vindo(a) à Lunderon."
+        )
+        return redirect("meu_perfil")
     else:
         # 6. Se o token expirou, informa o usuário.
-        messages.error(request, 'Seu link de verificação expirou. Por favor, tente se cadastrar novamente.')
-        return redirect('login')
+        messages.error(
+            request,
+            "Seu link de verificação expirou. Por favor, tente se cadastrar novamente.",
+        )
+        return redirect("login")
+
 
 def cadastre_se(request):
     from .forms import CadastroUsuarioForm
+
     if request.method == "POST":
         form = CadastroUsuarioForm(request.POST)
         if form.is_valid():
@@ -968,11 +1108,17 @@ def cadastre_se(request):
             # Tenta enviar o e-mail de verificação
             try:
                 send_verification_email(user, request)
-                messages.success(request, 'Cadastro realizado com sucesso! Enviamos um link de ativação para o seu e-mail.')
+                messages.success(
+                    request,
+                    "Cadastro realizado com sucesso! Enviamos um link de ativação para o seu e-mail.",
+                )
             except Exception as e:
                 # Informa sobre o erro no terminal para debug
                 print(f"ERRO AO ENVIAR E-MAIL DE VERIFICAÇÃO: {e}")
-                messages.error(request, 'Ocorreu um erro ao enviar o e-mail de verificação. Por favor, tente novamente ou contate o suporte.')
+                messages.error(
+                    request,
+                    "Ocorreu um erro ao enviar o e-mail de verificação. Por favor, tente novamente ou contate o suporte.",
+                )
 
             # Redireciona para a página de login, onde a mensagem de sucesso/erro será exibida
             return redirect("login")
@@ -994,19 +1140,24 @@ def validate_otp_view(request):
     return redirect("meu_perfil")
 
 
-
 def reenviar_verificacao_email(request, user_id):
     try:
         user = Usuario.objects.get(id=user_id)
         if not user.is_active:
             send_verification_email(user, request)
-            messages.success(request, 'Um novo link de verificação foi enviado para o seu e-mail.')
+            messages.success(
+                request, "Um novo link de verificação foi enviado para o seu e-mail."
+            )
         else:
-            messages.info(request, 'Esta conta já está ativa. Você pode fazer login normalmente.')
+            messages.info(
+                request, "Esta conta já está ativa. Você pode fazer login normalmente."
+            )
     except Usuario.DoesNotExist:
-        messages.error(request, 'Usuário não encontrado.')
-    
-    return redirect('login')
+        messages.error(request, "Usuário não encontrado.")
+
+    return redirect("login")
+
+
 def login_view(request):
     if request.method == "POST":
         email_digitado = request.POST.get("email")
@@ -1023,9 +1174,11 @@ def login_view(request):
             # 2. VERIFICA SE A CONTA ESTÁ ATIVA.
             if not user_encontrado.is_active:
                 # Se não estiver ativa, mostra uma mensagem específica com um link para reenviar o e-mail.
-                resend_url = reverse('reenviar_verificacao', kwargs={'user_id': user_encontrado.id})
+                resend_url = reverse(
+                    "reenviar_verificacao", kwargs={"user_id": user_encontrado.id}
+                )
                 mensagem = mark_safe(
-                    f'Sua conta ainda não foi ativada. Por favor, verifique o link que enviamos para o seu e-mail. '
+                    f"Sua conta ainda não foi ativada. Por favor, verifique o link que enviamos para o seu e-mail. "
                     f'<a href="{resend_url}" class="alert-link">Não recebeu? Clique aqui para reenviar.</a>'
                 )
                 messages.warning(request, mensagem)
@@ -1046,7 +1199,7 @@ def login_view(request):
         except Usuario.DoesNotExist:
             # Se o e-mail nem existe no banco de dados.
             messages.error(request, "Email ou senha inválidos.")
-            
+
     return render(request, "core/login.html")
 
 
@@ -1065,8 +1218,10 @@ def admin_ativar_usuario(request, user_id):
     user_para_ativar.is_active = True
     user_para_ativar.email_verificado = True
     user_para_ativar.save()
-    messages.success(request, f'O usuário "{user_para_ativar.username}" foi ativado com sucesso.')
-    return redirect('admin_usuarios')
+    messages.success(
+        request, f'O usuário "{user_para_ativar.username}" foi ativado com sucesso.'
+    )
+    return redirect("admin_usuarios")
 
 
 @login_required
@@ -1079,14 +1234,19 @@ def admin_reenviar_verificacao(request, user_id):
     if not user_para_verificar.is_active:
         try:
             send_verification_email(user_para_verificar, request)
-            messages.success(request, f'E-mail de verificação reenviado para {user_para_verificar.email}.')
+            messages.success(
+                request,
+                f"E-mail de verificação reenviado para {user_para_verificar.email}.",
+            )
         except Exception as e:
-            messages.error(request, 'Ocorreu um erro ao tentar reenviar o e-mail.')
+            messages.error(request, "Ocorreu um erro ao tentar reenviar o e-mail.")
             print(f"ERRO AO REENVIAR E-MAIL ADMIN: {e}")
     else:
-        messages.warning(request, f'O usuário "{user_para_verificar.username}" já está ativo.')
-        
-    return redirect('admin_usuarios')
+        messages.warning(
+            request, f'O usuário "{user_para_verificar.username}" já está ativo.'
+        )
+
+    return redirect("admin_usuarios")
 
 
 # ==============================================================================
@@ -1097,9 +1257,6 @@ def pagamento_falho(request):
     Renderiza a página de pagamento falho.
     """
     from .forms import EditarPerfilForm
-
-
-
 
     return render(request, "planos/pagamento_falho.html")
 
@@ -1261,6 +1418,7 @@ def stripe_webhook(request):
 @login_required
 def editar_perfil(request):
     from .forms import EditarPerfilForm
+
     if request.method == "POST":
         form = EditarPerfilForm(request.POST, instance=request.user)
         if form.is_valid():
@@ -1273,16 +1431,13 @@ def editar_perfil(request):
     return render(request, "core/usuarios/editar_perfil.html", {"form": form})
 
 
-
-
-
-
-
 @login_required
 def meu_perfil(request):
-    # A linha abaixo busca TUDO o que precisamos: os vídeos criados, 
+    # A linha abaixo busca TUDO o que precisamos: os vídeos criados,
     # o limite correto do plano do usuário e a assinatura dele.
-    videos_criados_no_mes, limite_videos_mes, assinatura = _get_user_video_usage(request.user)
+    videos_criados_no_mes, limite_videos_mes, assinatura = _get_user_video_usage(
+        request.user
+    )
 
     context = {
         "user": request.user,
@@ -1343,7 +1498,8 @@ def admin_assinaturas(request):
 # Certifique-se de que 'os' está importado no topo do seu arquivo
 
 
-# ... (resto dos seus imports e views) 
+# ... (resto dos seus imports e views)
+
 
 def planos(request):
     """
@@ -1352,11 +1508,15 @@ def planos(request):
     """
     if request.user.is_authenticated and request.user.plano_ativo:
         # Esta parte já está correta, buscando o uso e limite do plano do usuário.
-        videos_criados_no_mes, limite_videos_mes, assinatura_ativa = _get_user_video_usage(request.user)
-        
+        videos_criados_no_mes, limite_videos_mes, assinatura_ativa = (
+            _get_user_video_usage(request.user)
+        )
+
         if not assinatura_ativa:
-             # Caso de segurança se plano_ativo=True mas não há assinatura
-            return redirect("planos") # Redireciona para a mesma página para reavaliar a lógica abaixo
+            # Caso de segurança se plano_ativo=True mas não há assinatura
+            return redirect(
+                "planos"
+            )  # Redireciona para a mesma página para reavaliar a lógica abaixo
 
         uso_percentual = 0
         if limite_videos_mes > 0:
@@ -1372,13 +1532,13 @@ def planos(request):
 
     # --- CORREÇÃO APLICADA AQUI ---
     # Para usuários não assinantes, buscamos todos os planos para exibi-los na página.
-    todos_os_planos = Plano.objects.order_by('preco')
+    todos_os_planos = Plano.objects.order_by("preco")
     context = {
         "stripe_publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
-        "planos": todos_os_planos  # Adiciona a lista de planos ao contexto
+        "planos": todos_os_planos,  # Adiciona a lista de planos ao contexto
     }
     # --- FIM DA CORREÇÃO ---
-    
+
     return render(request, "core/planos/planos.html", context)
 
 
@@ -1386,20 +1546,23 @@ def planos(request):
 @user_passes_test(is_admin)
 def ativar_assinatura(request, id):
     assinatura = get_object_or_404(Assinatura, id=id)
-    
+
     # --- INÍCIO DA MELHORIA ---
     # Garante que o usuário também seja ativado junto com a assinatura
     usuario = assinatura.usuario
     if not usuario.is_active:
         usuario.is_active = True
         usuario.email_verificado = True
-        usuario.save(update_fields=['is_active', 'email_verificado'])
+        usuario.save(update_fields=["is_active", "email_verificado"])
     # --- FIM DA MELHORIA ---
-        
+
     assinatura.status = "ativo"
-    assinatura.save() # O .save() da assinatura já cuida do campo 'plano_ativo'
-    
-    messages.success(request, f'Assinatura de {assinatura.usuario.username} ativada com sucesso. A conta do usuário também foi ativada.')
+    assinatura.save()  # O .save() da assinatura já cuida do campo 'plano_ativo'
+
+    messages.success(
+        request,
+        f"Assinatura de {assinatura.usuario.username} ativada com sucesso. A conta do usuário também foi ativada.",
+    )
     return redirect("admin_assinaturas")
 
 
@@ -1417,6 +1580,7 @@ def cancelar_assinatura(request, id):
 @user_passes_test(is_admin)
 def editar_assinatura(request, id):
     from .forms import EditarAssinaturaForm
+
     assinatura = get_object_or_404(Assinatura, id=id)
     if request.method == "POST":
         form = EditarAssinaturaForm(request.POST, instance=assinatura)
@@ -1442,6 +1606,7 @@ def excluir_assinatura(request, id):
     contexto = {"item": assinatura}
     return render(request, "core/user/confirmar_exclusao.html", contexto)
 
+
 # Em core/views.py
 
 
@@ -1451,7 +1616,9 @@ def excluir_assinatura(request, id):
 from django.db.models import Count, Q
 from django.utils import timezone
 from datetime import timedelta
+
 # (e outros imports necessários)
+
 
 @user_passes_test(is_admin)
 def admin_usuarios(request):
@@ -1465,19 +1632,20 @@ def admin_usuarios(request):
         .annotate(
             videos_no_mes=Count(
                 "videogerado",
-                filter=Q(videogerado__criado_em__gte=trinta_dias_atras) & ~Q(videogerado__status='ERRO')
+                filter=Q(videogerado__criado_em__gte=trinta_dias_atras)
+                & ~Q(videogerado__status="ERRO"),
             )
         )
         .order_by("-date_joined")
     )
     # --- FIM DA CORREÇÃO ---
-    
+
     contexto = {
         "usuarios": usuarios,
         # A variável 'limite_videos_mes' foi corretamente removida,
         # pois o template agora busca o limite do plano de cada usuário.
     }
-    
+
     return render(request, "core/user/admin_usuarios.html", contexto)
 
 
@@ -1485,6 +1653,7 @@ def admin_usuarios(request):
 @user_passes_test(is_admin)
 def editar_usuario(request, user_id):
     from .forms import AdminUsuarioForm
+
     user = get_object_or_404(Usuario, id=user_id)
     assinatura = (
         Assinatura.objects.filter(usuario=user).order_by("-data_inicio").first()
@@ -1589,6 +1758,7 @@ def admin_configuracoes(request):
 @user_passes_test(is_admin)
 def adicionar_configuracao(request):
     from .forms import ConfiguracaoForm
+
     if request.method == "POST":
         form = ConfiguracaoForm(request.POST)
         if form.is_valid():
@@ -1605,6 +1775,7 @@ def adicionar_configuracao(request):
 @user_passes_test(is_admin)
 def editar_configuracao(request, id):
     from .forms import ConfiguracaoForm
+
     config = get_object_or_404(Configuracao, id=id)
     if request.method == "POST":
         form = ConfiguracaoForm(request.POST, instance=config)
@@ -1656,7 +1827,7 @@ def aprovar_pagamento(request, id):
     # 2. Ativa e verifica a conta do usuário automaticamente para garantir o acesso
     usuario.is_active = True
     usuario.email_verificado = True
-    usuario.save(update_fields=['is_active', 'email_verificado'])
+    usuario.save(update_fields=["is_active", "email_verificado"])
 
     # 3. Busca a duração padrão da assinatura nas configurações
     try:
@@ -1728,24 +1899,34 @@ def deletar_pagamento(request, id):
 @user_passes_test(is_admin)
 def admin_relatorios(request):
     # --- LÓGICA EXISTENTE ---
-    assinaturas = Assinatura.objects.select_related("usuario", "plano").order_by("-data_inicio")
-    pagamentos = Pagamento.objects.select_related("usuario", "plano").order_by("-data_pagamento")
+    assinaturas = Assinatura.objects.select_related("usuario", "plano").order_by(
+        "-data_inicio"
+    )
+    pagamentos = Pagamento.objects.select_related("usuario", "plano").order_by(
+        "-data_pagamento"
+    )
 
     # --- CÁLCULO DOS KPIs ---
     total_assinantes_ativos = Assinatura.objects.filter(status="ativo").count()
-    receita_total = Pagamento.objects.filter(status="aprovado").aggregate(soma=Sum("valor"))["soma"] or 0
+    receita_total = (
+        Pagamento.objects.filter(status="aprovado").aggregate(soma=Sum("valor"))["soma"]
+        or 0
+    )
     trinta_dias_atras = timezone.now() - timedelta(days=30)
-    novos_assinantes = Assinatura.objects.filter(data_inicio__gte=trinta_dias_atras).count()
-    total_videos_gerados = VideoGerado.objects.filter(status='CONCLUIDO').count()
-    total_videos_falhos = VideoGerado.objects.filter(status='ERRO').count()
-    total_videos_processando = VideoGerado.objects.filter(status='PROCESSANDO').count()
-
+    novos_assinantes = Assinatura.objects.filter(
+        data_inicio__gte=trinta_dias_atras
+    ).count()
+    total_videos_gerados = VideoGerado.objects.filter(status="CONCLUIDO").count()
+    total_videos_falhos = VideoGerado.objects.filter(status="ERRO").count()
+    total_videos_processando = VideoGerado.objects.filter(status="PROCESSANDO").count()
 
     # --- LÓGICA NOVA ADICIONADA ---
     # Conta usuários que não são admins e que ainda estão inativos (não verificaram e-mail)
     usuarios_pendentes = Usuario.objects.filter(is_active=False, is_staff=False).count()
     # Pega os 5 últimos usuários pendentes para exibir na nova tabela
-    ultimos_pendentes = Usuario.objects.filter(is_active=False, is_staff=False).order_by('-date_joined')[:5]
+    ultimos_pendentes = Usuario.objects.filter(
+        is_active=False, is_staff=False
+    ).order_by("-date_joined")[:5]
 
     context = {
         "assinaturas": assinaturas,
@@ -1791,15 +1972,17 @@ def criar_checkout_session(request, plano_id):
 
         # Valida se o plano tem um Price ID do Stripe configurado
         if not plano.stripe_price_id:
-            messages.error(request, "Este plano não está configurado para pagamento. Por favor, contate o suporte.")
+            messages.error(
+                request,
+                "Este plano não está configurado para pagamento. Por favor, contate o suporte.",
+            )
             return redirect("planos")
 
         # 2. Busca ou cria o cliente no Stripe.
         stripe_customer_id = request.user.stripe_customer_id
         if not stripe_customer_id:
             customer = stripe.Customer.create(
-                email=request.user.email,
-                name=request.user.username
+                email=request.user.email, name=request.user.username
             )
             request.user.stripe_customer_id = customer.id
             request.user.save()
@@ -1882,65 +2065,98 @@ def get_youtube_most_replayed_segments(request):
     """
     try:
         data = json.loads(request.body)
-        youtube_url = data.get('url')
-        if not youtube_url or 'youtube.com' not in youtube_url:
-            return JsonResponse({'error': 'URL do YouTube inválida.'}, status=400)
+        youtube_url = data.get("url")
+        if not youtube_url or "youtube.com" not in youtube_url:
+            return JsonResponse({"error": "URL do YouTube inválida."}, status=400)
 
-        headers = {'User-Agent': 'Mozilla/5.0', 'Accept-Language': 'pt-BR,pt;q=0.9'}
+        headers = {"User-Agent": "Mozilla/5.0", "Accept-Language": "pt-BR,pt;q=0.9"}
         response = requests.get(youtube_url, headers=headers)
         response.raise_for_status()
 
         # Regex para encontrar o objeto ytInitialData
         match = re.search(r'window["|"]ytInitialData["|"] = ({.*?});', response.text)
         if not match:
-            match = re.search(r'var ytInitialData = ({.*?});', response.text)
+            match = re.search(r"var ytInitialData = ({.*?});", response.text)
 
         if not match:
-            return JsonResponse({'error': 'Não foi possível encontrar os dados do vídeo na página. O vídeo pode ter restrição de idade, ser privado ou a estrutura do YouTube mudou.'}, status=404)
+            return JsonResponse(
+                {
+                    "error": "Não foi possível encontrar os dados do vídeo na página. O vídeo pode ter restrição de idade, ser privado ou a estrutura do YouTube mudou."
+                },
+                status=404,
+            )
 
         initial_data = json.loads(match.group(1))
-        
+
         # Navega pela estrutura do JSON para encontrar os marcadores
         decorations = []
-        mutations = initial_data.get('frameworkUpdates', {}).get('entityBatchUpdate', {}).get('mutations', [])
+        mutations = (
+            initial_data.get("frameworkUpdates", {})
+            .get("entityBatchUpdate", {})
+            .get("mutations", [])
+        )
         for mutation in mutations:
-            if 'payload' in mutation and 'macroMarkersListEntity' in mutation['payload']:
-                markers_list = mutation['payload']['macroMarkersListEntity'].get('markersList', {})
-                decorations = markers_list.get('markersDecoration', {}).get('timedMarkerDecorations', [])
+            if (
+                "payload" in mutation
+                and "macroMarkersListEntity" in mutation["payload"]
+            ):
+                markers_list = mutation["payload"]["macroMarkersListEntity"].get(
+                    "markersList", {}
+                )
+                decorations = markers_list.get("markersDecoration", {}).get(
+                    "timedMarkerDecorations", []
+                )
                 if decorations:
                     break
-        
+
         if not decorations:
-            return JsonResponse({'segments': [], 'message': 'Nenhum segmento "mais repetido" foi encontrado para este vídeo.'})
+            return JsonResponse(
+                {
+                    "segments": [],
+                    "message": 'Nenhum segmento "mais repetido" foi encontrado para este vídeo.',
+                }
+            )
 
         segments = []
         processed_ranges = set()  # Conjunto para rastrear intervalos já adicionados
 
         for deco in decorations:
-            if deco.get('label', {}).get('runs', [{}])[0].get('text') == 'Mais repetidos':
-                start_ms = int(deco.get('visibleTimeRangeStartMillis', 0))
-                end_ms = int(deco.get('visibleTimeRangeEndMillis', 0))
-                
+            if (
+                deco.get("label", {}).get("runs", [{}])[0].get("text")
+                == "Mais repetidos"
+            ):
+                start_ms = int(deco.get("visibleTimeRangeStartMillis", 0))
+                end_ms = int(deco.get("visibleTimeRangeEndMillis", 0))
+
                 time_range_key = (start_ms, end_ms)
 
                 # Adiciona o segmento apenas se o intervalo de tempo for único
                 if time_range_key not in processed_ranges:
-                    segments.append({
-                        'start': start_ms / 1000.0,
-                        'end': end_ms / 1000.0,
-                        'duration': (end_ms - start_ms) / 1000.0
-                    })
+                    segments.append(
+                        {
+                            "start": start_ms / 1000.0,
+                            "end": end_ms / 1000.0,
+                            "duration": (end_ms - start_ms) / 1000.0,
+                        }
+                    )
                     processed_ranges.add(time_range_key)
 
-        return JsonResponse({'segments': sorted(segments, key=lambda x: x['start'])})
+        return JsonResponse({"segments": sorted(segments, key=lambda x: x["start"])})
 
     except requests.RequestException as e:
-        return JsonResponse({'error': f'Erro ao buscar a URL do YouTube: {e}'}, status=500)
+        return JsonResponse(
+            {"error": f"Erro ao buscar a URL do YouTube: {e}"}, status=500
+        )
     except Exception as e:
         print(f"Erro em get_youtube_most_replayed_segments: {e}")
-        return JsonResponse({'error': 'Ocorreu um erro inesperado ao analisar o vídeo.'}, status=500)
+        return JsonResponse(
+            {"error": "Ocorreu um erro inesperado ao analisar o vídeo."}, status=500
+        )
 
-def processar_corte_youtube(video_gerado_id, youtube_url, segment, musica_base_id, volume_musica, gerar_legendas):
+
+def processar_corte_youtube(
+    video_gerado_id, youtube_url, segment, musica_base_id, volume_musica, gerar_legendas
+):
     video = get_object_or_404(VideoGerado, id=video_gerado_id)
     temp_dir = os.path.join(settings.MEDIA_ROOT, "youtube_cuts_temp")
     os.makedirs(temp_dir, exist_ok=True)
@@ -1955,31 +2171,35 @@ def processar_corte_youtube(video_gerado_id, youtube_url, segment, musica_base_i
 
     try:
         # --- ETAPA 1: Baixar o segmento com yt-dlp (esta parte já estava correta) ---
-        video.status = 'PROCESSANDO (1/4 - Baixando segmento)'
+        video.status = "PROCESSANDO (1/4 - Baixando segmento)"
         video.save()
 
-        segment_filename_template = os.path.join(temp_dir, f'segment_{video.usuario.id}_{random.randint(1000, 9999)}.%(ext)s')
+        segment_filename_template = os.path.join(
+            temp_dir, f"segment_{video.usuario.id}_{random.randint(1000, 9999)}.%(ext)s"
+        )
 
         ydl_opts = {
-            'format': 'best[ext=mp4][height<=1080]/best[ext=mp4]/best',
-            'outtmpl': segment_filename_template,
-            'quiet': True,
-            'download_ranges': yt_dlp.utils.download_range_func(None, [(segment['start'], segment['end'])]),
-            'force_keyframes_at_cuts': False,
+            "format": "best[ext=mp4][height<=1080]/best[ext=mp4]/best",
+            "outtmpl": segment_filename_template,
+            "quiet": True,
+            "download_ranges": yt_dlp.utils.download_range_func(
+                None, [(segment["start"], segment["end"])]
+            ),
+            "force_keyframes_at_cuts": False,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=True)
             caminho_video_segmento = ydl.prepare_filename(info)
-        
+
         if not caminho_video_segmento or not os.path.exists(caminho_video_segmento):
             raise Exception("yt-dlp não conseguiu baixar o arquivo do segmento.")
-        
+
         caminhos_para_limpar.append(caminho_video_segmento)
 
         # --- ETAPA 2: Gerar legendas (se solicitado) ---
         if gerar_legendas:
-            video.status = 'PROCESSANDO (2/4 - Gerando legendas)'
+            video.status = "PROCESSANDO (2/4 - Gerando legendas)"
             video.save()
             caminho_audio_extraido = extract_audio_from_video(caminho_video_segmento)
             caminhos_para_limpar.append(caminho_audio_extraido)
@@ -1987,41 +2207,49 @@ def processar_corte_youtube(video_gerado_id, youtube_url, segment, musica_base_i
             caminhos_para_limpar.append(caminho_legenda_srt)
 
         # --- ETAPA 3: Processar vídeo final (redimensionar, música, legendas) ---
-        video.status = 'PROCESSANDO (3/4 - Finalizando vídeo)'
+        video.status = "PROCESSANDO (3/4 - Finalizando vídeo)"
         video.save()
 
         if musica_base_id:
             musica_base = get_object_or_404(MusicaBase, id=musica_base_id)
-            caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
+            caminho_musica_input = download_from_cloudflare(
+                musica_base.object_key, ".mp3"
+            )
             if not caminho_musica_input:
                 raise Exception("Falha ao baixar a música de fundo.")
             caminhos_para_limpar.append(caminho_musica_input)
 
         nome_base = f"corte_{video.usuario.id}_{random.randint(10000, 99999)}"
         nome_arquivo_final = f"{nome_base}.mp4"
-        caminho_video_local_final = os.path.join(settings.MEDIA_ROOT, "videos_gerados", nome_arquivo_final)
+        caminho_video_local_final = os.path.join(
+            settings.MEDIA_ROOT, "videos_gerados", nome_arquivo_final
+        )
         caminhos_para_limpar.append(caminho_video_local_final)
         object_key_r2 = f"videos_gerados/{nome_arquivo_final}"
         os.makedirs(os.path.dirname(caminho_video_local_final), exist_ok=True)
 
         cmd = ["ffmpeg", "-y", "-i", caminho_video_segmento]
         if caminho_musica_input:
-             cmd.extend(["-i", caminho_musica_input])
+            cmd.extend(["-i", caminho_musica_input])
 
         # --- INÍCIO DA CORREÇÃO NO FFMPEG ---
-        video_filters = "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1"
+        video_filters = "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1"
         if caminho_legenda_srt:
-            escaped_srt_path = caminho_legenda_srt.replace('\\', '/').replace(':', '\\:')
+            escaped_srt_path = caminho_legenda_srt.replace("\\", "/").replace(
+                ":", "\\:"
+            )
             style_options = "FontName=impact,FontSize=9,PrimaryColour=&H00FFFFFF,Bold=-1,MarginV=60,BorderStyle=3,Outline=2,Shadow=1"
-            video_filters += f",subtitles='{escaped_srt_path}':force_style='{style_options}'"
+            video_filters += (
+                f",subtitles='{escaped_srt_path}':force_style='{style_options}'"
+            )
 
         # CORREÇÃO 1: O filtro de vídeo precisa do input [0:v]
         filter_complex_parts = [f"[0:v]{video_filters}[v]"]
-        
+
         if caminho_musica_input:
             # CORREÇÃO 2: O volume precisa ser um valor decimal (ex: 0.7), não um inteiro (ex: 70)
             volume_musica_decimal = float(volume_musica) / 100.0
-            
+
             # CORREÇÃO 3: A sintaxe do filtro de áudio estava incorreta
             audio_filters = (
                 f"[0:a]loudnorm[audio_original_norm];"
@@ -2030,21 +2258,49 @@ def processar_corte_youtube(video_gerado_id, youtube_url, segment, musica_base_i
                 f"[audio_original_norm][audio_musica_final]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]"
             )
             filter_complex_parts.append(audio_filters)
-            
+
             filter_complex_str = ";".join(filter_complex_parts)
-            cmd.extend(["-filter_complex", filter_complex_str, "-map", "[v]", "-map", "[audio_mix]"])
-        else: # Sem música, usa o filtro de vídeo simples
+            cmd.extend(
+                [
+                    "-filter_complex",
+                    filter_complex_str,
+                    "-map",
+                    "[v]",
+                    "-map",
+                    "[audio_mix]",
+                ]
+            )
+        else:  # Sem música, usa o filtro de vídeo simples
             cmd.extend(["-vf", video_filters, "-map", "0:v", "-map", "0:a?"])
 
-        cmd.extend(["-c:v", "libx264", "-preset", "fast", "-crf", "23", "-r", "60", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-shortest", caminho_video_local_final])
-        
+        cmd.extend(
+            [
+                "-c:v",
+                "libx264",
+                "-preset",
+                "fast",
+                "-crf",
+                "28",
+                "-r",
+                "30",
+                "-pix_fmt",
+                "yuv420p",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+                "-shortest",
+                caminho_video_local_final,
+            ]
+        )
+
         subprocess.run(cmd, check=True, capture_output=True, text=True)
         # --- FIM DA CORREÇÃO ---
 
         # --- ETAPA 4: Upload para o R2 ---
-        video.status = 'PROCESSANDO (4/4 - Enviando para nuvem)'
+        video.status = "PROCESSANDO (4/4 - Enviando para nuvem)"
         video.save()
-        
+
         if not upload_to_r2(caminho_video_local_final, object_key_r2):
             raise Exception("Falha no upload do corte para o Cloudflare R2.")
 
@@ -2057,17 +2313,17 @@ def processar_corte_youtube(video_gerado_id, youtube_url, segment, musica_base_i
         # --- CORREÇÃO NO TRATAMENTO DE ERRO ---
         video.status = "ERRO"
         # Salva a mensagem de erro detalhada no banco de dados para facilitar a depuração
-        video.mensagem_erro = str(e) 
+        video.mensagem_erro = str(e)
         video.save()
-        
+
         print(f"!!!!!!!!!! ERRO AO PROCESSAR CORTE (ID: {video_gerado_id}) !!!!!!!!!!")
-        if isinstance(e, subprocess.CalledProcessError): 
+        if isinstance(e, subprocess.CalledProcessError):
             # Imprime os detalhes do erro do ffmpeg no console
             print(f"--- ERRO FFMPEG (STDOUT) ---\n{e.stdout}")
             print(f"--- ERRO FFMPEG (STDERR) ---\n{e.stderr}")
         else:
             print(f"Exceção: {e}")
-            
+
     finally:
         # A lógica de limpeza de arquivos já está correta, usando a lista
         for path in caminhos_para_limpar:
@@ -2081,6 +2337,7 @@ def processar_corte_youtube(video_gerado_id, youtube_url, segment, musica_base_i
 # ==============================================================================
 # ASYNCHRONOUS TASK HANDLING (Cloud Tasks)
 # ==============================================================================
+
 
 @csrf_exempt
 @require_POST
@@ -2099,10 +2356,10 @@ def process_video_task(request):
         try:
             token = auth_header.split(" ")[1]
             # A URL do público (audience) deve ser a URL completa do seu serviço do Cloud Run
-            audience = os.environ.get("CLOUD_RUN_URL") 
+            audience = os.environ.get("CLOUD_RUN_URL")
             if not audience:
-                 print("ERRO: A variável de ambiente CLOUD_RUN_URL não está definida.")
-                 return HttpResponse("Internal Server Error", status=500)
+                print("ERRO: A variável de ambiente CLOUD_RUN_URL não está definida.")
+                return HttpResponse("Internal Server Error", status=500)
 
             # Valida o token
             id_token.verify_oauth2_token(token, google_requests.Request(), audience)
@@ -2139,6 +2396,7 @@ def process_video_task(request):
         print(f"ERROR: Unhandled exception processing task: {e}")
         return HttpResponse(f"Error processing task: {e}", status=500)
 
+
 def enqueue_video_task(task_name, *args, **kwargs):
     """
     Enqueues a video processing task to Google Cloud Tasks or runs it locally.
@@ -2146,7 +2404,7 @@ def enqueue_video_task(task_name, *args, **kwargs):
     if settings.DEBUG:
         print(f"DEBUG MODE: Running task '{task_name}' in a background thread.")
         import threading
-        
+
         target_func = None
         if task_name == "processar_geracao_video":
             target_func = processar_geracao_video
@@ -2161,7 +2419,9 @@ def enqueue_video_task(task_name, *args, **kwargs):
         return
 
     if not tasks_v2:
-        raise ImportError("Google Cloud Tasks library is not installed. Cannot enqueue tasks.")
+        raise ImportError(
+            "Google Cloud Tasks library is not installed. Cannot enqueue tasks."
+        )
 
     try:
         client = tasks_v2.CloudTasksClient()
@@ -2169,7 +2429,7 @@ def enqueue_video_task(task_name, *args, **kwargs):
         project = settings.GOOGLE_CLOUD_PROJECT
         queue = settings.GOOGLE_CLOUD_TASKS_QUEUE
         location = settings.GOOGLE_CLOUD_REGION
-        url = settings.CLOUD_RUN_URL + reverse('process_video_task')
+        url = settings.CLOUD_RUN_URL + reverse("process_video_task")
 
         parent = client.queue_path(project, location, queue)
 
@@ -2186,7 +2446,7 @@ def enqueue_video_task(task_name, *args, **kwargs):
                 "headers": {"Content-type": "application/json"},
                 "body": json.dumps(payload).encode(),
             },
-            'dispatch_deadline': duration_pb2.Duration(seconds=3600)
+            "dispatch_deadline": duration_pb2.Duration(seconds=3600),
         }
 
         client.create_task(parent=parent, task=task)
@@ -2196,24 +2456,28 @@ def enqueue_video_task(task_name, *args, **kwargs):
         print(f"FATAL: Could not enqueue task. Error: {e}")
         raise
 
+
 @login_required
 def pagina_gerador(request):
     from .forms import GeradorForm
+
     """
     Página para gerar um novo vídeo.
     Refatorado para usar processamento em segundo plano e evitar timeouts.
     """
     videos_criados, limite_videos, assinatura = _get_user_video_usage(request.user)
 
-    if not assinatura or assinatura.status != 'ativo':
+    if not assinatura or assinatura.status != "ativo":
         messages.warning(request, "Você precisa de um plano ativo para gerar vídeos.")
         return redirect("planos")
 
     if videos_criados >= limite_videos:
-        messages.error(request, f"Você atingiu seu limite de {limite_videos} vídeos por mês.")
+        messages.error(
+            request, f"Você atingiu seu limite de {limite_videos} vídeos por mês."
+        )
         return redirect("meu_perfil")
 
-    if request.method == 'POST':
+    if request.method == "POST":
         form = GeradorForm(request.POST, request.FILES)
         if form.is_valid():
             data = form.cleaned_data
@@ -2223,12 +2487,12 @@ def pagina_gerador(request):
             if narrador_texto:  # Só valida se houver texto de narração
                 # O valor vem como string do formulário, ex: '85', '100', '115'
                 velocidade_str = data.get("narrador_velocidade", "100")
-                
+
                 # Converte para int para a lógica de comparação e para passar para a função de áudio
                 try:
                     velocidade = int(velocidade_str)
                 except (ValueError, TypeError):
-                    velocidade = 100 # Fallback seguro
+                    velocidade = 100  # Fallback seguro
 
                 # Define os limites de caracteres com base na velocidade
                 if velocidade <= 85:  # Lenta
@@ -2242,49 +2506,54 @@ def pagina_gerador(request):
                     nome_velocidade = "rápida"
 
                 if len(narrador_texto) > limite_chars:
-                    messages.error(request, f"O texto da narração excedeu o limite de {limite_chars} caracteres para a velocidade {nome_velocidade}. Por favor, reduza o texto.")
+                    messages.error(
+                        request,
+                        f"O texto da narração excedeu o limite de {limite_chars} caracteres para a velocidade {nome_velocidade}. Por favor, reduza o texto.",
+                    )
                     # Re-renderiza a página com os dados do formulário e a mensagem de erro
                     context = {
-                        'form': form,
-                        'videos_restantes': limite_videos - videos_criados,
-                        'limite_videos_mes': limite_videos,
+                        "form": form,
+                        "videos_restantes": limite_videos - videos_criados,
+                        "limite_videos_mes": limite_videos,
                     }
-                    return render(request, 'core/gerador.html', context)
+                    return render(request, "core/gerador.html", context)
             # --- FIM DA VALIDAÇÃO ---
 
             video_upload = data.get("video_upload")
             if video_upload:
                 try:
-                    temp_object_key = f"uploaded_videos_temp/{request.user.id}_{uuid.uuid4().hex}.mp4"
+                    temp_object_key = (
+                        f"uploaded_videos_temp/{request.user.id}_{uuid.uuid4().hex}.mp4"
+                    )
                     upload_fileobj_to_r2(video_upload, temp_object_key)
-                    data['video_upload_key'] = temp_object_key
+                    data["video_upload_key"] = temp_object_key
                 except Exception as e:
                     messages.error(request, f"Falha ao fazer upload do vídeo: {e}")
-                    return redirect('pagina_gerador')
-            
-            if 'video_upload' in data:
-                del data['video_upload']
+                    return redirect("pagina_gerador")
+
+            if "video_upload" in data:
+                del data["video_upload"]
 
             video_gerado = VideoGerado.objects.create(
                 usuario=request.user,
-                status='PROCESSANDO',
-                duracao_segundos=data.get('duracao_segundos') or 30,
-                loop=data.get('loop_video', False),
-                plano_de_fundo=data.get('plano_de_fundo', 'normal'),
-                volume_musica=data.get('volume_musica', 70),
-                texto_overlay=data.get('texto_overlay', ''),
-                narrador_texto=data.get('narrador_texto', ''),
-                texto_tela_final=data.get('texto_tela_final', ''),
-                posicao_texto=data.get('posicao_texto', 'centro'),
-                cor_da_fonte=data.get('cor_da_fonte', '#FFFFFF'),
-                texto_fonte=data.get('texto_fonte', 'arial'),
-                texto_tamanho=data.get('texto_tamanho', 50),
-                texto_negrito=data.get('texto_negrito', False),
-                texto_sublinhado=data.get('texto_sublinhado', False),
-                legenda_sincronizada=data.get('legenda_sincronizada', False),
-                narrador_voz=data.get('narrador_voz', 'pt-BR-Wavenet-B'),
-                narrador_velocidade=data.get('narrador_velocidade', 100),
-                narrador_tom=data.get('narrador_tom', 0.0)
+                status="PROCESSANDO",
+                duracao_segundos=data.get("duracao_segundos") or 30,
+                loop=data.get("loop_video", False),
+                plano_de_fundo=data.get("plano_de_fundo", "normal"),
+                volume_musica=data.get("volume_musica", 70),
+                texto_overlay=data.get("texto_overlay", ""),
+                narrador_texto=data.get("narrador_texto", ""),
+                texto_tela_final=data.get("texto_tela_final", ""),
+                posicao_texto=data.get("posicao_texto", "centro"),
+                cor_da_fonte=data.get("cor_da_fonte", "#FFFFFF"),
+                texto_fonte=data.get("texto_fonte", "arial"),
+                texto_tamanho=data.get("texto_tamanho", 50),
+                texto_negrito=data.get("texto_negrito", False),
+                texto_sublinhado=data.get("texto_sublinhado", False),
+                legenda_sincronizada=data.get("legenda_sincronizada", False),
+                narrador_voz=data.get("narrador_voz", "pt-BR-Wavenet-B"),
+                narrador_velocidade=data.get("narrador_velocidade", 100),
+                narrador_tom=data.get("narrador_tom", 0.0),
             )
 
             try:
@@ -2293,72 +2562,126 @@ def pagina_gerador(request):
                     video_gerado.id,
                     data,
                     request.user.id,
-                    assinatura.id if assinatura else None
+                    assinatura.id if assinatura else None,
                 )
-                messages.success(request, "Seu vídeo começou a ser processado! Ele aparecerá em 'Meus Vídeos' em breve.")
-                return redirect('meus_videos')
+                messages.success(
+                    request,
+                    "Seu vídeo começou a ser processado! Ele aparecerá em 'Meus Vídeos' em breve.",
+                )
+                return redirect("meus_videos")
             except Exception as e:
-                video_gerado.status = 'ERRO'
+                video_gerado.status = "ERRO"
                 video_gerado.save()
                 print(f"ERROR: Failed to enqueue video generation task. {e}")
-                messages.error(request, "Ocorreu um erro ao enviar seu vídeo para processamento. Por favor, tente novamente.")
-                return redirect('pagina_gerador')
+                messages.error(
+                    request,
+                    "Ocorreu um erro ao enviar seu vídeo para processamento. Por favor, tente novamente.",
+                )
+                return redirect("pagina_gerador")
         else:
-            messages.error(request, "Houve um erro no formulário. Por favor, verifique os dados inseridos.")
-    else: # GET request
+            messages.error(
+                request,
+                "Houve um erro no formulário. Por favor, verifique os dados inseridos.",
+            )
+    else:  # GET request
         form = GeradorForm()
 
     context = {
-        'form': form,
-        'videos_restantes': limite_videos - videos_criados,
-        'limite_videos_mes': limite_videos,
+        "form": form,
+        "videos_restantes": limite_videos - videos_criados,
+        "limite_videos_mes": limite_videos,
     }
-    return render(request, 'core/gerador.html', context)
+    return render(request, "core/gerador.html", context)
 
 
 @login_required
 def cortes_youtube_view(request):
     from .forms import CortesYouTubeForm
+
     if not request.user.plano_ativo:
-        messages.warning(request, "Esta funcionalidade está disponível apenas para assinantes.")
+        messages.warning(
+            request, "Esta funcionalidade está disponível apenas para assinantes."
+        )
         return redirect("planos")
 
     videos_criados, limite_videos_mes, _ = _get_user_video_usage(request.user)
 
     if limite_videos_mes is not None and videos_criados >= limite_videos_mes:
-        messages.error(request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês.")
+        messages.error(
+            request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês."
+        )
         return redirect("meu_perfil")
-    
-    if request.method == 'POST':
+
+    if request.method == "POST":
         form = CortesYouTubeForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            youtube_url = data['youtube_url']
-            selected_segments = json.loads(data['segments'])
+            youtube_url = data["youtube_url"]
+            selected_segments = json.loads(data["segments"])
 
             # --- INÍCIO DA VALIDAÇÃO DE DURAÇÃO DO CORTE ---
             for segment in selected_segments:
-                if segment.get('duration', 0) > 180:
-                    messages.error(request, f"O corte que começa em {segment['start']:.0f}s tem duração maior que 3 minutos e não pode ser processado. Por favor, desmarque-o e tente novamente.")
+                if segment.get("duration", 0) > 180:
+                    messages.error(
+                        request,
+                        f"O corte que começa em {segment['start']:.0f}s tem duração maior que 3 minutos e não pode ser processado. Por favor, desmarque-o e tente novamente.",
+                    )
                     # Recarrega a página mantendo o estado do formulário
                     form = CortesYouTubeForm(initial=data)
-                    return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': (limite_videos_mes - videos_criados) if videos_criados is not None and limite_videos_mes is not None else 'Ilimitado'})
+                    return render(
+                        request,
+                        "core/cortes_youtube.html",
+                        {
+                            "form": form,
+                            "videos_restantes": (
+                                (limite_videos_mes - videos_criados)
+                                if videos_criados is not None
+                                and limite_videos_mes is not None
+                                else "Ilimitado"
+                            ),
+                        },
+                    )
             # --- FIM DA VALIDAÇÃO ---
-            
-            if limite_videos_mes is not None and (videos_criados + len(selected_segments)) > limite_videos_mes:
-                messages.error(request, f"A criação de {len(selected_segments)} cortes excederia seu limite mensal de {limite_videos_mes} vídeos.")
-                return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
 
-            musica_base = get_valid_media_from_category(MusicaBase, data['categoria_musica'])
+            if (
+                limite_videos_mes is not None
+                and (videos_criados + len(selected_segments)) > limite_videos_mes
+            ):
+                messages.error(
+                    request,
+                    f"A criação de {len(selected_segments)} cortes excederia seu limite mensal de {limite_videos_mes} vídeos.",
+                )
+                return render(
+                    request,
+                    "core/cortes_youtube.html",
+                    {
+                        "form": form,
+                        "videos_restantes": limite_videos_mes - videos_criados,
+                    },
+                )
+
+            musica_base = get_valid_media_from_category(
+                MusicaBase, data["categoria_musica"]
+            )
             if not musica_base:
-                messages.error(request, f"Não foi possível encontrar uma música válida para a categoria '{data['categoria_musica']}'.")
-                return render(request, 'core/cortes_youtube.html', {'form': form, 'videos_restantes': limite_videos_mes - videos_criados})
+                messages.error(
+                    request,
+                    f"Não foi possível encontrar uma música válida para a categoria '{data['categoria_musica']}'.",
+                )
+                return render(
+                    request,
+                    "core/cortes_youtube.html",
+                    {
+                        "form": form,
+                        "videos_restantes": limite_videos_mes - videos_criados,
+                    },
+                )
 
             try:
                 for segment in selected_segments:
                     video_gerado = VideoGerado.objects.create(
                         usuario=request.user,
-                        status='PROCESSANDO',
+                        status="PROCESSANDO",
                         narrador_texto=f"Corte do vídeo: {youtube_url}",
                         texto_overlay=f"Início: {segment['start']}s",
                     )
@@ -2369,21 +2692,31 @@ def cortes_youtube_view(request):
                         youtube_url,
                         segment,
                         musica_base.id,
-                        data['volume_musica'],
-                        data['gerar_legendas']
+                        data["volume_musica"],
+                        data["gerar_legendas"],
                     )
 
-                messages.success(request, f"{len(selected_segments)} cortes foram enviados para processamento. Eles aparecerão em 'Meus Vídeos' em breve.")
-                return redirect('meus_videos')
+                messages.success(
+                    request,
+                    f"{len(selected_segments)} cortes foram enviados para processamento. Eles aparecerão em 'Meus Vídeos' em breve.",
+                )
+                return redirect("meus_videos")
 
             except Exception as e:
-                messages.error(request, f"Ocorreu um erro ao iniciar o processamento dos cortes: {e}")
+                messages.error(
+                    request,
+                    f"Ocorreu um erro ao iniciar o processamento dos cortes: {e}",
+                )
 
-    else: # GET request
+    else:  # GET request
         form = CortesYouTubeForm()
 
     context = {
-        'form': form,
-        'videos_restantes': (limite_videos_mes - videos_criados) if videos_criados is not None and limite_videos_mes is not None else 'Ilimitado',
+        "form": form,
+        "videos_restantes": (
+            (limite_videos_mes - videos_criados)
+            if videos_criados is not None and limite_videos_mes is not None
+            else "Ilimitado"
+        ),
     }
-    return render(request, 'core/cortes_youtube.html', context)
+    return render(request, "core/cortes_youtube.html", context)
