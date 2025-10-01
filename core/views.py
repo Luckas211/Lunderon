@@ -2399,21 +2399,15 @@ def process_video_task(request):
 
 def enqueue_video_task(task_name, *args, **kwargs):
     """
-    Enqueues a video processing task to Google Cloud Tasks or runs it locally.
+    Enqueues a video processing task to Google Cloud Tasks or runs it synchronously in DEBUG mode.
     """
     if settings.DEBUG:
-        print(f"DEBUG MODE: Running task '{task_name}' in a background thread.")
-        import threading
-
-        target_func = None
+        print(f"DEBUG MODE: Running task '{task_name}' synchronously in the foreground.")
+        
         if task_name == "processar_geracao_video":
-            target_func = processar_geracao_video
+            processar_geracao_video(*args, **kwargs)
         elif task_name == "processar_corte_youtube":
-            target_func = processar_corte_youtube
-
-        if target_func:
-            thread = threading.Thread(target=target_func, args=args, kwargs=kwargs)
-            thread.start()
+            processar_corte_youtube(*args, **kwargs)
         else:
             print(f"DEBUG ERROR: Unknown task name '{task_name}'")
         return
