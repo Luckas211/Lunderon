@@ -111,7 +111,10 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 # Usa o backend personalizado para servir arquivos estáticos do R2 em produção.
-STATICFILES_STORAGE = 'core.storage.StaticStorage'
+if DEBUG:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'core.storage.StaticStorage'
 
 # --- Configurações de Autenticação ---
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
