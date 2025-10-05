@@ -1,6 +1,7 @@
 # ==============================================================================
 # IMPORTS ORGANIZADOS
 # ==============================================================================
+from .tasks import task_processar_geracao_video, task_processar_corte_youtube # <-- Importe as novas tarefas Celery
 from .transcription_utils import get_word_timestamps
 from django.utils.safestring import mark_safe
 from .utils import send_verification_email, is_token_valid
@@ -2334,131 +2335,12 @@ def processar_corte_youtube(
                     print(f"Erro ao remover arquivo temporário {path}: {err}")
 
 
-# ==============================================================================
-# ASYNCHRONOUS TASK HANDLING (Cloud Tasks)
-# ==============================================================================
-
-
-@csrf_exempt
-@require_POST
-def process_video_task(request):
-    """
-    Worker view that receives tasks from Google Cloud Tasks and executes them.
-    This endpoint is intended to be called only by Cloud Tasks.
-    """
-    if not settings.DEBUG:
-        # --- INÍCIO DA VERIFICAÇÃO OIDC ---
-        auth_header = request.headers.get("Authorization")
-        if not auth_header:
-            print("AVISO: Cabeçalho de autorização ausente.")
-            return HttpResponse("Unauthorized", status=401)
-
-        try:
-            token = auth_header.split(" ")[1]
-            # A URL do público (audience) deve ser a URL completa do seu serviço do Cloud Run
-            audience = os.environ.get("CLOUD_RUN_URL")
-            if not audience:
-                print("ERRO: A variável de ambiente CLOUD_RUN_URL não está definida.")
-                return HttpResponse("Internal Server Error", status=500)
-
-            # Valida o token
-            id_token.verify_oauth2_token(token, google_requests.Request(), audience)
-            # Se a verificação for bem-sucedida, o código continua
-
-        except (ValueError, IndexError, id_token.InvalidValueerror) as e:
-            # Se o token for inválido, retorna um erro de não autorizado
-            print(f"ERRO: Falha na verificação do token OIDC: {e}")
-            return HttpResponse("Unauthorized", status=401)
-        # --- FIM DA VERIFICAÇÃO OIDC ---
-
-    try:
-        payload = json.loads(request.body.decode())
-        task_name = payload.get("task_name")
-        args = payload.get("args", [])
-        kwargs = payload.get("kwargs", {})
-
-        print(f"INFO: Received task '{task_name}'")
-
-        if task_name == "processar_geracao_video":
-            processar_geracao_video(*args, **kwargs)
-        elif task_name == "processar_corte_youtube":
-            processar_corte_youtube(*args, **kwargs)
-        else:
-            print(f"ERROR: Unknown task name '{task_name}'")
-            return HttpResponse(f"Unknown task: {task_name}", status=400)
-
-        return HttpResponse("Task processed successfully.", status=200)
-
-    except json.JSONDecodeError:
-        print("ERROR: Invalid JSON in task payload.")
-        return HttpResponse("Invalid JSON payload", status=400)
-    except Exception as e:
-        print(f"ERROR: Unhandled exception processing task: {e}")
-        return HttpResponse(f"Error processing task: {e}", status=500)
-
-
-def enqueue_video_task(task_name, *args, **kwargs):
-    """
-    Enqueues a video processing task to Google Cloud Tasks or runs it synchronously in DEBUG mode.
-    """
-    if settings.DEBUG:
-        print(f"DEBUG MODE: Running task '{task_name}' synchronously in the foreground.")
-        
-        if task_name == "processar_geracao_video":
-            processar_geracao_video(*args, **kwargs)
-        elif task_name == "processar_corte_youtube":
-            processar_corte_youtube(*args, **kwargs)
-        else:
-            print(f"DEBUG ERROR: Unknown task name '{task_name}'")
-        return
-
-    if not tasks_v2:
-        raise ImportError(
-            "Google Cloud Tasks library is not installed. Cannot enqueue tasks."
-        )
-
-    try:
-        client = tasks_v2.CloudTasksClient()
-
-        project = settings.GOOGLE_CLOUD_PROJECT
-        queue = settings.GOOGLE_CLOUD_TASKS_QUEUE
-        location = settings.GOOGLE_CLOUD_REGION
-        url = settings.CLOUD_RUN_URL + reverse("process_video_task")
-
-        parent = client.queue_path(project, location, queue)
-
-        payload = {
-            "task_name": task_name,
-            "args": args,
-            "kwargs": kwargs,
-        }
-
-        task = {
-            "http_request": {
-                "http_method": tasks_v2.HttpMethod.POST,
-                "url": url,
-                "headers": {"Content-type": "application/json"},
-                "body": json.dumps(payload).encode(),
-            },
-            "dispatch_deadline": duration_pb2.Duration(seconds=3600),
-        }
-
-        client.create_task(parent=parent, task=task)
-        print(f"INFO: Task '{task_name}' enqueued successfully to queue '{queue}'.")
-
-    except Exception as e:
-        print(f"FATAL: Could not enqueue task. Error: {e}")
-        raise
 
 
 @login_required
 def pagina_gerador(request):
     from .forms import GeradorForm
 
-    """
-    Página para gerar um novo vídeo.
-    Refatorado para usar processamento em segundo plano e evitar timeouts.
-    """
     videos_criados, limite_videos, assinatura = _get_user_video_usage(request.user)
 
     if not assinatura or assinatura.status != "ativo":
@@ -2476,26 +2358,22 @@ def pagina_gerador(request):
         if form.is_valid():
             data = form.cleaned_data
 
-            # --- INÍCIO DA VALIDAÇÃO DE LIMITE DE CARACTERES ---
+            # --- VALIDAÇÃO DE LIMITE DE CARACTERES (permanece igual) ---
             narrador_texto = data.get("narrador_texto", "")
-            if narrador_texto:  # Só valida se houver texto de narração
-                # O valor vem como string do formulário, ex: '85', '100', '115'
+            if narrador_texto:
                 velocidade_str = data.get("narrador_velocidade", "100")
-
-                # Converte para int para a lógica de comparação e para passar para a função de áudio
                 try:
                     velocidade = int(velocidade_str)
                 except (ValueError, TypeError):
-                    velocidade = 100  # Fallback seguro
+                    velocidade = 100
 
-                # Define os limites de caracteres com base na velocidade
-                if velocidade <= 85:  # Lenta
+                if velocidade <= 85:
                     limite_chars = 2000
                     nome_velocidade = "lenta"
-                elif velocidade <= 100:  # Normal
+                elif velocidade <= 100:
                     limite_chars = 2600
                     nome_velocidade = "normal"
-                else:  # Rápida (maior que 100)
+                else:
                     limite_chars = 3200
                     nome_velocidade = "rápida"
 
@@ -2504,15 +2382,14 @@ def pagina_gerador(request):
                         request,
                         f"O texto da narração excedeu o limite de {limite_chars} caracteres para a velocidade {nome_velocidade}. Por favor, reduza o texto.",
                     )
-                    # Re-renderiza a página com os dados do formulário e a mensagem de erro
                     context = {
                         "form": form,
                         "videos_restantes": limite_videos - videos_criados,
                         "limite_videos_mes": limite_videos,
                     }
                     return render(request, "core/gerador.html", context)
-            # --- FIM DA VALIDAÇÃO ---
-
+            
+            # --- UPLOAD DE VÍDEO (permanece igual) ---
             video_upload = data.get("video_upload")
             if video_upload:
                 try:
@@ -2551,22 +2428,28 @@ def pagina_gerador(request):
             )
 
             try:
-                enqueue_video_task(
-                    "processar_geracao_video",
+                # ==========================================================
+                # ALTERAÇÃO PRINCIPAL AQUI
+                # Trocamos o `enqueue_video_task` pela chamada da tarefa Celery
+                # ==========================================================
+                task_processar_geracao_video.delay(
                     video_gerado.id,
                     data,
                     request.user.id,
                     assinatura.id if assinatura else None,
                 )
+                
                 messages.success(
                     request,
                     "Seu vídeo começou a ser processado! Ele aparecerá em 'Meus Vídeos' em breve.",
                 )
                 return redirect("meus_videos")
+                
             except Exception as e:
                 video_gerado.status = "ERRO"
+                video_gerado.mensagem_erro = "Falha ao enfileirar a tarefa."
                 video_gerado.save()
-                print(f"ERROR: Failed to enqueue video generation task. {e}")
+                print(f"ERROR: Falha ao enfileirar a tarefa de geração de vídeo. {e}")
                 messages.error(
                     request,
                     "Ocorreu um erro ao enviar seu vídeo para processamento. Por favor, tente novamente.",
@@ -2613,14 +2496,13 @@ def cortes_youtube_view(request):
             youtube_url = data["youtube_url"]
             selected_segments = json.loads(data["segments"])
 
-            # --- INÍCIO DA VALIDAÇÃO DE DURAÇÃO DO CORTE ---
+            # --- VALIDAÇÃO DE DURAÇÃO (permanece igual) ---
             for segment in selected_segments:
                 if segment.get("duration", 0) > 180:
                     messages.error(
                         request,
-                        f"O corte que começa em {segment['start']:.0f}s tem duração maior que 3 minutos e não pode ser processado. Por favor, desmarque-o e tente novamente.",
+                        f"O corte que começa em {segment['start']:.0f}s tem duração maior que 3 minutos e não pode ser processado.",
                     )
-                    # Recarrega a página mantendo o estado do formulário
                     form = CortesYouTubeForm(initial=data)
                     return render(
                         request,
@@ -2635,8 +2517,8 @@ def cortes_youtube_view(request):
                             ),
                         },
                     )
-            # --- FIM DA VALIDAÇÃO ---
-
+            
+            # --- VALIDAÇÃO DE LIMITE DE VÍDEOS (permanece igual) ---
             if (
                 limite_videos_mes is not None
                 and (videos_criados + len(selected_segments)) > limite_videos_mes
@@ -2679,9 +2561,12 @@ def cortes_youtube_view(request):
                         narrador_texto=f"Corte do vídeo: {youtube_url}",
                         texto_overlay=f"Início: {segment['start']}s",
                     )
-
-                    enqueue_video_task(
-                        "processar_corte_youtube",
+                    
+                    # ==========================================================
+                    # ALTERAÇÃO PRINCIPAL AQUI
+                    # Trocamos o `enqueue_video_task` pela chamada da tarefa Celery
+                    # ==========================================================
+                    task_processar_corte_youtube.delay(
                         video_gerado.id,
                         youtube_url,
                         segment,
