@@ -552,13 +552,19 @@ def processar_geracao_video(
 
             if not video_base:
                 # Fallback: se nenhum ID foi fornecido ou se o vídeo escolhido não for válido, seleciona um aleatório
-                video_base = get_valid_media_from_category(
-                    VideoBase, data["categoria_video"]
-                )
+                categoria_video_id = data.get("categoria_video")
+                if categoria_video_id:
+                    try:
+                        categoria_video = CategoriaVideo.objects.get(id=categoria_video_id)
+                        video_base = get_valid_media_from_category(
+                            VideoBase, categoria_video
+                        )
+                    except CategoriaVideo.DoesNotExist:
+                        raise Exception(f"Categoria de vídeo com ID {categoria_video_id} não encontrada.")
 
             if not video_base:
                 raise Exception(
-                    f"Não foi possível encontrar um vídeo de fundo válido para a categoria '{data['categoria_video']}'."
+                    f"Não foi possível encontrar um vídeo de fundo válido para a categoria."
                 )
 
             caminho_video_input = download_from_cloudflare(
@@ -584,12 +590,20 @@ def processar_geracao_video(
             )
             caminhos_para_limpar.append(caminho_imagem_texto)
 
-        musica_base = get_valid_media_from_category(
-            MusicaBase, data["categoria_musica"]
-        )
+        categoria_musica_id = data.get("categoria_musica")
+        musica_base = None
+        if categoria_musica_id:
+            try:
+                categoria_musica = CategoriaMusica.objects.get(id=categoria_musica_id)
+                musica_base = get_valid_media_from_category(
+                    MusicaBase, categoria_musica
+                )
+            except CategoriaMusica.DoesNotExist:
+                raise Exception(f"Categoria de música com ID {categoria_musica_id} não encontrada.")
+
         if not musica_base:
             raise Exception(
-                f"Não foi possível encontrar uma música para a categoria '{data['categoria_musica']}'."
+                f"Não foi possível encontrar uma música para a categoria."
             )
         caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
         caminhos_para_limpar.append(caminho_musica_input)
@@ -2428,6 +2442,12 @@ def pagina_gerador(request):
             )
 
             try:
+                # Convert model objects to IDs for Celery serialization
+                if data.get("categoria_video"):
+                    data["categoria_video"] = data["categoria_video"].id
+                if data.get("categoria_musica"):
+                    data["categoria_musica"] = data["categoria_musica"].id
+                
                 # ==========================================================
                 # ALTERAÇÃO PRINCIPAL AQUI
                 # Trocamos o `enqueue_video_task` pela chamada da tarefa Celery
