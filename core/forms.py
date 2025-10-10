@@ -191,7 +191,7 @@ class GeradorForm(forms.Form):
 
     # 2. CONTEÚDO E ESTILO DO TEXTO
     texto_overlay = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 4}),
+        widget=forms.Textarea(attrs={'rows': 4, 'maxlength': '250'}),
         required=False,
         label="Texto Estático"
     )
@@ -226,10 +226,10 @@ class GeradorForm(forms.Form):
         required=False,
         label="Tipo de Letra"
     )
-    texto_tamanho = forms.IntegerField(
-        min_value=20,
-        max_value=100,
-        initial=70,
+    texto_tamanho = forms.TypedChoiceField(
+        choices=[(10, '10'), (20, '20'), (30, '30'), (35, '35')],
+        coerce=int,
+        initial=20,
         required=False,
         label="Tamanho da Letra"
     )
@@ -271,19 +271,17 @@ class GeradorForm(forms.Form):
     video_base_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     categoria_musica = forms.ModelChoiceField(
         queryset=CategoriaMusica.objects.all(),
-        label="Categoria da Música",
-        required=False
     )
     video_upload = forms.FileField(
         label="Upload do Vídeo do Produto",
         required=False,
         help_text="Selecione um vídeo local do seu produto (MP4, AVI, MOV, etc.)"
     )
-    volume_musica = forms.IntegerField(
-        min_value=0,
-        max_value=100,
+    volume_musica = forms.TypedChoiceField(
+        choices=[(0, 'Sem Som'), (25, 'Baixo'), (50, 'Médio'), (75, 'Alto'), (100, 'Máximo')],
+        coerce=int,
         initial=50,
-        label="Volume da Música (%)",
+        label="Volume da Música",
     )
     loop_video = forms.BooleanField(
         required=False,
@@ -315,22 +313,28 @@ class GeradorForm(forms.Form):
         video_upload = cleaned_data.get('video_upload')
         texto_overlay = cleaned_data.get('texto_overlay')
         narrador_texto = cleaned_data.get('narrador_texto')
+        volume_musica = cleaned_data.get('volume_musica')
+        categoria_musica = cleaned_data.get('categoria_musica')
+
+        # Se o volume da música for maior que 0, a categoria da música é obrigatória
+        if volume_musica and volume_musica > 0 and not categoria_musica:
+            self.add_error('categoria_musica', "Para adicionar música, você deve selecionar uma categoria de música.")
 
         if tipo_conteudo == 'vendedor':
             if not video_upload:
-                raise forms.ValidationError("Para o tipo 'Vendedor', você deve fazer upload de um vídeo.")
+                self.add_error('video_upload', "Para o tipo 'Vendedor', você deve fazer upload de um vídeo.")
             if not narrador_texto:
-                raise forms.ValidationError("Para o tipo 'Vendedor', o texto para narração é obrigatório.")
+                self.add_error('narrador_texto', "Para o tipo 'Vendedor', o texto para narração é obrigatório.")
         elif tipo_conteudo == 'narrador':
             if not categoria_video:
-                raise forms.ValidationError("Para o tipo 'Narração', você deve selecionar uma categoria de vídeo.")
+                self.add_error('categoria_video', "Para o tipo 'Narração', você deve selecionar uma categoria de vídeo.")
             if not narrador_texto:
-                raise forms.ValidationError("Para o tipo 'Narração', o texto para narração é obrigatório.")
+                self.add_error('narrador_texto', "Para o tipo 'Narração', o texto para narração é obrigatório.")
         elif tipo_conteudo == 'texto':
             if not categoria_video:
-                raise forms.ValidationError("Para o tipo 'Texto Estático', você deve selecionar uma categoria de vídeo.")
+                self.add_error('categoria_video', "Para o tipo 'Texto Estático', você deve selecionar uma categoria de vídeo.")
             if not texto_overlay:
-                raise forms.ValidationError("Para o tipo 'Texto Estático', o texto é obrigatório.")
+                self.add_error('texto_overlay', "Para o tipo 'Texto Estático', o texto é obrigatório.")
 
         return cleaned_data
 
@@ -354,8 +358,8 @@ class CortesYouTubeForm(forms.Form):
     volume_musica = forms.IntegerField(
         min_value=0,
         max_value=100,
-        initial=20, # Começa com um volume mais baixo por padrão
-        label="Volume da Música de Fundo (%)",
+        initial=20,
+        label="Volume da Música de Fundo",
         help_text="Ajuste o volume da música para não sobrepor o áudio original do vídeo."
     )
     gerar_legendas = forms.BooleanField(

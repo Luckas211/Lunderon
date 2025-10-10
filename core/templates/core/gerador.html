@@ -76,7 +76,14 @@
                     <div class="form-step" data-step-content="1">
                          <div class="secao-conteudo" data-content-type="texto">
                             <div class="step-header"><h3><i class="fas fa-paragraph"></i> Conteúdo do Texto Estático</h3></div>
-                            <div class="form-field" id="field-texto-overlay">{{ form.texto_overlay.label_tag }} {{ form.texto_overlay }}</div>
+                                                        <div class="form-field" id="field-texto-overlay">{{ form.texto_overlay.label_tag }} {{ form.texto_overlay }}
+                                <div id="texto-overlay-info-box" class="info-box" style="margin-top: 10px;">
+                                    <div class="info-box-line">
+                                        <i class="fas fa-keyboard"></i>
+                                        <span>Contagem: <strong id="current-chars-overlay">0</strong> / <strong>250</strong> caracteres</span>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="form-field" id="field-duracao-segundos">{{ form.duracao_segundos.label_tag }} {{ form.duracao_segundos }} <div class="field-tip">{{ form.duracao_segundos.help_text }}</div></div>
                         </div>
                         <div class="secao-conteudo" data-content-type="narrador,vendedor">
@@ -234,7 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
         posicaoTexto: form.querySelectorAll('input[name="posicao_texto"]'),
         corDaFonte: form.querySelector('select[name="cor_da_fonte"]'),
         textoFonte: form.querySelector('select[name="texto_fonte"]'),
-        textoTamanho: form.querySelector('input[name="texto_tamanho"]'),
+        textoTamanho: form.querySelector('select[name="texto_tamanho"]'),
         textoNegrito: form.querySelector('input[name="texto_negrito"]'),
         textoSublinhado: form.querySelector('input[name="texto_sublinhado"]'),
         categoriaVideo: form.querySelector('select[name="categoria_video"]'),
@@ -317,12 +324,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         const item = document.createElement('div');
                         item.classList.add('video-gallery-item');
                         item.dataset.videoId = video.id;
-                        item.dataset.videoUrl = video.url;
+                        item.dataset.videoUrl = video.url; // Store URL in dataset
 
                         const videoThumb = document.createElement('video');
-                        videoThumb.src = video.url + '#t=0.5';
+                        videoThumb.src = video.url;
                         videoThumb.preload = 'metadata';
                         videoThumb.muted = true;
+                        videoThumb.playsInline = true;
 
                         const title = document.createElement('div');
                         title.classList.add('video-title');
@@ -335,9 +343,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         item.addEventListener('click', () => {
                             document.querySelectorAll('.video-gallery-item.selected').forEach(el => el.classList.remove('selected'));
                             item.classList.add('selected');
-                            inputs.videoBaseId.value = video.id;
+                            inputs.videoBaseId.value = item.dataset.videoId;
                             
-                            videoUrl = video.url;
+                            const videoUrl = item.dataset.videoUrl; // Retrieve URL from dataset
                             if (videoUrl) {
                                 previewPlaceholder.classList.add('hidden');
                                 videoElement.src = videoUrl;
@@ -383,6 +391,21 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    const textoOverlayInput = inputs.textoOverlay;
+    const currentCharSpanOverlay = document.getElementById('current-chars-overlay');
+
+    if (textoOverlayInput && currentCharSpanOverlay) {
+        textoOverlayInput.addEventListener('input', () => {
+            const currentLength = textoOverlayInput.value.length;
+            currentCharSpanOverlay.textContent = currentLength;
+            if (currentLength > 250) {
+                document.getElementById('texto-overlay-info-box').classList.add('limit-exceeded');
+            } else {
+                document.getElementById('texto-overlay-info-box').classList.remove('limit-exceeded');
+            }
+        });
+    }
 
     inputs.categoriaVideo.addEventListener('change', updatePreviewVideo);
     inputs.videoUpload.addEventListener('change', updatePreviewVideo);
@@ -590,7 +613,6 @@ document.addEventListener('DOMContentLoaded', function() {
         uploadTextLabel.textContent = this.files.length > 0 ? this.files[0].name : 'Clique para escolher um vídeo';
     });
 
-    // --- INICIALIZAÇÃO ---
     const checkedRadio = form.querySelector('input[name="tipo_conteudo"]:checked') || inputs.tipoConteudo[0];
     if (checkedRadio) {
         checkedRadio.checked = true;

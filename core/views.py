@@ -241,6 +241,27 @@ FONT_PATHS = {
 }
 
 
+def wrap_text_by_width(text, font, max_width, draw):
+    """Wraps text to fit within a specified width, using the draw object."""
+    lines = []
+    if not text:
+        return ""
+
+    words = text.split(' ')
+    
+    if not words:
+        return ""
+
+    current_line = words[0]
+    for word in words[1:]:
+        if draw.textbbox((0, 0), current_line + " " + word, font=font)[2] <= max_width:
+            current_line += " " + word
+        else:
+            lines.append(current_line)
+            current_line = word
+    lines.append(current_line)
+    return "\n".join(lines)
+
 def create_text_image(texto, cor_da_fonte_hex, data, posicao="centro"):
     target_size = (1080, 1920)
     w, h = target_size
@@ -252,48 +273,65 @@ def create_text_image(texto, cor_da_fonte_hex, data, posicao="centro"):
     if not caminho_da_fonte:
         print(f"AVISO: Fonte '{nome_fonte}' não encontrada. Usando Cunia como padrão.")
         caminho_da_fonte = FONT_PATHS["Windows"]["cunia"]
-    tamanho_fonte = data.get("texto_tamanho", 70)
-    try:
-        if data.get("texto_negrito", False) and nome_fonte == "arial":
-            caminho_da_fonte = FONT_PATHS.get(sistema_op, {}).get(
-                "arialbd", caminho_da_fonte
-            )
-        font = ImageFont.truetype(caminho_da_fonte, size=tamanho_fonte)
-    except Exception as e:
-        print(
-            f"AVISO: Fonte '{caminho_da_fonte}' não pôde ser carregada: {e}. Usando fonte padrão."
-        )
-        font = ImageFont.load_default(size=tamanho_fonte)
 
-    texto_quebrado = textwrap.fill(texto, width=30)
+    # --- LÓGICA DE DELIMITAÇÃO DE TEXTO ---
+    try:
+        tamanho_fonte_inicial = int(data.get("texto_tamanho", 35))
+    except (ValueError, TypeError):
+        tamanho_fonte_inicial = 35
+
+    tamanho_fonte = tamanho_fonte_inicial
+    max_text_width = w * 0.9  # 90% da largura
+    max_text_height = h * 0.4 # 40% da altura
+    min_font_size = 35
+
+    while tamanho_fonte >= min_font_size:
+        try:
+            if data.get("texto_negrito", False) and nome_fonte == "arial":
+                caminho_da_fonte_atual = FONT_PATHS.get(sistema_op, {}).get("arialbd", caminho_da_fonte)
+            else:
+                caminho_da_fonte_atual = caminho_da_fonte
+            font = ImageFont.truetype(caminho_da_fonte_atual, size=tamanho_fonte)
+        except Exception as e:
+            print(f"AVISO: Fonte '{caminho_da_fonte_atual}' não pôde ser carregada: {e}. Usando fonte padrão.")
+            font = ImageFont.load_default(size=tamanho_fonte)
+
+        temp_img = Image.new("RGBA", (w, h))
+        temp_draw = ImageDraw.Draw(temp_img)
+        
+        texto_quebrado = wrap_text_by_width(texto, font, max_text_width, temp_draw)
+        
+        bbox = temp_draw.textbbox((0, 0), texto_quebrado, font=font, align="center", spacing=15)
+        text_h = bbox[3] - bbox[2]
+
+        if text_h <= max_text_height:
+            # O texto cabe, podemos parar
+            break
+        
+        # O texto não cabe, reduz o tamanho da fonte e tenta de novo
+        tamanho_fonte -= 2
+    # --- FIM DA LÓGICA DE DELIMITAÇÃO ---
+
+    # Agora, desenha a imagem final com o tamanho de fonte calculado
     img = Image.new("RGBA", target_size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
+    
     espacamento_entre_linhas = 15
-
-    bbox = draw.textbbox(
-        (0, 0),
-        texto_quebrado,
-        font=font,
-        align="center",
-        spacing=espacamento_entre_linhas,
-    )
-    text_w, text_h = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    final_bbox = draw.textbbox((0, 0), texto_quebrado, font=font, align="center", spacing=espacamento_entre_linhas)
+    text_w, text_h = final_bbox[2] - final_bbox[0], final_bbox[3] - final_bbox[1] 
 
     x = (w - text_w) / 2
     if posicao == "inferior":
-        y = h - text_h - (h * 0.15)
-    else:
+        y = h - text_h - 170
+    else: # centro
         y = (h - text_h) / 2
 
-    cor_rgba = cor_da_fonte_hex
-
-    # Tenta converter a cor hexadecimal para uma tupla RGBA; usa branco em caso de erro.
     try:
         hex_limpo = cor_da_fonte_hex.lstrip("#")
         r, g, b = tuple(int(hex_limpo[i : i + 2], 16) for i in (0, 2, 4))
-        cor_rgba = (r, g, b, 255)  # Adiciona canal alfa para opacidade total
+        cor_rgba = (r, g, b, 255)
     except (ValueError, IndexError, TypeError):
-        cor_rgba = (255, 255, 255, 255)  # Fallback para branco opaco
+        cor_rgba = (255, 255, 255, 255)
 
     draw.text(
         (x + 2, y + 2),
@@ -314,9 +352,7 @@ def create_text_image(texto, cor_da_fonte_hex, data, posicao="centro"):
 
     if data.get("texto_sublinhado", False):
         num_linhas = len(texto_quebrado.split("\n"))
-        altura_total_texto_sem_espaco = text_h - (
-            espacamento_entre_linhas * (num_linhas - 1)
-        )
+        altura_total_texto_sem_espaco = text_h - (espacamento_entre_linhas * (num_linhas - 1))
         altura_linha_unica = altura_total_texto_sem_espaco / num_linhas
         for i, linha_texto in enumerate(texto_quebrado.split("\n")):
             linha_y = y + (i * (altura_linha_unica + espacamento_entre_linhas))
@@ -370,9 +406,7 @@ def preview_voz(request, nome_da_voz):
         # Retornar o arquivo de áudio
         with open(caminho_audio, "rb") as audio_file:
             response = HttpResponse(audio_file.read(), content_type="audio/wav")
-            response["Content-Disposition"] = (
-                f'attachment; filename="preview_{nome_da_voz}.wav"'
-            )
+            response["Content-Disposition"] = f'attachment; filename="preview_{nome_da_voz}.wav"'
 
             # Limpeza do arquivo temporário após o envio
             def cleanup():
@@ -590,27 +624,29 @@ def processar_geracao_video(
             )
             caminhos_para_limpar.append(caminho_imagem_texto)
 
+        # --- LÓGICA DE MÚSICA DE FUNDO (OPCIONAL) ---
+        caminho_musica_input = None
+        volume_musica = data.get("volume_musica", 50)
         categoria_musica_id = data.get("categoria_musica")
-        musica_base = None
-        if categoria_musica_id:
+
+        # A música só é processada se um volume maior que zero E uma categoria forem fornecidos
+        if volume_musica > 0 and categoria_musica_id:
             try:
                 categoria_musica = CategoriaMusica.objects.get(id=categoria_musica_id)
                 musica_base = get_valid_media_from_category(
                     MusicaBase, categoria_musica
                 )
+                if musica_base:
+                    caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
+                    caminhos_para_limpar.append(caminho_musica_input)
+                else:
+                    print(f"AVISO: Nenhuma música válida encontrada para a categoria {categoria_musica}. O vídeo será gerado sem música.")
             except CategoriaMusica.DoesNotExist:
-                raise Exception(f"Categoria de música com ID {categoria_musica_id} não encontrada.")
+                print(f"AVISO: Categoria de música com ID {categoria_musica_id} não encontrada. O vídeo será gerado sem música.")
 
-        if not musica_base:
+        if not caminho_video_input:
             raise Exception(
-                f"Não foi possível encontrar uma música para a categoria."
-            )
-        caminho_musica_input = download_from_cloudflare(musica_base.object_key, ".mp3")
-        caminhos_para_limpar.append(caminho_musica_input)
-
-        if not caminho_video_input or not caminho_musica_input:
-            raise Exception(
-                "Erro ao obter os arquivos de mídia necessários para a geração."
+                "Erro ao obter o arquivo de vídeo de fundo necessário para a geração."
             )
 
         with tempfile.NamedTemporaryFile(delete=False, suffix="_temp.mp4") as temp_f:
@@ -623,38 +659,39 @@ def processar_geracao_video(
         else:
             cmd.extend(["-i", caminho_video_input])
 
-        inputs_adicionais = [caminho_musica_input]
+        # --- LÓGICA CONDICIONAL PARA INPUTS ---
+        # A música só é adicionada se o caminho existir
+        if caminho_musica_input:
+            inputs_adicionais = [caminho_musica_input]
+        else:
+            inputs_adicionais = []
+
         if caminho_imagem_texto:
             inputs_adicionais.insert(0, caminho_imagem_texto)
         if caminho_narrador_input:
             inputs_adicionais.append(caminho_narrador_input)
+        
         for f in inputs_adicionais:
-            cmd.extend(["-i", f])
+            if f: # Garante que não adicionemos inputs nulos
+                cmd.extend(["-i", f])
 
         video_chain_parts = []
         current_stream = "[0:v]"
         video_chain_parts.append(
-            f"{current_stream}scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1[v_scaled]"
+            f"{current_stream}scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:-1:-1,setsar=1[v_scaled]"
         )
         current_stream = "[v_scaled]"
 
         if caminho_legenda_ass:
             if platform.system() == "Windows":
-                # On Windows, escape the colon and use forward slashes
-                caminho_legenda_ffmpeg = caminho_legenda_ass.replace("\\", "/").replace(
-                    ":", "\\:"
-                )
-                caminho_fontes_projeto_ffmpeg = (
-                    os.path.join(settings.BASE_DIR, "core", "static", "fonts")
+                caminho_legenda_ffmpeg = caminho_legenda_ass.replace("\\", "/").replace(":", "\\:")
+                caminho_fontes_projeto_ffmpeg = ( os.path.join(settings.BASE_DIR, "core", "static", "fonts")
                     .replace("\\", "/")
                     .replace(":", "\\")
                 )
             else:
-                # On Linux/macOS, paths are simpler
                 caminho_legenda_ffmpeg = caminho_legenda_ass
-                caminho_fontes_projeto_ffmpeg = os.path.join(
-                    settings.BASE_DIR, "core", "static", "fonts"
-                )
+                caminho_fontes_projeto_ffmpeg = os.path.join(settings.BASE_DIR, "core", "static", "fonts")
 
             video_chain_parts.append(
                 f"{current_stream}ass=filename='{caminho_legenda_ffmpeg}':fontsdir='{caminho_fontes_projeto_ffmpeg}'[v_subtitled]"
@@ -678,39 +715,68 @@ def processar_geracao_video(
             )
             current_stream = "[v_watermarked]"
 
+        # O overlay da imagem de texto é o próximo passo na cadeia
+        video_input_offset = 1 # Começa em 1 porque 0 é o vídeo base
         if caminho_imagem_texto:
             video_chain_parts.append(
-                f"{current_stream}[1:v]overlay=(W-w)/2:(H-h)/2[final_v]"
+                f"{current_stream}[{video_input_offset}:v]overlay=(W-w)/2:(H-h)/2[final_v]"
             )
             final_video_stream = "[final_v]"
+            video_input_offset += 1 # Incrementa para o próximo input
         else:
             video_chain_parts.append(f"{current_stream}copy[final_v]")
             final_video_stream = "[final_v]"
 
-        video_chain = ";".join(video_chain_parts)
-        volume_musica_decimal = data.get("volume_musica", 50) / 100.0
-        music_input_index = 1 + (1 if caminho_imagem_texto else 0)
+        # --- LÓGICA CONDICIONAL PARA ÁUDIO ---
+        audio_chain_parts = []
+        final_audio_stream = None
 
+        # Mapeia os inputs de áudio dinamicamente
+        music_input_index = -1
+        narrator_input_index = -1
+
+        current_audio_input_index = video_input_offset
+        if caminho_musica_input:
+            music_input_index = current_audio_input_index
+            current_audio_input_index += 1
         if caminho_narrador_input:
-            narrator_input_index = music_input_index + 1
-            audio_chain = (
-                f"[{music_input_index}:a]loudnorm[musica_norm];[{narrator_input_index}:a]loudnorm[narrador_norm];"
-                + f"[musica_norm]volume={volume_musica_decimal}[musica_final];[narrador_norm]volume=1.0[narrador_final];"
-                + f"[musica_final][narrador_final]amix=inputs=2:duration=longest[aout]"
-            )
-        else:
-            audio_chain = f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]"
+            narrator_input_index = current_audio_input_index
 
-        cmd.extend(
-            [
-                "-filter_complex",
-                f"{video_chain};{audio_chain}",
-                "-map",
-                final_video_stream,
-                "-map",
-                "[aout]",
-            ]
-        )
+        # Constrói a cadeia de filtros de áudio
+        if music_input_index != -1 and narrator_input_index != -1:
+            # Caso 1: Música e Narração
+            volume_musica_decimal = data.get("volume_musica", 50) / 100.0
+            audio_chain_parts.append(f"[{music_input_index}:a]loudnorm[musica_norm]")
+            audio_chain_parts.append(f"[{narrator_input_index}:a]loudnorm[narrador_norm]")
+            audio_chain_parts.append(f"[musica_norm]volume={volume_musica_decimal}[musica_final]")
+            audio_chain_parts.append(f"[narrador_norm]volume=1.0[narrador_final]")
+            audio_chain_parts.append(f"[musica_final][narrador_final]amix=inputs=2:duration=longest[aout]")
+            final_audio_stream = "[aout]"
+        elif music_input_index != -1:
+            # Caso 2: Apenas Música
+            volume_musica_decimal = data.get("volume_musica", 50) / 100.0
+            audio_chain_parts.append(f"[{music_input_index}:a]volume={volume_musica_decimal}[aout]")
+            final_audio_stream = "[aout]"
+        elif narrator_input_index != -1:
+            # Caso 3: Apenas Narração
+            audio_chain_parts.append(f"[{narrator_input_index}:a]loudnorm[aout]")
+            final_audio_stream = "[aout]"
+
+        # Monta o comando filter_complex
+        video_chain = ";".join(video_chain_parts)
+        if audio_chain_parts:
+            audio_chain = ";".join(audio_chain_parts)
+            cmd.extend(["-filter_complex", f"{video_chain};{audio_chain}"])
+        else:
+            cmd.extend(["-filter_complex", video_chain])
+
+        # Mapeia as saídas finais
+        cmd.extend(["-map", final_video_stream])
+        if final_audio_stream:
+            cmd.extend(["-map", final_audio_stream])
+        else:
+            # Se não houver áudio, impede que o ffmpeg pegue o áudio do vídeo original
+            cmd.extend(["-an"])
         cmd.extend(
             [
                 "-c:v",
@@ -819,7 +885,8 @@ def preview_video_base(request, categoria_id):
 
         if not presigned_url:
             return JsonResponse(
-                {"error": "Falha ao gerar a URL de pré-visualização."}, status=500
+                {"error": "Falha ao gerar a URL de pré-visualização."},
+                status=500,
             )
 
         return JsonResponse({"url": presigned_url})
@@ -926,7 +993,6 @@ def gerar_legenda_karaoke_ass(
     try:
         hex_limpo = cor_da_fonte_hex.lstrip("#")
         r, g, b = tuple(int(hex_limpo[i : i + 2], 16) for i in (0, 2, 4))
-        # 👇 CORREÇÃO AQUI: Alpha trocado de &HFF para &H00 para ficar opaco
         cor_primaria_ass = f"&H00{b:02X}{g:02X}{r:02X}"
     except (ValueError, IndexError):
         cor_primaria_ass = "&H00FFFFFF"  # Branco opaco como padrão
@@ -935,22 +1001,16 @@ def gerar_legenda_karaoke_ass(
     try:
         hex_limpo_destaque = cor_destaque_hex.lstrip("#")
         r_s, g_s, b_s = tuple(int(hex_limpo_destaque[i : i + 2], 16) for i in (0, 2, 4))
-        # 👇 CORREÇÃO AQUI: Alpha trocado de &HFF para &H00 para ficar opaco
         cor_secundaria_ass = f"&H00{b_s:02X}{g_s:02X}{r_s:02X}"
     except (ValueError, IndexError, TypeError):
         cor_secundaria_ass = "&H0000FFFF"  # Amarelo opaco como padrão
 
-    # Define as cores do efeito karaokê
-    # 👇 CORREÇÃO AQUI: Contorno também precisa ser opaco
-    cor_outline = "&H00000000"  # Contorno preto opaco
-    cor_back = (
-        "&H80000000"  # Sombra/Fundo semi-transparente (opcional, para melhor leitura)
-    )
+    cor_outline = "&H00000000"
+    cor_back = "&H80000000"
 
     alignment_code = 5 if posicao == "centro" else 2
     margin_v = 150 if posicao == "inferior" else 50
 
-    # Header do arquivo ASS com os estilos
     header = (
         f"[Script Info]\nTitle: Legenda Sincronizada com Precisão\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\n\n"
         f"[V4+ Styles]\n"
@@ -960,9 +1020,8 @@ def gerar_legenda_karaoke_ass(
     )
 
     dialogos = []
-    palavras_por_linha = 4  # Define quantas palavras aparecerão por linha na legenda
+    palavras_por_linha = 4
 
-    # Agrupa as palavras em linhas
     linhas = [
         word_timestamps[i : i + palavras_por_linha]
         for i in range(0, len(word_timestamps), palavras_por_linha)
@@ -975,19 +1034,16 @@ def gerar_legenda_karaoke_ass(
         start_time_linha = linha[0]["start"]
         end_time_linha = linha[-1]["end"]
 
-        # Cria a string de texto com as tags de tempo do karaokê
         texto_karaoke = ""
         for palavra in linha:
-            duracao_ms = int(
-                (palavra["end"] - palavra["start"]) * 100
-            )  # Duração da palavra em centissegundos
-            texto_karaoke += f"{'{k'}{duracao_ms}}}{palavra['word'].strip()} "
+            duracao_cs = int((palavra["end"] - palavra["start"]) * 100)
+            # CORREÇÃO: Formata a tag de karaoke para o padrão ASS {\k<duração>}
+            texto_karaoke += f"{{\k{duracao_cs}}}{palavra['word'].strip()} "
 
         dialogos.append(
             f"Dialogue: 0,{formatar_tempo_ass(start_time_linha)},{formatar_tempo_ass(end_time_linha)},Default,,0,0,0,,{texto_karaoke.strip()}"
         )
 
-    # Juntar tudo
     conteudo_ass = header + "\n".join(dialogos)
 
     with tempfile.NamedTemporaryFile(
@@ -1143,7 +1199,7 @@ def cadastre_se(request):
 
 
 def validate_otp_view(request):
-    #
+    # 
     # ATENÇÃO: Este é um código temporário para o site não quebrar.
     # Você precisa substituir este conteúdo pela sua lógica original
     # que valida o código OTP do usuário.
@@ -1530,8 +1586,8 @@ def planos(request):
         if not assinatura_ativa:
             # Caso de segurança se plano_ativo=True mas não há assinatura
             return redirect(
-                "planos"
-            )  # Redireciona para a mesma página para reavaliar a lógica abaixo
+                "planos"  # Redireciona para a mesma página para reavaliar a lógica abaixo
+            )
 
         uso_percentual = 0
         if limite_videos_mes > 0:
@@ -2160,12 +2216,14 @@ def get_youtube_most_replayed_segments(request):
 
     except requests.RequestException as e:
         return JsonResponse(
-            {"error": f"Erro ao buscar a URL do YouTube: {e}"}, status=500
+            {"error": f"Erro ao buscar a URL do YouTube: {e}"},
+            status=500,
         )
     except Exception as e:
         print(f"Erro em get_youtube_most_replayed_segments: {e}")
         return JsonResponse(
-            {"error": "Ocorreu um erro inesperado ao analisar o vídeo."}, status=500
+            {"error": "Ocorreu um erro inesperado ao analisar o vídeo."},
+            status=500,
         )
 
 
@@ -2372,7 +2430,17 @@ def pagina_gerador(request):
         if form.is_valid():
             data = form.cleaned_data
 
-            # --- VALIDAÇÃO DE LIMITE DE CARACTERES (permanece igual) ---
+            # --- VALIDAÇÃO DE LIMITE DE CARACTERES ---
+            texto_overlay = data.get("texto_overlay", "")
+            if texto_overlay and len(texto_overlay) > 250:
+                messages.error(request, "O texto estático não pode ter mais de 250 caracteres.")
+                context = {
+                    "form": form,
+                    "videos_restantes": limite_videos - videos_criados,
+                    "limite_videos_mes": limite_videos,
+                }
+                return render(request, "core/gerador.html", context)
+
             narrador_texto = data.get("narrador_texto", "")
             if narrador_texto:
                 velocidade_str = data.get("narrador_velocidade", "100")
@@ -2432,7 +2500,7 @@ def pagina_gerador(request):
                 posicao_texto=data.get("posicao_texto", "centro"),
                 cor_da_fonte=data.get("cor_da_fonte", "#FFFFFF"),
                 texto_fonte=data.get("texto_fonte", "arial"),
-                texto_tamanho=data.get("texto_tamanho", 50),
+                texto_tamanho=data.get("texto_tamanho", 20),
                 texto_negrito=data.get("texto_negrito", False),
                 texto_sublinhado=data.get("texto_sublinhado", False),
                 legenda_sincronizada=data.get("legenda_sincronizada", False),

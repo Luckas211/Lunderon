@@ -210,14 +210,14 @@
    ESTILOS DE FORMULÁRIO (Inputs, Selects, etc.)
    -------------------------------------------------------------------------- */
 .form-field {
-    margin-bottom: 20px;
+    margin-bottom: 20px; /* Aumentado para mais espaço */
 }
 
 .form-field label, .form-field .label {
     display: block;
     font-size: 14px;
     font-weight: 500;
-    margin-bottom: 8px;
+    margin-bottom: 10px; /* Aumentado */
     color: var(--cor-texto-principal);
 }
 
@@ -399,16 +399,23 @@
 /* --- Toggle Switch --- */
 .form-check-wrapper.large {
     display: flex;
-    align-items: center;
+    align-items: center; /* Centraliza verticalmente */
     justify-content: space-between;
     background-color: var(--cor-fundo-terciario);
-    padding: 12px;
+    padding: 16px; /* Aumenta o padding para mais respiro */
     border-radius: var(--raio-borda);
+    cursor: pointer; /* Adicionado para indicar que é clicável */
 }
 .form-check-wrapper input { display: none; }
 
+.form-check-info {
+    flex: 1; /* Permite que o texto ocupe o espaço */
+    margin-right: 16px; /* Espaço entre o texto e o toggle */
+}
+
 .form-check-info .form-check-title {
     font-weight: 500;
+    color: var(--cor-texto-principal);
 }
 .form-check-info .form-check-desc {
     font-size: 12px;
@@ -418,24 +425,26 @@
 }
 
 .toggle-switch {
-    width: 44px;
-    height: 24px;
+    width: 48px; /* Levemente maior */
+    height: 28px;
     background-color: var(--cor-borda);
-    border-radius: 12px;
+    border-radius: 14px;
     position: relative;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: background-color 0.3s ease;
+    flex-shrink: 0; /* Impede que o toggle encolha */
 }
 .toggle-switch::before {
     content: '';
     position: absolute;
-    top: 2px;
-    left: 2px;
+    top: 4px;
+    left: 4px;
     width: 20px;
     height: 20px;
     background-color: white;
     border-radius: 50%;
-    transition: transform 0.3s;
+    transition: transform 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
 }
 .form-check-wrapper input:checked ~ .toggle-switch {
     background-color: var(--cor-sucesso);
@@ -703,10 +712,15 @@
     position: relative;
     cursor: pointer;
     border: 2px solid transparent;
-    border-radius: 6px;
-    transition: border-color 0.3s, box-shadow 0.3s;
+    border-radius: 8px; /* Aumentado */
+    transition: all 0.3s;
     overflow: hidden;
     aspect-ratio: 9/16;
+}
+
+.video-gallery-item:hover {
+    transform: scale(1.05);
+    border-color: var(--cor-primaria);
 }
 
 .video-gallery-item video {
@@ -723,17 +737,23 @@
     right: 0;
     background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
     color: white;
-    font-size: 11px;
-    padding: 12px 6px 6px;
+    font-size: 12px; /* Aumentado */
+    padding: 12px 8px 8px; /* Ajustado */
     text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    transition: opacity 0.3s;
+}
+
+.video-gallery-item:hover .video-title {
+    opacity: 0; /* Esconde o título no hover para ver o vídeo */
 }
 
 .video-gallery-item.selected {
     border-color: var(--cor-primaria);
-    box-shadow: 0 0 0 2px var(--cor-primaria);
+    box-shadow: 0 0 10px var(--cor-primaria);
+    transform: scale(1.05);
 }
 .video-gallery p {
     color: var(--cor-texto-secundario);

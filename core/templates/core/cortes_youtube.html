@@ -17,6 +17,12 @@
 
         <form id="youtube-cutter-form" method="post" class="panel-form">
             {% csrf_token %}
+            {% if form.errors %}
+                <div class="alert alert-danger">
+                    <strong>Por favor, corrija os erros abaixo:</strong>
+                    {{ form.errors }}
+                </div>
+            {% endif %}
             
             <div class="form-step-wrapper">
                 <div class="form-step active" data-step="1">
