@@ -202,6 +202,7 @@ class VideoGerado(models.Model):
     usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE)
     status = models.CharField(max_length=50, default="PROCESSANDO")
     arquivo_final = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho do vídeo gerado (local ou R2)")
+    thumbnail_key = models.CharField(max_length=500, blank=True, null=True, help_text="Caminho da thumbnail do vídeo no R2")
     criado_em = models.DateTimeField(auto_now_add=True)
     duracao_segundos = models.IntegerField(blank=True, null=True)
     loop = models.BooleanField(default=False)
@@ -228,6 +229,13 @@ class VideoGerado(models.Model):
 
     def __str__(self):
         return f"Vídeo de {self.usuario.username} - {self.status}"
+
+    @property
+    def thumbnail_url(self):
+        if self.thumbnail_key:
+            from .utils import generate_presigned_url
+            return generate_presigned_url(self.thumbnail_key)
+        return None
 
 
 # ================================================================

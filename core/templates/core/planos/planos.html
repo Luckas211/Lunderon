@@ -5,6 +5,62 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'core/css/planos.css' %}">
+<style>
+    .pricing-card.pro-plan {
+        border: 2px solid var(--color-primary);
+        box-shadow: 0 10px 40px rgba(90, 103, 216, 0.2);
+        transform: scale(1.05);
+    }
+
+    .faq-section {
+        padding: 80px 0;
+        background-color: var(--color-background-alt);
+    }
+
+    .faq-item {
+        background: var(--color-background);
+        border-radius: 10px;
+        margin-bottom: 15px;
+        border: 1px solid var(--color-border);
+        transition: background-color 0.2s ease;
+    }
+
+    .faq-item:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .faq-question {
+        padding: 20px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+
+    .faq-question .icon {
+        transition: transform 0.3s ease;
+        color: var(--color-primary);
+    }
+
+    .faq-answer {
+        padding: 0 20px 20px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease, padding 0.3s ease;
+        color: var(--color-text-light);
+        line-height: 1.6;
+    }
+
+    .faq-item.active .faq-answer {
+        max-height: 200px; /* Adjust as needed */
+    }
+
+    .faq-item.active .faq-question .icon {
+        transform: rotate(45deg);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -129,10 +185,71 @@
 
 <section class="faq-section">
     <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Perguntas Frequentes</h2>
+            <p class="section-subtitle">Tire suas dúvidas mais comuns sobre nossos planos e serviços.</p>
+        </div>
+        <div class="faq-list">
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Posso cancelar a qualquer momento?</span>
+                    <i class="fas fa-plus icon"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Sim! Você pode cancelar sua assinatura a qualquer momento através do seu painel de usuário. Seu acesso permanecerá ativo até o final do período já pago.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Quais são as formas de pagamento?</span>
+                    <i class="fas fa-plus icon"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Aceitamos os principais cartões de crédito (Visa, MasterCard, American Express) através da nossa parceira de pagamentos, a Stripe, uma das plataformas mais seguras do mundo.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>O que acontece se eu atingir meu limite de vídeos?</span>
+                    <i class="fas fa-plus icon"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Ao atingir o limite de vídeos do seu plano, a funcionalidade de geração será pausada até o início do próximo ciclo de 30 dias da sua assinatura. Você não será cobrado a mais por isso.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Os vídeos que eu gero são meus?</span>
+                    <i class="fas fa-plus icon"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Com certeza. Todo o conteúdo que você cria na plataforma é 100% seu. Você tem todos os direitos para usar os vídeos como quiser, em qualquer plataforma.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
 <section class="cta-section">
 </section>
 
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        question.addEventListener('click', () => {
+            const currentlyActive = document.querySelector('.faq-item.active');
+            if (currentlyActive && currentlyActive !== item) {
+                currentlyActive.classList.remove('active');
+            }
+            item.classList.toggle('active');
+        });
+    });
+});
+</script>
 {% endblock %}

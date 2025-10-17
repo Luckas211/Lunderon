@@ -3,6 +3,76 @@
 
 {% block title %}LUNDERON - Crie Vídeos com Inteligência Artificial{% endblock %}
 
+{% block extra_css %}
+<style>
+    .how-it-works-section {
+        padding: 80px 0;
+        background-color: #0a0a0f; /* Um pouco mais claro que o fundo para destacar */
+    }
+
+    .how-it-works-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 30px;
+        margin-top: 50px;
+    }
+
+    .step-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .step-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .step-number {
+        background: -webkit-linear-gradient(45deg, #6a11cb, #2575fc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: 4rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+
+    .step-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 10px;
+        color: #fff;
+    }
+
+    .step-card p {
+        color: #a9a9b3;
+        font-size: 1rem;
+    }
+
+    .btn-primary.btn-pulse {
+        animation: pulse 2s infinite;
+        box-shadow: 0 0 0 0 rgba(90, 103, 216, 0.7);
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(90, 103, 216, 0.7);
+        }
+        70% {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px 20px rgba(90, 103, 216, 0);
+        }
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(90, 103, 216, 0);
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 
 <section class="hero">
@@ -17,11 +87,11 @@
                 Sua Fábrica de Conteúdo Viral com <span class="gradient-text">Inteligência Artificial</span>
             </h1>
             <p class="hero-subtitle">
-                Gere narrações com IA, legende clipes virais do YouTube ou transforme seus próprios vídeos de produtos em anúncios profissionais. Tudo em minutos.
+                Transforme textos em narrações, reaproveite clipes do YouTube e crie anúncios profissionais. Sua produção de conteúdo, automatizada.
             </p>
             <div class="hero-actions">
-                <a href="{% url 'cadastre_se' %}" class="btn btn-primary btn-lg">Começar a Criar (Grátis)</a>
-                <a href="{% url 'como_funciona' %}" class="btn btn-secondary btn-lg">Ver Como Funciona</a>
+                <a href="{% url 'cadastre_se' %}" class="btn btn-primary btn-lg btn-pulse">Começar a Criar (Grátis)</a>
+                <a href="#como-funciona" class="btn btn-secondary btn-lg">Ver Como Funciona</a>
             </div>
             <div class="hero-mockup-wrapper">
                 <div class="hero-mockup">
@@ -31,7 +101,7 @@
                     </video>
                 </div>
                 <div class="floating-shape shape-1">
-                    <i class="fas fa-cut"></i>
+                    <i class="fas fa-robot"></i>
                 </div>
                 <div class="floating-shape shape-2">
                     <i class="fas fa-microphone-alt"></i>
@@ -44,23 +114,50 @@
     </div>
 </section>
 
+<!-- NOVA SEÇÃO COMO FUNCIONA -->
+<section id="como-funciona" class="how-it-works-section">
+    <div class="container">
+        <div class="section-header">
+            <h2 class="section-title">Crie Vídeos Incríveis em 3 Passos</h2>
+            <p class="section-subtitle">O processo é simples, rápido e o resultado é profissional.</p>
+        </div>
+        <div class="how-it-works-grid">
+            <div class="step-card">
+                <div class="step-number">1</div>
+                <h3>Escolha o Modo</h3>
+                <p>Comece com um texto (Modo Narrador), um link do YouTube (Modo Cortes) ou um vídeo seu (Modo Vendedor).</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">2</div>
+                <h3>Personalize</h3>
+                <p>Ajuste a narração, adicione legendas, escolha a música de fundo e defina o estilo visual do seu vídeo.</p>
+            </div>
+            <div class="step-card">
+                <div class="step-number">3</div>
+                <h3>Gere e Publique</h3>
+                <p>Nossa IA processa tudo em minutos. Baixe seu vídeo e esteja pronto para postar e viralizar.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
 <section class="stats-section">
     <div class="container">
         <div class="stats-grid">
             <div class="stat-item">
-                <div class="stat-number">3</div>
-                <div class="stat-label">Modos de Criação</div>
+                <div class="stat-icon"><i class="fas fa-cogs"></i></div>
+                <div class="stat-label">3 Modos de Criação</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">1-Clique</div>
-                <div class="stat-label">Cortes do YouTube</div>
+                <div class="stat-icon"><i class="fab fa-youtube"></i></div>
+                <div class="stat-label">Cortes com 1-Clique</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">IA</div>
-                <div class="stat-label">Legendas Automáticas</div>
+                <div class="stat-icon"><i class="fas fa-closed-captioning"></i></div>
+                <div class="stat-label">Legendas com IA</div>
             </div>
             <div class="stat-item">
-                <div class="stat-number">1-Hora</div>
+                <div class="stat-icon"><i class="fas fa-lock"></i></div>
                 <div class="stat-label">Privacidade Total</div>
             </div>
         </div>
@@ -180,8 +277,8 @@
                 <h2 class="cta-title">Pronto para automatizar seu conteúdo?</h2>
                 <p class="cta-subtitle">Junte-se a milhares de criadores que já estão produzindo mais e melhor. Comece seus testes grátis hoje!</p>
                 <div class="cta-actions">
-                    <a href="{% url 'cadastre_se' %}" class="btn btn-primary btn-lg">Começar Grátis Agora</a>
-                    <a href="{% url 'como_funciona' %}" class="btn btn-secondary btn-lg">Ver Demonstração</a>
+                    <a href="{% url 'cadastre_se' %}" class="btn btn-primary btn-lg btn-pulse">Começar Grátis Agora</a>
+                    <a href="{% url 'planos' %}" class="btn btn-secondary btn-lg">Ver Planos</a>
                 </div>
             </div>
         </div>

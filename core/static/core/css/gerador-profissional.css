@@ -799,3 +799,14 @@
         display: none; /* Oculta o texto dos passos em telas muito pequenas */
     }
 }
+
+.form-field input.is-invalid,
+.form-field select.is-invalid,
+.form-field textarea.is-invalid {
+    border-color: var(--cor-erro);
+}
+
+.step.disabled {
+    pointer-events: none;
+    opacity: 0.5;
+}

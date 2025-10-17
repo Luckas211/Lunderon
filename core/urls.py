@@ -36,7 +36,6 @@ urlpatterns = [
     path('meus-videos/', views.meus_videos, name='meus_videos'),
     path('video/<int:video_id>/download/', views.video_download_page, name='video_download_page'),
     path('video/<int:video_id>/download-direto/', views.download_video_direto, name='download_video_direto'),
-    path('video/<int:video_id>/excluir/', views.delete_video_file, name='delete_video_file'),
     path('gerador/', views.pagina_gerador, name='pagina_gerador'),
     path('cortes-youtube/', views.cortes_youtube_view, name='cortes_youtube'),
 

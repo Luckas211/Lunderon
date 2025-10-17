@@ -4,8 +4,60 @@
 {% block title %}Gerador de Vídeos - LUNDERON{% endblock %}
 
 {% block extra_css %}
-    {# Carrega o novo arquivo de estilo específico para esta página #}
     <link rel="stylesheet" href="{% static 'core/css/gerador-profissional.css' %}">
+    <style>
+        .label-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px; /* Espaço entre o label e o tooltip */
+            margin-bottom: 8px;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+        }
+        .tooltip .tooltip-icon {
+            color: #a9a9b3;
+            font-size: 0.9rem;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 240px;
+            background-color: #2c2c38;
+            color: #fff;
+            text-align: left;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 10;
+            bottom: 150%;
+            left: 50%;
+            margin-left: -120px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .tooltip .tooltiptext::after {
+            content: "";
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #2c2c38 transparent transparent transparent;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        /* Ajuste para o tooltip dentro do form-check */
+        .form-check-title .tooltip {
+            margin-left: 5px;
+        }
+    </style>
 {% endblock %}
 
 
@@ -22,8 +74,8 @@
             <div class="header-content">
                 <div class="header-icon"><i class="fas fa-magic"></i></div>
                 <div class="header-text">
-                    <h1>Gerador de Vídeos IA</h1>
-                    <p>Crie um vídeo profissional em segundos.</p>
+                    <h1>Gerador de Vídeos com IA</h1>
+                    <p>Crie vídeos incríveis com narração, legendas e música de fundo em poucos cliques.</p>
                 </div>
             </div>
         </header>
@@ -55,7 +107,7 @@
                 <div class="panel-content">
                     <div class="form-step" data-step-content="0">
                         <div class="step-header">
-                            <h3><i class="fas fa-stream"></i> Qual o tipo de conteúdo?</h3>
+                            <h3><i class="fas fa-stream"></i> Qual o tipo de vídeo que você quer criar?</h3>
                             <p>Escolha como o texto principal do seu vídeo será gerado.</p>
                         </div>
                         <div class="option-cards">
@@ -63,9 +115,9 @@
                             <label class="option-card">
                                 {{ radio.tag }}
                                 <div class="card-content">
-                                    {% if forloop.counter == 1 %}<div class="card-icon"><i class="fas fa-microphone-alt"></i></div><div class="card-info"><h4>Texto com Narração</h4><p>Gera uma voz a partir do seu texto.</p></div>{% endif %}
-                                    {% if forloop.counter == 2 %}<div class="card-icon"><i class="fas fa-font"></i></div><div class="card-info"><h4>Texto Estático</h4><p>Exibe um texto fixo na tela.</p></div>{% endif %}
-                                    {% if forloop.counter == 3 %}<div class="card-icon"><i class="fas fa-upload"></i></div><div class="card-info"><h4>Vendedor (Upload)</h4><p>Use seu próprio vídeo com narração.</p></div>{% endif %}
+                                    {% if forloop.counter == 1 %}<div class="card-icon"><i class="fas fa-microphone-alt"></i></div><div class="card-info"><h4>Vídeo com Narração</h4><p>Gere uma voz a partir de um texto e adicione um vídeo de fundo.</p></div>{% endif %}
+                                    {% if forloop.counter == 2 %}<div class="card-icon"><i class="fas fa-font"></i></div><div class="card-info"><h4>Vídeo com Texto</h4><p>Crie um vídeo com um texto estático e um fundo.</p></div>{% endif %}
+                                    {% if forloop.counter == 3 %}<div class="card-icon"><i class="fas fa-upload"></i></div><div class="card-info"><h4>Vídeo de Vendas</h4><p>Envie seu próprio vídeo e adicione uma narração para criar um anúncio.</p></div>{% endif %}
                                     <div class="card-check"><i class="fas fa-check-circle"></i></div>
                                 </div>
                             </label>
@@ -128,10 +180,46 @@
                             </div>
                         </div>
                         <div class="form-grid">
-                            <div class="form-field">{{ form.cor_da_fonte.label_tag }} {{ form.cor_da_fonte }}</div>
-                            <div class="form-field">{{ form.cor_destaque_legenda.label_tag }} {{ form.cor_destaque_legenda }}</div>
-                            <div class="form-field">{{ form.texto_fonte.label_tag }} {{ form.texto_fonte }}</div>
-                            <div class="form-field">{{ form.texto_tamanho.label_tag }} {{ form.texto_tamanho }}</div>
+                            <div class="form-field">
+                                <div class="label-wrapper">
+                                    {{ form.cor_da_fonte.label_tag }}
+                                    <div class="tooltip">
+                                        <i class="fas fa-question-circle tooltip-icon"></i>
+                                        <span class="tooltiptext">Define a cor principal do texto ou da legenda que aparecerá no vídeo.</span>
+                                    </div>
+                                </div>
+                                {{ form.cor_da_fonte }}
+                            </div>
+                            <div class="form-field">
+                                <div class="label-wrapper">
+                                    {{ form.cor_destaque_legenda.label_tag }}
+                                    <div class="tooltip">
+                                        <i class="fas fa-question-circle tooltip-icon"></i>
+                                        <span class="tooltiptext">Apenas no modo "Legenda Sincronizada". Define a cor da palavra que está sendo falada (efeito karaokê).</span>
+                                    </div>
+                                </div>
+                                {{ form.cor_destaque_legenda }}
+                            </div>
+                            <div class="form-field">
+                                <div class="label-wrapper">
+                                    {{ form.texto_fonte.label_tag }}
+                                    <div class="tooltip">
+                                        <i class="fas fa-question-circle tooltip-icon"></i>
+                                        <span class="tooltiptext">Escolha a família da fonte para o texto. Fontes diferentes causam grande impacto visual.</span>
+                                    </div>
+                                </div>
+                                {{ form.texto_fonte }}
+                            </div>
+                            <div class="form-field">
+                                <div class="label-wrapper">
+                                    {{ form.texto_tamanho.label_tag }}
+                                    <div class="tooltip">
+                                        <i class="fas fa-question-circle tooltip-icon"></i>
+                                        <span class="tooltiptext">Tamanho inicial da fonte. O sistema pode reduzir o tamanho automaticamente para que textos longos caibam na tela.</span>
+                                    </div>
+                                </div>
+                                {{ form.texto_tamanho }}
+                            </div>
                         </div>
                         <div class="form-field"><label>Formatos:</label>
                             <div class="checkbox-group">
@@ -150,7 +238,13 @@
                         <div class="form-field">
                             <label class="form-check-wrapper large">{{ form.legenda_sincronizada }}
                                 <div class="form-check-info">
-                                    <span class="form-check-title">Legenda Sincronizada</span>
+                                    <span class="form-check-title">
+                                        Legenda Sincronizada
+                                        <span class="tooltip">
+                                            <i class="fas fa-question-circle tooltip-icon"></i>
+                                            <span class="tooltiptext">Gera legendas no estilo karaokê, que destacam cada palavra conforme ela é falada na narração. Requer o "Modo Narrador" ou "Vendedor".</span>
+                                        </span>
+                                    </span>
                                     <span class="form-check-desc">{{ form.legenda_sincronizada.help_text }}</span>
                                 </div>
                                 <div class="toggle-switch"></div>
@@ -437,12 +531,35 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     const goToStep = (stepIndex) => {
+        // Validation before proceeding
+        if (stepIndex > state.currentStep) {
+            const currentStepContent = stepContents[state.currentStep];
+            const inputsToValidate = currentStepContent.querySelectorAll('input[required], select[required], textarea[required]');
+            let isValid = true;
+            inputsToValidate.forEach(input => {
+                if (!input.value) {
+                    isValid = false;
+                    // Add error indication
+                    input.classList.add('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                // Show a general error message
+                const notificationDiv = document.getElementById('form-notifications');
+                notificationDiv.innerHTML = `<div class="alert alert-danger">Por favor, preencha todos os campos obrigatórios.</div>`;
+                return; // Stop navigation
+            }
+        }
+
         state.currentStep = stepIndex;
         const currentPos = state.availableSteps.indexOf(stepIndex);
         
         steps.forEach(s => {
-            s.classList.toggle('active', parseInt(s.dataset.step) === stepIndex);
-            s.classList.toggle('completed', parseInt(s.dataset.step) < stepIndex);
+            const sIndex = parseInt(s.dataset.step);
+            s.classList.toggle('active', sIndex === stepIndex);
+            s.classList.toggle('completed', state.availableSteps.indexOf(sIndex) < currentPos);
+            s.classList.toggle('disabled', state.availableSteps.indexOf(sIndex) > currentPos);
         });
         stepContents.forEach(c => c.classList.toggle('active', parseInt(c.dataset.stepContent) === stepIndex));
         

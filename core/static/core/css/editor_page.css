@@ -6,7 +6,6 @@
 .editor-layout {
     display: flex;
     height: calc(100vh - var(--header-height));
-   
 }
 [data-theme="dark"] .editor-layout {
     background-color: var(--color-background-darker);
@@ -28,11 +27,11 @@
 }
 
 .panel-header {
-    padding: 20px 25px;
+    padding: 24px;
     border-bottom: 1px solid var(--color-border);
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 16px;
     flex-shrink: 0;
 }
 .panel-header i { font-size: 1.5rem; color: var(--color-primary); }
@@ -46,7 +45,7 @@
 }
 
 .form-step-wrapper {
-    padding: 25px;
+    padding: 24px;
     flex-grow: 1;
     overflow-y: auto; /* Habilita o scroll SÓ nesta área */
 }
@@ -64,113 +63,23 @@
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 
-.step-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+.step-header { display: flex; align-items: center; gap: 12px; margin-bottom: 32px; }
 .step-number { width: 28px; height: 28px; border-radius: 50%; background-color: var(--color-primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.9rem; flex-shrink: 0;}
 .step-header h3 { font-size: 1.1rem; font-weight: 600; margin: 0; }
 
-.form-group { margin-bottom: 25px; }
+.form-group { margin-bottom: 24px; }
 .form-group label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 0.9rem; }
 .form-text { font-size: 0.85rem; color: var(--color-text-light); margin-top: 8px; }
 
-/* Segmentos */
-
-/* --- Lista de Segmentos (Cortes do YouTube) --- */
-#segments-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    max-height: 250px;
-    overflow-y: auto;
-    padding-right: 5px;
-}
-
-/* --- Barra de Rolagem Customizada --- */
-#segments-list::-webkit-scrollbar {
-    width: 8px;
-}
-#segments-list::-webkit-scrollbar-track {
-    background: transparent;
-}
-#segments-list::-webkit-scrollbar-thumb {
-    background-color: var(--color-border);
-    border-radius: 4px;
-}
-
-.segment-item {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.segment-item:hover {
-    background-color: var(--color-background-alt);
-    border-color: var(--color-primary);
-}
-
-/* Fundo do item quando selecionado (modo claro) */
-.segment-item:has(input:checked) {
-    background-color: var(--color-secondary);
-    border-color: var(--color-primary);
-}
-
-/* AJUSTE PARA DARK MODE: Fundo do item quando selecionado */
-[data-theme="dark"] .segment-item:has(input:checked) {
-    background-color: rgba(101, 91, 226, 0.15); /* Usa um tom roxo translúcido */
-}
-
-.segment-info {
-    flex-grow: 1;
-    margin-left: 12px;
-}
-
-.segment-info strong {
-    display: block;
-    font-size: 0.95rem;
-    color: var(--color-text-dark); /* Adapta-se automaticamente */
-}
-
-.segment-info span {
-    font-size: 0.85rem;
-    color: var(--color-text-light); /* Adapta-se automaticamente */
-}
-
-.segment-duration {
-    font-weight: 600;
-    font-size: 0.9rem;
-    background-color: var(--color-border); /* Adapta-se automaticamente */
-    padding: 4px 8px;
-    border-radius: 20px;
-}
-
-
-/* Estilos para Range Slider */
-.range-slider-group { display: flex; align-items: center; gap: 15px; }
-.form-range { flex-grow: 1; -webkit-appearance: none; appearance: none; width: 100%; height: 8px; background: var(--color-border); outline: none; border-radius: 4px; }
-.form-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; background: var(--color-primary); cursor: pointer; border-radius: 50%; }
-.form-range::-moz-range-thumb { width: 20px; height: 20px; background: var(--color-primary); cursor: pointer; border-radius: 50%; }
-.range-slider-group output { font-weight: 600; background-color: var(--color-secondary); padding: 4px 10px; border-radius: 6px; font-size: 0.9rem; min-width: 30px; text-align: center;}
-[data-theme="dark"] .range-slider-group output { background-color: var(--color-border-dark); }
-
-
-/* Estilos para Checkbox */
-.form-check-wrapper { display: flex; align-items: center; gap: 12px; background-color: var(--color-background-alt); padding: 15px; border-radius: 8px; cursor: pointer;}
-[data-theme="dark"] .form-check-wrapper { background-color: var(--color-background-darker); }
-.form-check-input { width: 1.2em; height: 1.2em; }
-.form-check-info .form-check-title { font-weight: 600; }
-.form-check-info .form-text { margin-top: 2px; }
 
 .panel-footer {
-    padding: 20px 25px;
+    padding: 24px;
     border-top: 1px solid var(--color-border);
     background-color: var(--color-background);
     flex-shrink: 0;
 }
 [data-theme="dark"] .panel-footer { background-color: var(--color-background-alt); border-top-color: var(--color-border-dark);}
-.alert-info { background-color: var(--color-secondary); color: var(--color-primary-dark); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; font-weight: 500;}
+.alert-info { background-color: var(--color-secondary); color: var(--color-primary-dark); padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 24px; font-weight: 500;}
 
 /* --- Área de Preview (Direita) --- */
 .editor-preview {
@@ -205,4 +114,107 @@
     .editor-layout { flex-direction: column; height: auto; }
     .editor-panel { width: 100%; height: auto; max-height: 50vh; border-right: none; border-bottom: 1px solid var(--color-border); }
     .editor-preview { min-height: 400px; padding: 20px; }
+}
+
+/* --- Nova Lista de Segmentos --- */
+#segments-list-container {
+    margin-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.segment-list-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.segment-list-item.disabled {
+    background-color: var(--color-background-alt);
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+[data-theme="dark"] .segment-list-item.disabled {
+     background-color: var(--color-background-darker);
+}
+
+.segment-list-item:not(.disabled) {
+    cursor: pointer;
+}
+
+.segment-list-item:not(.disabled):hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-background-alt);
+}
+
+.segment-list-item.selected {
+    background-color: var(--color-secondary);
+    border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .segment-list-item.selected {
+    background-color: rgba(101, 91, 226, 0.15); /* Usa um tom roxo translúcido */
+}
+
+.segment-checkbox input {
+    width: 1.1em;
+    height: 1.1em;
+    cursor: pointer;
+}
+
+.segment-details {
+    flex-grow: 1;
+    cursor: pointer;
+}
+
+.segment-details strong {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.segment-details span {
+    font-size: 0.85rem;
+    color: var(--color-text-light);
+}
+
+.segment-duration {
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background-color: var(--color-secondary);
+}
+[data-theme="dark"] .segment-duration {
+    background-color: var(--color-border-dark);
+}
+
+.btn-preview {
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-dark);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-preview:not(:disabled):hover {
+    background-color: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+}
+
+.btn-preview i {
+    font-size: 0.8rem;
 }

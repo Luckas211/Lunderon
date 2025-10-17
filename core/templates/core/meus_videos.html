@@ -5,6 +5,21 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+<style>
+    .card-footer {
+        display: flex;
+        gap: 10px; /* Espaço entre os botões */
+        padding: 15px;
+        border-top: 1px solid var(--color-border, #333);
+    }
+    .card-footer .btn,
+    .card-footer form {
+        flex: 1; /* Faz os botões ocuparem o espaço igualmente */
+    }
+    .card-footer form button {
+        width: 100%;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -37,10 +52,10 @@
                 <div class="usage-meter">
                     <div class="info-item">
                         <span class="info-label">Uso do Ciclo Mensal</span>
-                        <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes }} vídeos</span>
+                        <span class="info-value">{{ videos_criados_no_mes }} / {{ limite_videos_mes|default:"Ilimitado" }} vídeos</span>
                     </div>
                      <div class="progress-bar">
-                        {% widthratio videos_criados_no_mes|default:0 limite_videos_mes 100 as usage_percentage %}
+                        {% widthratio videos_criados_no_mes|default:0 limite_videos_mes|default:1 100 as usage_percentage %}
                         <div class="progress-bar-inner" style="width: {{ usage_percentage }}%;">
                             <span>{{ usage_percentage|floatformat:0 }}%</span>
                         </div>
@@ -69,6 +84,9 @@
                 {% for video in videos %}
                     <div class="dashboard-card video-card" data-status="{{ video.status|lower }}">
                         <div class="card-media">
+                            {% if video.thumbnail_url %}
+                                <img src="{{ video.thumbnail_url }}" alt="Thumbnail do vídeo" class="video-thumbnail">
+                            {% else %}
                             <div class="video-placeholder">
                                 {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
                                     <div class="status-icon success"><i class="fas fa-check-circle"></i></div>
@@ -84,26 +102,39 @@
                                     <span>Processando...</span>
                                 {% endif %}
                             </div>
+                            {% endif %}
                         </div>
                         <div class="card-body">
                             <div class="video-card-header">
                                 <h3 class="video-card-title">{{ video.criado_em|date:"d/m/Y H:i" }}</h3>
                                 <span class="status-badge status-{{ video.status|lower }}">{{ video.get_status_display }}</span>
                             </div>
-                            <p class="video-card-info">
-                                <strong>Texto:</strong>
+                            <div class="video-card-info">
+                                <p><strong>Texto:</strong>
                                 {% if video.narrador_texto %}"{{ video.narrador_texto|truncatechars:80 }}"
                                 {% elif video.texto_overlay %}"{{ video.texto_overlay|truncatechars:80 }}"
-                                {% else %}N/A{% endif %}
-                            </p>
+                                {% else %}N/A{% endif %}</p>
+                                <p><strong>Duração:</strong> {{ video.duracao_segundos|default:"N/A" }} segundos</p>
+                            </div>
+                            {% if video.status == 'ERRO' %}
+                            <div class="error-details" style="display: none; margin-top: 15px; padding: 10px; background-color: var(--color-background-alt); border-radius: 8px;" id="error-{{ video.id }}">
+                                <p style="margin: 0; font-size: 0.85rem; color: var(--color-text-light);"><strong>Motivo do Erro:</strong><br>{{ video.mensagem_erro }}</p>
+                            </div>
+                            {% endif %}
                         </div>
-                        {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
                         <div class="card-footer">
-                            <a href="{% url 'download_video_direto' video.id %}" class="btn btn-primary btn-full">
-                                <i class="fas fa-download"></i> Baixar Vídeo (MP4)
-                            </a>
+                            {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
+                                <a href="{% url 'download_video_direto' video.id %}" class="btn btn-primary">
+                                    <i class="fas fa-download"></i> Baixar
+                                </a>
+                            {% endif %}
+                            
+                            {% if video.status == 'ERRO' %}
+                                <button type="button" class="btn btn-outline toggle-error-btn" data-target="#error-{{ video.id }}">
+                                    <i class="fas fa-info-circle"></i> Ver Detalhes
+                                </button>
+                            {% endif %}
                         </div>
-                        {% endif %}
                     </div>
                 {% endfor %}
             </div>
@@ -121,4 +152,28 @@
         {% endif %}
     </main>
 </div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const errorButtons = document.querySelectorAll('.toggle-error-btn');
+    errorButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const errorDetails = document.querySelector(targetId);
+            if (errorDetails) {
+                if (errorDetails.style.display === 'none') {
+                    errorDetails.style.display = 'block';
+                    this.innerHTML = '<i class="fas fa-eye-slash"></i> Ocultar Detalhes';
+                } else {
+                    errorDetails.style.display = 'none';
+                    this.innerHTML = '<i class="fas fa-info-circle"></i> Ver Detalhes';
+                }
+            }
+        });
+    });
+});
+</script>
 {% endblock %}

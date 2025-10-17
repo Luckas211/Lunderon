@@ -34,7 +34,7 @@ def extract_audio_from_video(video_path):
     ]
     
     try:
-        subprocess.run(cmd, check=True, capture_output=True, text=True, encoding='utf-8')
+        subprocess.run(cmd, check=True, capture_output=True, text=True, encoding='utf-8', stdin=subprocess.DEVNULL)
         return audio_path
     except subprocess.CalledProcessError as e:
         print(f"Erro ao extrair áudio: {e.stderr}")

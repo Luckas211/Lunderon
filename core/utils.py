@@ -229,3 +229,58 @@ def delete_from_r2(object_key):
     except ClientError as e:
         print(f"Erro ao apagar do R2: {e}")
         return False
+
+
+def generate_thumbnail_from_video_r2(object_key):
+    """
+    Gera uma thumbnail a partir de um vídeo no R2.
+    """
+    import tempfile
+    import subprocess
+    import os
+
+    caminho_video_local = None
+    caminho_thumbnail_local = None
+
+    try:
+        # 1. Baixar o vídeo do R2
+        caminho_video_local = download_from_cloudflare(object_key, ".mp4")
+        if not caminho_video_local:
+            raise Exception("Falha ao baixar o vídeo para gerar a thumbnail.")
+
+        # 2. Gerar a thumbnail com ffmpeg
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_f:
+            caminho_thumbnail_local = temp_f.name
+        
+        cmd = [
+            "ffmpeg",
+            "-y",
+            "-i",
+            caminho_video_local,
+            "-ss",
+            "00:00:01",
+            "-vframes",
+            "1",
+            "-q:v",
+            "2",
+            caminho_thumbnail_local,
+        ]
+        subprocess.run(cmd, check=True, capture_output=True, text=True, stdin=subprocess.DEVNULL)
+
+        # 3. Fazer upload da thumbnail para o R2
+        thumbnail_object_key = object_key.replace("videos_gerados/", "thumbnails/").replace(".mp4", ".jpg")
+        if not upload_to_r2(caminho_thumbnail_local, thumbnail_object_key):
+            raise Exception("Falha no upload da thumbnail para o R2.")
+
+        return thumbnail_object_key
+
+    except Exception as e:
+        print(f"Erro ao gerar thumbnail: {e}")
+        return None
+
+    finally:
+        # 4. Limpar arquivos temporários
+        if caminho_video_local and os.path.exists(caminho_video_local):
+            os.remove(caminho_video_local)
+        if caminho_thumbnail_local and os.path.exists(caminho_thumbnail_local):
+            os.remove(caminho_thumbnail_local)

@@ -5,6 +5,9 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'core/css/editor_page.css' %}">
+<style>
+    /* Estilos específicos para a lista de segmentos, que agora é o controle principal */
+</style>
 {% endblock %}
 
 {% block content %}
@@ -44,10 +47,10 @@
                         <h3>Selecione os Cortes e Opções</h3>
                     </div>
                     
-                    <div id="segments-container" class="form-group">
-                        <label>Segmentos Encontrados (Clique em ▶️ para pré-visualizar)</label>
-                        <div id="segments-list">
-                            </div>
+                    <div class="form-group">
+                        <label>Segmentos Encontrados</label>
+                        <div id="segments-list-container"></div>
+                        <small class="form-text text-muted mt-2">Selecione os segmentos que deseja transformar em vídeos. Segmentos em vermelho são longos demais.</small>
                     </div>
                     
                     <div class="form-group">
@@ -80,7 +83,7 @@
                 <div class="alert alert-info">
                     Você tem <strong>{{ videos_restantes }}</strong> vídeo(s) restante(s) no seu limite.
                 </div>
-                <button type="submit" id="submit-btn" class="btn btn-primary btn-full btn-lg" disabled>Gerar Cortes Selecionados</button>
+                <button type="button" id="submit-btn" class="btn btn-primary btn-full btn-lg" disabled>Gerar Cortes Selecionados</button>
             </div>
         </form>
     </aside>
@@ -100,8 +103,7 @@
         <div id="preview-content" class="preview-content">
             <div class="video-preview-wrapper">
                 <div id="youtube-player"></div>
-
-                </div>
+            </div>
             <div id="segments-error" class="alert alert-danger" style="display: none;"></div>
         </div>
     </main>
@@ -114,30 +116,29 @@
 <script src="https://www.youtube.com/iframe_api"></script>
 
 <script>
-// 2. Variáveis globais para o player e o videoId
 let player;
 let currentVideoId;
+let fetchedSegments = []; // Armazena os segmentos recebidos da análise
+let activePreviewTimeout = null;
 
-// 3. Função que a API do YouTube chama automaticamente quando está pronta
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('youtube-player', {
         height: '100%',
         width: '100%',
         playerVars: {
             'playsinline': 1,
-            'controls': 0, // Desativa os controles padrão para uma experiência limpa
-            'rel': 0,      // Não mostra vídeos relacionados no final
+            'controls': 0,
+            'rel': 0,
         }
     });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Mapeamento de elementos
     const form = document.getElementById('youtube-cutter-form');
     const analyzeBtn = document.getElementById('analyze-btn');
     const submitBtn = document.getElementById('submit-btn');
     const youtubeUrlInput = document.getElementById('id_youtube_url');
-    const segmentsList = document.getElementById('segments-list');
+    const segmentsListContainer = document.getElementById('segments-list-container');
     const segmentsError = document.getElementById('segments-error');
     const hiddenSegmentsInput = document.getElementById('id_segments');
     
@@ -148,7 +149,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const step2 = document.querySelector('.form-step[data-step="2"]');
     const loadingOverlay = document.getElementById('loading-overlay');
 
-    // Adiciona classes aos campos do Django
     youtubeUrlInput.classList.add('form-input');
     document.getElementById('id_categoria_musica').classList.add('form-select');
 
@@ -163,6 +163,13 @@ document.addEventListener('DOMContentLoaded', function() {
         return (match && match[2].length === 11) ? match[2] : null;
     }
 
+    const formatTime = (seconds) => {
+        const date = new Date(seconds * 1000);
+        const minutes = date.getUTCMinutes();
+        const secs = date.getUTCSeconds();
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
     analyzeBtn.addEventListener('click', async function() {
         const url = youtubeUrlInput.value;
         if (!url) {
@@ -175,13 +182,12 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('URL do YouTube inválida.');
             return;
         }
-        currentVideoId = videoId; // Armazena o ID do vídeo atual
+        currentVideoId = videoId;
 
         toggleLoading(true, 'Analisando vídeo...');
         analyzeBtn.disabled = true;
         analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
         
-        segmentsList.innerHTML = '';
         segmentsError.style.display = 'none';
         submitBtn.disabled = true;
 
@@ -196,52 +202,45 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (!response.ok) throw new Error(data.error || 'Erro desconhecido.');
             
-            // Mostra o player em vez da thumbnail
             previewPlaceholder.style.display = 'none';
             previewContent.style.display = 'block';
 
             if (data.segments && data.segments.length > 0) {
-                // Carrega o vídeo no player, mas não toca ainda
                 player.cueVideoById(videoId);
+                fetchedSegments = data.segments; // Armazena os segmentos
+
+                const MAX_DURATION = 180;
+                segmentsListContainer.innerHTML = '';
 
                 data.segments.forEach((segment, index) => {
-                    const startTime = new Date(segment.start * 1000).toISOString().substr(14, 5);
-                    const endTime = new Date(segment.end * 1000).toISOString().substr(14, 5);
-                    
-                    const DURATION_LIMIT = 180; // 3 minutos
-                    const isOverLimit = segment.duration > DURATION_LIMIT;
+                    const isTooLong = segment.duration > MAX_DURATION;
+                    const segmentId = index;
 
-                    const segmentElement = document.createElement('div');
-                    segmentElement.className = 'segment-item';
-                    if (isOverLimit) {
-                        segmentElement.classList.add('disabled');
-                    }
-
-                    let warningMessage = '';
-                    if (isOverLimit) {
-                        warningMessage = `<small class="text-danger d-block">Duração excede 3 min.</small>`;
-                    }
-
-                    segmentElement.innerHTML = `
-                        <label class="segment-checkbox">
-                           <input class="form-check-input" type="checkbox" value='${JSON.stringify(segment)}' id="segment-${index}" ${isOverLimit ? 'disabled' : 'checked'}>
-                        </label>
-                        <div class="segment-info">
-                            <strong>Corte ${index + 1}</strong>
-                            <span>${startTime} - ${endTime}</span>
-                            ${warningMessage}
+                    const segmentEl = document.createElement('div');
+                    segmentEl.className = `segment-list-item ${isTooLong ? 'disabled' : ''}`;
+                    segmentEl.dataset.segmentId = segmentId;
+                    segmentEl.innerHTML = `
+                        <div class="segment-checkbox">
+                            <input type="checkbox" id="segment-check-${segmentId}" data-segment-id="${segmentId}" ${isTooLong ? 'disabled' : ''}>
                         </div>
-                        <span class="segment-duration ${isOverLimit ? 'text-danger' : ''}">${Math.round(segment.duration)}s</span>
-                        <button type="button" class="btn-preview" data-start="${segment.start}" data-end="${segment.end}" title="Assistir prévia">
+                        <div class="segment-details">
+                            <strong>Corte ${segmentId + 1}</strong>
+                            <span>${formatTime(segment.start)} - ${formatTime(segment.end)}</span>
+                        </div>
+                        <div class="segment-duration">
+                            ${Math.round(segment.duration)}s
+                        </div>
+                        <button type="button" class="btn-preview" data-start="${segment.start}" data-end="${segment.end}" ${isTooLong ? 'disabled' : ''}>
                             <i class="fas fa-play"></i>
                         </button>
                     `;
-                    segmentsList.appendChild(segmentElement);
+                    segmentsListContainer.appendChild(segmentEl);
                 });
-                
+
                 step1.classList.remove('active');
                 step2.classList.add('active');
                 submitBtn.disabled = false;
+
             } else {
                 segmentsError.textContent = data.message || 'Nenhum segmento popular foi encontrado.';
                 segmentsError.style.display = 'block';
@@ -256,87 +255,57 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 5. Event listener para os botões de pré-visualização
-    segmentsList.addEventListener('click', function(e) {
-        const previewBtn = e.target.closest('.btn-preview');
-        if (previewBtn) {
-            const startSeconds = parseFloat(previewBtn.dataset.start);
-            const endSeconds = parseFloat(previewBtn.dataset.end);
+    segmentsListContainer.addEventListener('click', function(e) {
+        const item = e.target.closest('.segment-list-item');
+        if (!item || item.classList.contains('disabled')) return;
+
+        // Lógica do botão de preview
+        if (e.target.closest('.btn-preview')) {
+            const button = e.target.closest('.btn-preview');
+            const start = parseFloat(button.dataset.start);
+            const end = parseFloat(button.dataset.end);
             
-            if (player && typeof player.loadVideoById === 'function') {
-                player.loadVideoById({
-                    videoId: currentVideoId,
-                    startSeconds: startSeconds,
-                    endSeconds: endSeconds
-                });
-            }
+            if(activePreviewTimeout) clearTimeout(activePreviewTimeout);
+
+            player.seekTo(start);
+            player.playVideo();
+            
+            activePreviewTimeout = setTimeout(() => {
+                if (player.getPlayerState() === YT.PlayerState.PLAYING) {
+                     player.pauseVideo();
+                }
+            }, (end - start) * 1000);
+            return; 
         }
+
+        // Lógica de seleção do item
+        const checkbox = item.querySelector('input[type="checkbox"]');
+        if (checkbox && !e.target.matches('input[type="checkbox"]')) {
+            checkbox.checked = !checkbox.checked;
+        }
+        item.classList.toggle('selected', checkbox.checked);
     });
 
-    form.addEventListener('submit', function(e) {
-        const selectedCheckboxes = segmentsList.querySelectorAll('input[type="checkbox"]:checked');
+    submitBtn.addEventListener('click', function(e) {
+        const selectedCheckboxes = segmentsListContainer.querySelectorAll('input[type="checkbox"]:checked');
         if (selectedCheckboxes.length === 0) {
-            e.preventDefault();
             alert('Você deve selecionar pelo menos um segmento para gerar.');
             return;
         }
 
-        const selectedSegments = Array.from(selectedCheckboxes).map(cb => JSON.parse(cb.value));
+        const selectedSegments = Array.from(selectedCheckboxes).map(cb => {
+            const segmentId = parseInt(cb.dataset.segmentId, 10);
+            return fetchedSegments[segmentId];
+        });
+
         hiddenSegmentsInput.value = JSON.stringify(selectedSegments);
         
         toggleLoading(true, 'Gerando cortes...');
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
+
+        form.submit();
     });
 });
 </script>
-
-<style>
-    .segment-item {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-    }
-    .segment-checkbox {
-        display: flex;
-        align-items: center;
-    }
-    .btn-preview {
-        background: var(--color-secondary);
-        color: var(--color-primary);
-        border: none;
-        border-radius: 50%;
-        width: 32px;
-        height: 32px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.8rem;
-        margin-left: auto;
-        transition: background-color 0.2s;
-    }
-    .btn-preview:hover {
-        background-color: var(--color-secondary-dark);
-    }
-</style>
-
 {% endblock %}
-<style>
-    .segment-item.disabled {
-        opacity: 0.6;
-        background-color: #f8f9fa;
-        border-left: 3px solid #dc3545;
-        padding-left: 10px;
-    }
-    .segment-item.disabled .segment-info strong {
-        text-decoration: line-through;
-    }
-    .text-danger {
-        color: #dc3545;
-        font-weight: bold;
-    }
-    .d-block {
-        display: block;
-    }
-</style>
