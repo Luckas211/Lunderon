@@ -22,7 +22,7 @@ def task_processar_geracao_video(self, video_gerado_id, data, user_id, assinatur
         self.retry(exc=e, countdown=60, max_retries=3)
 
 @shared_task(bind=True)
-def task_processar_corte_youtube(self, video_gerado_id, youtube_url, segment, musica_base_id, volume_musica, gerar_legendas):
+def task_processar_corte_youtube(self, corte_gerado_id, musica_base_id, volume_musica, gerar_legendas):
     """
     Tarefa Celery para processar o corte de vídeos do YouTube em segundo plano.
     """
@@ -30,11 +30,11 @@ def task_processar_corte_youtube(self, video_gerado_id, youtube_url, segment, mu
     from .views import processar_corte_youtube
 
     try:
-        logger.info(f"Iniciando task_processar_corte_youtube para o ID: {video_gerado_id}")
+        logger.info(f"Iniciando task_processar_corte_youtube para o ID: {corte_gerado_id}")
         # A lógica pesada é chamada aqui
-        processar_corte_youtube(video_gerado_id, youtube_url, segment, musica_base_id, volume_musica, gerar_legendas)
-        logger.info(f"task_processar_corte_youtube para o ID: {video_gerado_id} concluída com sucesso.")
+        processar_corte_youtube(corte_gerado_id, musica_base_id, volume_musica, gerar_legendas)
+        logger.info(f"task_processar_corte_youtube para o ID: {corte_gerado_id} concluída com sucesso.")
     except Exception as e:
-        logger.error(f"ERRO na task_processar_corte_youtube para o ID {video_gerado_id}: {e}", exc_info=True)
+        logger.error(f"ERRO na task_processar_corte_youtube para o ID {corte_gerado_id}: {e}", exc_info=True)
         # Tenta novamente em 60 segundos, no máximo 3 vezes
         self.retry(exc=e, countdown=60, max_retries=3)

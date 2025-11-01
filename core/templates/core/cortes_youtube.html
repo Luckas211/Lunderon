@@ -1,115 +1,113 @@
 {% extends 'core/base.html' %}
 {% load static %}
 
-{% block title %}Editor de Cortes do YouTube - LUNDERON{% endblock %}
+{% block title %}Editor de Cortes Dinâmico - LUNDERON{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="{% static 'core/css/editor_page.css' %}">
-<style>
-    /* Estilos específicos para a lista de segmentos, que agora é o controle principal */
-</style>
 {% endblock %}
 
 {% block content %}
 <div class="editor-layout">
-    <aside class="editor-panel">
-        <div class="panel-header">
-            <i class="fas fa-cut"></i>
-            <h2>Editor de Cortes</h2>
-        </div>
+    <!-- PAINEL DE CONTROLE -->
+    <aside class="editor-panel" id="editor-panel">
+        <div class="panel-content-wrapper">
+            <div class="panel-header">
+                <h2>
+                    <i class="fas fa-wand-magic-sparkles icon"></i>
+                    Editor Mágico
+                </h2>
+            </div>
 
-        <form id="youtube-cutter-form" method="post" class="panel-form">
-            {% csrf_token %}
-            {% if form.errors %}
-                <div class="alert alert-danger">
-                    <strong>Por favor, corrija os erros abaixo:</strong>
-                    {{ form.errors }}
-                </div>
-            {% endif %}
-            
-            <div class="form-step-wrapper">
-                <div class="form-step active" data-step="1">
-                    <div class="step-header">
-                        <div class="step-number">1</div>
-                        <h3>Cole a URL do Vídeo</h3>
-                    </div>
-                    <div class="form-group">
-                        <label for="{{ form.youtube_url.id_for_label }}">URL do YouTube</label>
-                        {{ form.youtube_url }}
-                    </div>
-                    <button type="button" id="analyze-btn" class="btn btn-primary btn-full">Analisar Vídeo</button>
-                    <div class="form-text">Cole a URL completa para que nossa IA encontre os melhores momentos.</div>
-                </div>
+            <form id="youtube-cutter-form" method="post" class="panel-form">
+                {% csrf_token %}
+                <div class="form-content">
 
-                <div class="form-step" data-step="2">
-                    <div class="step-header">
-                        <div class="step-number">2</div>
-                        <h3>Selecione os Cortes e Opções</h3>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Segmentos Encontrados</label>
-                        <div id="segments-list-container"></div>
-                        <small class="form-text text-muted mt-2">Selecione os segmentos que deseja transformar em vídeos. Segmentos em vermelho são longos demais.</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ form.categoria_musica.id_for_label }}">Música de Fundo</label>
-                        {{ form.categoria_musica }}
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="id_volume_musica">Volume da Música (%)</label>
-                        <div class="range-slider-group">
-                            <input type="range" name="volume_musica" value="20" class="form-range" min="0" max="100" id="id_volume_musica" oninput="this.nextElementSibling.value = this.value">
-                            <output>20</output>
+                    <!-- PASSO 1: INSERIR URL -->
+                    <div class="form-step active" data-step="1">
+                        <div class="form-group">
+                            <label for="{{ form.youtube_url.id_for_label }}">Comece com um link do YouTube</label>
+                            <div class="url-input-group">
+                                {{ form.youtube_url }}
+                                <i class="fas fa-link icon-prefix"></i>
+                            </div>
+                            <p class="form-text">Aguardando o player do YouTube para analisar...</p>
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-check-wrapper">
-                            <input type="checkbox" class="form-check-input" id="id_gerar_legendas" name="gerar_legendas">
-                            <div class="form-check-info">
-                                <span class="form-check-title">Gerar Legendas (IA)</span>
-                                <small class="form-text">Ativa a transcrição automática do áudio para legendas.</small>
+                    <!-- PASSO 2: DECK DE EDIÇÃO -->
+                    <div class="form-step" data-step="2">
+                        <div class="form-group">
+                            <label>Cortes sugeridos</label>
+                            <div id="segments-deck" class="segments-deck">
+                                <!-- JS preencherá aqui -->
                             </div>
-                        </label>
+                        </div>
+                        
+                        <div class="additional-options">
+                            <div class="form-group">
+                                <label for="{{ form.categoria_musica.id_for_label }}">Música de Fundo</label>
+                                {{ form.categoria_musica }}
+                            </div>
+                            <div class="form-group">
+                                <label for="id_volume_musica">Volume da Música</label>
+                                <div class="range-slider-group">
+                                    <input type="range" name="volume_musica" value="20" class="form-range" min="0" max="100" id="id_volume_musica" oninput="this.nextElementSibling.value = this.value + '%'">
+                                    <output>20%</output>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="id_gerar_legendas" class="form-check-wrapper">
+                                    <input type="checkbox" class="form-check-input" id="id_gerar_legendas" name="gerar_legendas">
+                                    <div class="form-check-info">
+                                        <span class="form-check-title">Gerar Legendas com IA</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <input type="hidden" name="segments" id="id_segments">
-            <div class="panel-footer">
-                <div class="alert alert-info">
-                    Você tem <strong>{{ videos_restantes }}</strong> vídeo(s) restante(s) no seu limite.
+                
+                <input type="hidden" name="segments" id="id_segments">
+
+                <div class="panel-footer">
+                    <div class="usage-alert">
+                        Você tem <strong>{{ videos_restantes }}</strong> vídeo(s) restante(s).
+                    </div>
+                    <button type="button" id="main-action-btn" class="btn btn-primary btn-full btn-lg" disabled>
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Carregando Player...
+                    </button>
                 </div>
-                <button type="button" id="submit-btn" class="btn btn-primary btn-full btn-lg" disabled>Gerar Cortes Selecionados</button>
-            </div>
-        </form>
+            </form>
+        </div>
     </aside>
 
+    <!-- ÁREA DE PREVIEW DO VÍDEO -->
     <main class="editor-preview">
-        <div id="loading-overlay" class="loading-overlay">
-            <div class="loading-spinner"></div>
-            <p class="loading-text">Analisando...</p>
-        </div>
-        
-        <div id="preview-placeholder" class="preview-placeholder">
-            <i class="fab fa-youtube"></i>
-            <h3>Sua prévia aparecerá aqui</h3>
-            <p>Cole uma URL e clique em "Analisar Vídeo" para começar.</p>
-        </div>
-
-        <div id="preview-content" class="preview-content">
-            <div class="video-preview-wrapper">
-                <div id="youtube-player"></div>
+        <div class="preview-content-wrapper">
+            <div id="loading-overlay" class="loading-overlay">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Analisando...</p>
             </div>
-            <div id="segments-error" class="alert alert-danger" style="display: none;"></div>
+            
+            <div id="preview-placeholder" class="preview-placeholder active">
+                <i class="fab fa-youtube icon"></i>
+                <h3>A prévia do seu vídeo aparecerá aqui</h3>
+                <p>Cole uma URL para começar a mágica.</p>
+            </div>
+
+            <div id="preview-content" class="preview-content">
+                <div class="video-preview-wrapper">
+                    <div id="youtube-player"></div>
+                </div>
+                <div id="segments-error"></div>
+            </div>
         </div>
     </main>
 </div>
 {% endblock %}
-
 
 {% block scripts %}
 {{ block.super }}
@@ -118,194 +116,205 @@
 <script>
 let player;
 let currentVideoId;
-let fetchedSegments = []; // Armazena os segmentos recebidos da análise
-let activePreviewTimeout = null;
+let segmentsData = [];
+let currentStep = 1;
 
+// 1. A API do YouTube chama esta função quando está pronta.
 function onYouTubeIframeAPIReady() {
     player = new YT.Player('youtube-player', {
         height: '100%',
         width: '100%',
-        playerVars: {
-            'playsinline': 1,
-            'controls': 0,
-            'rel': 0,
+        playerVars: { 'playsinline': 1, 'controls': 1, 'rel': 0, 'modestbranding': 1 },
+        events: {
+            'onReady': onPlayerReady
         }
     });
 }
 
+// 2. Esta função é chamada quando o player do YouTube está totalmente carregado e pronto.
+function onPlayerReady(event) {
+    const mainActionBtn = document.getElementById('main-action-btn');
+    const urlInput = document.getElementById('id_youtube_url');
+    const formText = document.querySelector('.form-step[data-step="1"] .form-text');
+
+    if(mainActionBtn) {
+        mainActionBtn.disabled = false;
+        mainActionBtn.innerHTML = '<i class="fas fa-magnifying-glass"></i> Analisar Vídeo';
+    }
+    if(urlInput) urlInput.disabled = false;
+    if(formText) formText.textContent = 'Nossa IA vai analisar o vídeo e sugerir os melhores clipes para você.';
+}
+
 document.addEventListener('DOMContentLoaded', function() {
+    // --- Seletores de Elementos --- 
     const form = document.getElementById('youtube-cutter-form');
-    const analyzeBtn = document.getElementById('analyze-btn');
-    const submitBtn = document.getElementById('submit-btn');
+    const mainActionBtn = document.getElementById('main-action-btn');
     const youtubeUrlInput = document.getElementById('id_youtube_url');
-    const segmentsListContainer = document.getElementById('segments-list-container');
-    const segmentsError = document.getElementById('segments-error');
+    const segmentsDeck = document.getElementById('segments-deck');
     const hiddenSegmentsInput = document.getElementById('id_segments');
-    
+    const loadingOverlay = document.getElementById('loading-overlay');
     const previewPlaceholder = document.getElementById('preview-placeholder');
     const previewContent = document.getElementById('preview-content');
-    
-    const step1 = document.querySelector('.form-step[data-step="1"]');
-    const step2 = document.querySelector('.form-step[data-step="2"]');
-    const loadingOverlay = document.getElementById('loading-overlay');
 
-    youtubeUrlInput.classList.add('form-input');
-    document.getElementById('id_categoria_musica').classList.add('form-select');
+    if(youtubeUrlInput) youtubeUrlInput.disabled = true;
 
-    function toggleLoading(show, message) {
-        loadingOverlay.style.display = show ? 'flex' : 'none';
-        loadingOverlay.querySelector('.loading-text').textContent = message;
+    if(youtubeUrlInput) youtubeUrlInput.classList.add('form-input');
+    const categoryMusic = document.getElementById('id_categoria_musica');
+    if(categoryMusic) categoryMusic.classList.add('form-select');
+
+    // --- Funções Principais ---
+
+    function switchPanelStep(stepNumber) {
+        const step1 = document.querySelector('.form-step[data-step="1"]');
+        const step2 = document.querySelector('.form-step[data-step="2"]');
+        currentStep = stepNumber;
+
+        if (stepNumber === 2) {
+            step1.classList.remove('active');
+            step2.classList.add('active');
+            mainActionBtn.innerHTML = '<i class="fas fa-rocket"></i> Gerar Cortes';
+        } else {
+            step2.classList.remove('active');
+            step1.classList.add('active');
+            mainActionBtn.innerHTML = '<i class="fas fa-magnifying-glass"></i> Analisar Vídeo';
+        }
     }
 
-    function getYoutubeVideoId(url) {
-        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-        const match = url.match(regExp);
-        return (match && match[2].length === 11) ? match[2] : null;
-    }
-
-    const formatTime = (seconds) => {
-        const date = new Date(seconds * 1000);
-        const minutes = date.getUTCMinutes();
-        const secs = date.getUTCSeconds();
-        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    analyzeBtn.addEventListener('click', async function() {
-        const url = youtubeUrlInput.value;
-        if (!url) {
-            alert('Por favor, insira uma URL do YouTube.');
-            return;
-        }
-
-        const videoId = getYoutubeVideoId(url);
-        if (!videoId) {
-            alert('URL do YouTube inválida.');
-            return;
-        }
-        currentVideoId = videoId;
-
-        toggleLoading(true, 'Analisando vídeo...');
-        analyzeBtn.disabled = true;
-        analyzeBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
+    async function handleAnalyze() {
+        if (!youtubeUrlInput.value) { alert('Por favor, insira uma URL do YouTube.'); return; }
+        const videoId = getYoutubeVideoId(youtubeUrlInput.value);
+        if (!videoId) { alert('URL do YouTube inválida.'); return; }
         
-        segmentsError.style.display = 'none';
-        submitBtn.disabled = true;
+        currentVideoId = videoId;
+        toggleLoading(true, 'Analisando o vídeo...');
+        mainActionBtn.disabled = true;
 
         try {
             const response = await fetch("{% url 'get_youtube_segments' %}", {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
-                body: JSON.stringify({ url: url })
+                body: JSON.stringify({ url: youtubeUrlInput.value })
             });
             
             const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Erro ao analisar o vídeo.');
 
-            if (!response.ok) throw new Error(data.error || 'Erro desconhecido.');
-            
-            previewPlaceholder.style.display = 'none';
-            previewContent.style.display = 'block';
+            previewPlaceholder.classList.remove('active');
+            previewContent.classList.add('active');
 
             if (data.segments && data.segments.length > 0) {
-                player.cueVideoById(videoId);
-                fetchedSegments = data.segments; // Armazena os segmentos
-
-                const MAX_DURATION = 180;
-                segmentsListContainer.innerHTML = '';
-
-                data.segments.forEach((segment, index) => {
-                    const isTooLong = segment.duration > MAX_DURATION;
-                    const segmentId = index;
-
-                    const segmentEl = document.createElement('div');
-                    segmentEl.className = `segment-list-item ${isTooLong ? 'disabled' : ''}`;
-                    segmentEl.dataset.segmentId = segmentId;
-                    segmentEl.innerHTML = `
-                        <div class="segment-checkbox">
-                            <input type="checkbox" id="segment-check-${segmentId}" data-segment-id="${segmentId}" ${isTooLong ? 'disabled' : ''}>
-                        </div>
-                        <div class="segment-details">
-                            <strong>Corte ${segmentId + 1}</strong>
-                            <span>${formatTime(segment.start)} - ${formatTime(segment.end)}</span>
-                        </div>
-                        <div class="segment-duration">
-                            ${Math.round(segment.duration)}s
-                        </div>
-                        <button type="button" class="btn-preview" data-start="${segment.start}" data-end="${segment.end}" ${isTooLong ? 'disabled' : ''}>
-                            <i class="fas fa-play"></i>
-                        </button>
-                    `;
-                    segmentsListContainer.appendChild(segmentEl);
-                });
-
-                step1.classList.remove('active');
-                step2.classList.add('active');
-                submitBtn.disabled = false;
-
+                if(player && typeof player.cueVideoById === 'function') player.cueVideoById(videoId);
+                segmentsData = data.segments.map(s => ({...s, selected: true})); // All selected by default
+                renderSegmentsList();
+                switchPanelStep(2);
             } else {
-                segmentsError.textContent = data.message || 'Nenhum segmento popular foi encontrado.';
-                segmentsError.style.display = 'block';
+                alert('Nenhum segmento popular foi encontrado.');
+                previewPlaceholder.classList.add('active');
+                previewContent.classList.remove('active');
             }
         } catch (error) {
-            segmentsError.textContent = 'Erro: ' + error.message;
-            segmentsError.style.display = 'block';
+            alert('Erro: ' + error.message);
         } finally {
-            analyzeBtn.disabled = false;
-            analyzeBtn.innerHTML = 'Analisar Vídeo';
             toggleLoading(false, '');
+            mainActionBtn.disabled = false;
         }
-    });
+    }
 
-    segmentsListContainer.addEventListener('click', function(e) {
-        const item = e.target.closest('.segment-list-item');
-        if (!item || item.classList.contains('disabled')) return;
-
-        // Lógica do botão de preview
-        if (e.target.closest('.btn-preview')) {
-            const button = e.target.closest('.btn-preview');
-            const start = parseFloat(button.dataset.start);
-            const end = parseFloat(button.dataset.end);
-            
-            if(activePreviewTimeout) clearTimeout(activePreviewTimeout);
-
-            player.seekTo(start);
-            player.playVideo();
-            
-            activePreviewTimeout = setTimeout(() => {
-                if (player.getPlayerState() === YT.PlayerState.PLAYING) {
-                     player.pauseVideo();
-                }
-            }, (end - start) * 1000);
-            return; 
-        }
-
-        // Lógica de seleção do item
-        const checkbox = item.querySelector('input[type="checkbox"]');
-        if (checkbox && !e.target.matches('input[type="checkbox"]')) {
-            checkbox.checked = !checkbox.checked;
-        }
-        item.classList.toggle('selected', checkbox.checked);
-    });
-
-    submitBtn.addEventListener('click', function(e) {
-        const selectedCheckboxes = segmentsListContainer.querySelectorAll('input[type="checkbox"]:checked');
-        if (selectedCheckboxes.length === 0) {
+    function handleFormSubmit() {
+        const selectedSegments = segmentsData.filter(s => s.selected);
+        if (selectedSegments.length === 0) {
             alert('Você deve selecionar pelo menos um segmento para gerar.');
             return;
         }
-
-        const selectedSegments = Array.from(selectedCheckboxes).map(cb => {
-            const segmentId = parseInt(cb.dataset.segmentId, 10);
-            return fetchedSegments[segmentId];
-        });
-
         hiddenSegmentsInput.value = JSON.stringify(selectedSegments);
         
-        toggleLoading(true, 'Gerando cortes...');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
-
+        toggleLoading(true, 'Gerando seus cortes...');
+        mainActionBtn.disabled = true;
+        mainActionBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gerando...';
         form.submit();
+    }
+
+    // --- Renderização e UI da Lista ---
+
+    function renderSegmentsList() {
+        if (!segmentsDeck) return;
+        segmentsDeck.innerHTML = '';
+        segmentsData.forEach((segment, index) => {
+            const startTime = new Date(segment.start * 1000).toISOString().substr(14, 5);
+            const endTime = new Date(segment.end * 1000).toISOString().substr(14, 5);
+            
+            const segmentElement = document.createElement('div');
+            segmentElement.className = 'segment-item';
+            segmentElement.dataset.index = index;
+
+            segmentElement.innerHTML = `
+                <label class="segment-checkbox">
+                   <input class="form-check-input" type="checkbox" data-index="${index}" ${segment.selected ? 'checked' : ''}>
+                   <span class="checkbox-visual"><i class="fas fa-check"></i></span>
+                </label>
+                <div class="segment-info">
+                    <strong>Corte ${index + 1}</strong>
+                    <span>${startTime} - ${endTime}</span>
+                </div>
+                <span class="segment-duration">${Math.round(segment.duration)}s</span>
+                <button type="button" class="btn-preview" data-start="${segment.start}" data-end="${segment.end}" title="Pré-visualizar corte">
+                    <i class="fas fa-play"></i>
+                </button>
+            `;
+            segmentsDeck.appendChild(segmentElement);
+        });
+    }
+
+    // --- Event Listeners ---
+
+    mainActionBtn.addEventListener('click', () => {
+        if (currentStep === 1) {
+            handleAnalyze();
+        } else {
+            handleFormSubmit();
+        }
     });
+
+    if(segmentsDeck) {
+        segmentsDeck.addEventListener('click', e => {
+            const previewBtn = e.target.closest('.btn-preview');
+            const item = e.target.closest('.segment-item');
+            
+            if (previewBtn) {
+                e.stopPropagation(); // Prevent item click when clicking preview
+                const index = parseInt(item.dataset.index, 10);
+                if(player && typeof player.loadVideoById === 'function') {
+                    player.loadVideoById({ videoId: currentVideoId, startSeconds: segmentsData[index].start, endSeconds: segmentsData[index].end });
+                }
+                return;
+            }
+
+            if (item) {
+                const index = parseInt(item.dataset.index, 10);
+                const checkbox = item.querySelector('input[type="checkbox"]');
+                
+                // Toggle selection state in data model
+                // Only if the click was not on the checkbox itself
+                if (e.target !== checkbox) {
+                    checkbox.checked = !checkbox.checked;
+                }
+                segmentsData[index].selected = checkbox.checked;
+            }
+        });
+    }
+
+    // --- Funções Utilitárias ---
+    function toggleLoading(show, message) {
+        if(loadingOverlay) {
+            loadingOverlay.querySelector('.loading-text').textContent = message;
+            loadingOverlay.style.display = show ? 'flex' : 'none';
+        }
+    }
+    function getYoutubeVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
 });
 </script>
 {% endblock %}

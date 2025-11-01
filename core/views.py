@@ -1,6 +1,5 @@
-# ==============================================================================
-# IMPORTS ORGANIZADOS
-# ==============================================================================
+# Em core/views.py
+
 from .tasks import task_processar_geracao_video, task_processar_corte_youtube # <-- Importe as novas tarefas Celery
 from .transcription_utils import get_word_timestamps
 from django.utils.safestring import mark_safe
@@ -55,6 +54,7 @@ from .models import (
     VideoBase,
     MusicaBase,
     VideoGerado,
+    CorteGerado,
     CategoriaVideo,
     CategoriaMusica,
     Plano,
@@ -456,7 +456,7 @@ def meus_videos(request):
         videos_para_notificar.update(notificacao_vista=True)
     # --- FIM DA LÓGICA DE NOTIFICAÇÃO ---
 
-    videos = VideoGerado.objects.filter(usuario=request.user).order_by("-criado_em")
+    videos = VideoGerado.objects.filter(usuario=request.user).select_related('cortegerado').order_by("-criado_em")
 
     # --- LÓGICA ATUALIZADA ---
     # A lógica de busca do limite foi substituída pela função auxiliar.
@@ -505,8 +505,6 @@ def video_download_page(request, video_id):
 
 
 
-
-
 def processar_geracao_video(
     video_gerado_id, data, user_id, assinatura_id, limite_testes_config=0
 ):
@@ -528,7 +526,7 @@ def processar_geracao_video(
         caminho_narrador_input = None
         if (tipo_conteudo == "narrador" or tipo_conteudo == "vendedor") and data.get("narrador_texto"):
             logger.info(f"[{video_gerado_id}] Gerando áudio de narração...")
-            texto_narrador_limpo = re.sub(r'{\d+', '', data["narrador_texto"])
+            texto_narrador_limpo = re.sub(r'\{\{\d+\}\}', '', data["narrador_texto"])
             caminho_narrador_input, _, duracao_audio = gerar_audio_e_tempos(
                 texto_narrador_limpo,
                 data["narrador_voz"],
@@ -651,13 +649,14 @@ def processar_geracao_video(
         current_stream = "[v_scaled]"
 
         if caminho_legenda_ass:
-            # ... (código da legenda)
-            video_chain_parts.append(f"{current_stream}ass=...[v_subtitled]")
+            # Escapa o caminho do arquivo de legenda para o filtro do FFMPEG
+            escaped_ass_path = caminho_legenda_ass.replace('\\', '/').replace(':', '\\:')
+            video_chain_parts.append(f"{current_stream}ass=filename='{escaped_ass_path}'[v_subtitled]")
             current_stream = "[v_subtitled]"
 
         if not assinatura_ativa:
-            # ... (código da marca d'água)
-            video_chain_parts.append(f"{current_stream}drawtext=...[v_watermarked]")
+            # Adiciona marca d'água para usuários não assinantes
+            video_chain_parts.append(f"{current_stream}drawtext=text='LUNDERON.COM':x=(w-text_w-10):y=(h-text_h-10):fontsize=32:fontcolor=white@0.5:shadowcolor=black@0.5:shadowx=2:shadowy=2[v_watermarked]")
             current_stream = "[v_watermarked]"
 
         video_input_offset = 1
@@ -1072,7 +1071,8 @@ def verificar_email(request, token):
         # 5. Loga o usuário automaticamente e o envia para o painel.
         login(request, user)
         messages.success(
-            request, "E-mail verificado com sucesso! Bem-vindo(a) à Lunderon."
+            request,
+            "E-mail verificado com sucesso! Bem-vindo(a) à Lunderon.",
         )
         return redirect("meu_perfil")
     else:
@@ -1137,11 +1137,13 @@ def reenviar_verificacao_email(request, user_id):
         if not user.is_active:
             send_verification_email(user, request)
             messages.success(
-                request, "Um novo link de verificação foi enviado para o seu e-mail."
+                request,
+                "Um novo link de verificação foi enviado para o seu e-mail.",
             )
         else:
             messages.info(
-                request, "Esta conta já está ativa. Você pode fazer login normalmente."
+                request,
+                "Esta conta já está ativa. Você pode fazer login normalmente.",
             )
     except Usuario.DoesNotExist:
         messages.error(request, "Usuário não encontrado.")
@@ -1210,7 +1212,8 @@ def admin_ativar_usuario(request, user_id):
     user_para_ativar.email_verificado = True
     user_para_ativar.save()
     messages.success(
-        request, f'O usuário "{user_para_ativar.username}" foi ativado com sucesso.'
+        request,
+        f'O usuário "{user_para_ativar.username}" foi ativado com sucesso.',
     )
     return redirect("admin_usuarios")
 
@@ -1234,7 +1237,8 @@ def admin_reenviar_verificacao(request, user_id):
             print(f"ERRO AO REENVIAR E-MAIL ADMIN: {e}")
     else:
         messages.warning(
-            request, f'O usuário "{user_para_verificar.username}" já está ativo.'
+            request,
+            f'O usuário "{user_para_verificar.username}" já está ativo.',
         )
 
     return redirect("admin_usuarios")
@@ -2065,7 +2069,7 @@ def get_youtube_most_replayed_segments(request):
         response.raise_for_status()
 
         # Regex para encontrar o objeto ytInitialData
-        match = re.search(r'window["|"]ytInitialData["|"] = ({.*?});', response.text)
+        match = re.search(r'window["|\"]ytInitialData["|\"] = ({.*?});', response.text)
         if not match:
             match = re.search(r"var ytInitialData = ({.*?});", response.text)
 
@@ -2136,7 +2140,8 @@ def get_youtube_most_replayed_segments(request):
             info = ydl.extract_info(youtube_url, download=False)
             duration = info.get('duration', 0)
 
-        return JsonResponse({"segments": sorted(segments, key=lambda x: x["start"]), "duration": duration})
+        return JsonResponse({"segments": sorted(segments, key=lambda x: x["start"])
+, "duration": duration})
 
     except requests.RequestException as e:
         return JsonResponse(
@@ -2152,9 +2157,12 @@ def get_youtube_most_replayed_segments(request):
 
 
 def processar_corte_youtube(
-    video_gerado_id, youtube_url, segment, musica_base_id, volume_musica, gerar_legendas
+    corte_gerado_id, musica_base_id, volume_musica, gerar_legendas
 ):
-    video = get_object_or_404(VideoGerado, id=video_gerado_id)
+    corte_gerado = get_object_or_404(CorteGerado, pk=corte_gerado_id)
+    video = corte_gerado.video_gerado
+    youtube_url = corte_gerado.youtube_url
+    segment = {"start": corte_gerado.start_time, "end": corte_gerado.end_time}
     temp_dir = os.path.join(settings.MEDIA_ROOT, "youtube_cuts_temp")
     os.makedirs(temp_dir, exist_ok=True)
 
@@ -2291,7 +2299,8 @@ def processar_corte_youtube(
             ]
         )
 
-        subprocess.run(cmd, check=True, capture_output=True, text=True, stdin=subprocess.DEVNULL)
+        logger.info(f"Comando FFMPEG a ser executado: {' '.join(cmd)}")
+        subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=300, stdin=subprocess.DEVNULL)
         # --- FIM DA CORREÇÃO ---
 
         # --- ETAPA 4: Upload para o R2 ---
@@ -2318,13 +2327,13 @@ def processar_corte_youtube(
         video.mensagem_erro = str(e)
         video.save()
 
-        print(f"!!!!!!!!!! ERRO AO PROCESSAR CORTE (ID: {video_gerado_id}) !!!!!!!!!!")
+        logger.error(f"!!!!!!!!!! ERRO AO PROCESSAR CORTE (ID: {corte_gerado_id}) !!!!!!!!!!")
         if isinstance(e, subprocess.CalledProcessError):
             # Imprime os detalhes do erro do ffmpeg no console
-            print(f"--- ERRO FFMPEG (STDOUT) ---\n{e.stdout}")
-            print(f"--- ERRO FFMPEG (STDERR) ---\n{e.stderr}")
+            logger.error(f"--- ERRO FFMPEG (STDOUT) ---\n{e.stdout}")
+            logger.error(f"--- ERRO FFMPEG (STDERR) ---\n{e.stderr}")
         else:
-            print(f"Exceção: {e}")
+            logger.error(f"Exceção: {e}")
 
     finally:
         # A lógica de limpeza de arquivos já está correta, usando a lista
@@ -2334,8 +2343,6 @@ def processar_corte_youtube(
                     os.remove(path)
                 except OSError as err:
                     print(f"Erro ao remover arquivo temporário {path}: {err}")
-
-
 
 
 @login_required
@@ -2350,7 +2357,8 @@ def pagina_gerador(request):
 
     if videos_criados >= limite_videos:
         messages.error(
-            request, f"Você atingiu seu limite de {limite_videos} vídeos por mês."
+            request,
+f"Você atingiu seu limite de {limite_videos} vídeos por mês."
         )
         return redirect("meu_perfil")
 
@@ -2494,7 +2502,8 @@ def cortes_youtube_view(request):
 
     if not request.user.plano_ativo:
         messages.warning(
-            request, "Esta funcionalidade está disponível apenas para assinantes."
+            request,
+            "Esta funcionalidade está disponível apenas para assinantes.",
         )
         return redirect("planos")
 
@@ -2502,7 +2511,8 @@ def cortes_youtube_view(request):
 
     if limite_videos_mes is not None and videos_criados >= limite_videos_mes:
         messages.error(
-            request, f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês."
+            request,
+f"Você atingiu seu limite de {limite_videos_mes} vídeos por mês."
         )
         return redirect("meu_perfil")
 
@@ -2578,15 +2588,16 @@ def cortes_youtube_view(request):
                         narrador_texto=f"Corte do vídeo: {youtube_url}",
                         texto_overlay=f"Início: {segment['start']}s",
                     )
+                    corte_gerado = CorteGerado.objects.create(
+                        video_gerado=video_gerado,
+                        youtube_url=youtube_url,
+                        start_time=segment['start'],
+                        end_time=segment['end'],
+                    )
                     
-                    # ==========================================================
-                    # ALTERAÇÃO PRINCIPAL AQUI
-                    # Trocamos o `enqueue_video_task` pela chamada da tarefa Celery
-                    # ==========================================================
+                    logger.info(f"Enfileirando task de corte para o ID de corte: {corte_gerado.pk}")
                     task_processar_corte_youtube.delay(
-                        video_gerado.id,
-                        youtube_url,
-                        segment,
+                        corte_gerado.pk,
                         musica_base.id,
                         data["volume_musica"],
                         data["gerar_legendas"],
@@ -2599,9 +2610,10 @@ def cortes_youtube_view(request):
                 return redirect("meus_videos")
 
             except Exception as e:
+                logger.error(f"FALHA CRÍTICA AO ENFILEIRAR TAREFA DE CORTE: {e}", exc_info=True)
                 messages.error(
                     request,
-                    f"Ocorreu um erro ao iniciar o processamento dos cortes: {e}",
+                    f"Ocorreu um erro CRÍTICO ao iniciar o processamento. A tarefa não foi enviada. Por favor, verifique a conexão com o sistema de tarefas e tente novamente. Erro: {e}",
                 )
 
     else:  # GET request

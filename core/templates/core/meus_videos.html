@@ -26,16 +26,27 @@
 <div class="dashboard-layout">
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h2 class="sidebar-user">{% firstof user.get_full_name user.username %}</h2>
+            <div class="sidebar-avatar">
+                <span>{{ user.username|first|upper }}</span>
+            </div>
+            <div class="sidebar-user-info">
+                <h2>{% firstof user.get_full_name user.username %}</h2>
+                <p>Plano: {{ user.plano.nome|default:"Grátis" }}</p>
+            </div>
         </div>
-        <nav class="sidebar-nav">
-            <ul>
-                <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> Gerador</a></li>
-                <li><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> Cortes YouTube</a></li>
-                <li class="active"><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> Meus Vídeos</a></li>
-                <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> Meu Painel</a></li>
-            </ul>
-        </nav>
+        <div class="sidebar-nav-main">
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="{% url 'pagina_gerador' %}"><i class="fas fa-magic fa-fw"></i> <span>Gerador</span></a></li>
+                    <li><a href="{% url 'cortes_youtube' %}"><i class="fas fa-cut fa-fw"></i> <span>Cortes YouTube</span></a></li>
+                    <li class="active"><a href="{% url 'meus_videos' %}"><i class="fas fa-video fa-fw"></i> <span>Meus Vídeos</span></a></li>
+                    <li><a href="{% url 'meu_perfil' %}"><i class="fas fa-user-circle fa-fw"></i> <span>Meu Painel</span></a></li>
+                </ul>
+            </nav>
+        </div>
+        <footer class="sidebar-footer">
+            <a href="{% url 'logout' %}" class="btn btn-secondary btn-full"><i class="fas fa-sign-out-alt"></i> <span>Sair</span></a>
+        </footer>
     </aside>
 
     <main class="dashboard-content">
@@ -110,11 +121,16 @@
                                 <span class="status-badge status-{{ video.status|lower }}">{{ video.get_status_display }}</span>
                             </div>
                             <div class="video-card-info">
+                                {% if video.corte %}
+                                <p><strong>Corte do YouTube:</strong> <a href="{{ video.corte.youtube_url }}" target="_blank">{{ video.corte.youtube_url|truncatechars:40 }}</a></p>
+                                <p><strong>Início:</strong> {{ video.corte.start_time|floatformat:2 }}s | <strong>Fim:</strong> {{ video.corte.end_time|floatformat:2 }}s</p>
+                                {% else %}
                                 <p><strong>Texto:</strong>
                                 {% if video.narrador_texto %}"{{ video.narrador_texto|truncatechars:80 }}"
                                 {% elif video.texto_overlay %}"{{ video.texto_overlay|truncatechars:80 }}"
                                 {% else %}N/A{% endif %}</p>
                                 <p><strong>Duração:</strong> {{ video.duracao_segundos|default:"N/A" }} segundos</p>
+                                {% endif %}
                             </div>
                             {% if video.status == 'ERRO' %}
                             <div class="error-details" style="display: none; margin-top: 15px; padding: 10px; background-color: var(--color-background-alt); border-radius: 8px;" id="error-{{ video.id }}">

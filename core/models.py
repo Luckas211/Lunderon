@@ -237,6 +237,14 @@ class VideoGerado(models.Model):
             return generate_presigned_url(self.thumbnail_key)
         return None
 
+class CorteGerado(models.Model):
+    video_gerado = models.OneToOneField(VideoGerado, on_delete=models.CASCADE, primary_key=True)
+    youtube_url = models.URLField(max_length=255)
+    start_time = models.FloatField()
+    end_time = models.FloatField()
+
+    def __str__(self):
+        return f"Corte de {self.video_gerado.usuario.username} para {self.youtube_url}"
 
 # ================================================================
 # PLANOS E ASSINATURAS (COM CORREÇÃO NO MODELO 'Plano')
