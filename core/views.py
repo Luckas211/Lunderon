@@ -435,9 +435,10 @@ def meus_videos(request):
         if video.status == "CONCLUIDO":
             # Tenta usar o texto do narrador ou o texto de overlay para dar um título mais útil
             titulo_video = video.narrador_texto or video.texto_overlay or "sem título"
+            titulo_curto = (titulo_video[:30] + "...") if len(titulo_video) > 30 else titulo_video
             messages.success(
                 request,
-                f'Boas notícias! O seu vídeo "{ (titulo_video[:30] + '...') if len(titulo_video) > 30 else titulo_video }" foi gerado com sucesso.',
+                f'Boas notícias! O seu vídeo "{titulo_curto}" foi gerado com sucesso.',
             )
         elif video.status == "ERRO":
             # Limita a mensagem de erro para não poluir a tela do usuário
@@ -2190,7 +2191,7 @@ def processar_corte_youtube(
             "download_ranges": yt_dlp.utils.download_range_func(
                 None, [(segment["start"], segment["end"])]
             ),
-            "force_keyframes_at_cuts": False,
+            "force_keyframes_at_cuts": True,
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
