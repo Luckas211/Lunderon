@@ -375,54 +375,49 @@ def create_text_image(texto, cor_da_fonte_hex, data, posicao="centro"):
     return caminho_imagem_texto
 
 
-@csrf_exempt
+@login_required
 def preview_voz(request, nome_da_voz):
     """
-    Gera um preview de áudio para uma voz específica usando Kokoro
+    Gera um preview de áudio para uma voz específica e retorna a URL.
     """
     try:
-        # Verificar se a voz está disponível
+        # Validar se a voz está no mapeamento conhecido.
         if nome_da_voz not in VOICE_MAPPING:
-            return JsonResponse({"error": "Voz não encontrada"}, status=404)
+            return JsonResponse({"error": "Voz não encontrada ou inválida."}, status=404)
 
+        # O 'nome_da_voz' da URL já é o identificador correto.
+        kokoro_voice = nome_da_voz
         texto_teste = "Esta é uma prévia da voz selecionada."
 
-        # Gerar o áudio com Kokoro
-        pipeline = KPipeline(lang_code="p")
-        generator = pipeline(texto_teste, voice=nome_da_voz, speed=1.0)
-
-        # Concatenar segmentos de áudio
-        audio_segments = []
-        for i, (gs, ps, audio) in enumerate(generator):
-            audio_segments.append(audio)
-
-        full_audio = np.concatenate(audio_segments)
-
-        # Salvar em arquivo temporário
-        audio_temp_dir = os.path.join(settings.MEDIA_ROOT, "audio_temp")
-        os.makedirs(audio_temp_dir, exist_ok=True)
-        caminho_audio = os.path.join(
-            audio_temp_dir, f"preview_{nome_da_voz}_{random.randint(1000,9999)}.wav"
+        # Usa a função `gerar_audio_e_tempos` que já lida com a geração e salvamento temporário
+        caminho_audio_temp, _, duracao = gerar_audio_e_tempos(
+            texto=texto_teste,
+            voz=kokoro_voice,
+            velocidade=100
         )
-        sf.write(caminho_audio, full_audio, 24000)
 
-        # Retornar o arquivo de áudio
-        with open(caminho_audio, "rb") as audio_file:
-            response = HttpResponse(audio_file.read(), content_type="audio/wav")
-            response["Content-Disposition"] = f'attachment; filename="preview_{nome_da_voz}.wav"'
+        if not caminho_audio_temp:
+            raise Exception("A função `gerar_audio_e_tempos` não retornou um caminho de áudio.")
 
-            # Limpeza do arquivo temporário após o envio
-            def cleanup():
-                try:
-                    os.remove(caminho_audio)
-                except:
-                    pass
+        # Define o diretório e o nome do arquivo final dentro da pasta de mídia
+        audio_preview_dir = os.path.join(settings.MEDIA_ROOT, 'audio_previews')
+        os.makedirs(audio_preview_dir, exist_ok=True)
+        
+        nome_arquivo = f"preview_{kokoro_voice}_{random.randint(1000, 9999)}.wav"
+        caminho_audio_final = os.path.join(audio_preview_dir, nome_arquivo)
 
-            response._resource_closers.append(cleanup)
-            return response
+        # Move o arquivo temporário para o local público
+        os.rename(caminho_audio_temp, caminho_audio_final)
+
+        # Gera a URL pública para o arquivo
+        url_audio = os.path.join(settings.MEDIA_URL, 'audio_previews', nome_arquivo).replace('\\', '/')
+
+        # Retorna a URL em uma resposta JSON
+        return JsonResponse({'url': url_audio})
 
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logger.error(f"Erro ao gerar preview de voz para '{nome_da_voz}': {e}", exc_info=True)
+        return JsonResponse({"error": "Ocorreu um erro interno ao gerar o áudio."}, status=500)
 
 
 @login_required

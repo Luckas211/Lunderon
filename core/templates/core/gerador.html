@@ -5,59 +5,6 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'core/css/gerador-profissional.css' %}">
-    <style>
-        .label-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 8px; /* Espaço entre o label e o tooltip */
-            margin-bottom: 8px;
-        }
-        .tooltip {
-            position: relative;
-            display: inline-block;
-            cursor: pointer;
-        }
-        .tooltip .tooltip-icon {
-            color: #a9a9b3;
-            font-size: 0.9rem;
-        }
-        .tooltip .tooltiptext {
-            visibility: hidden;
-            width: 240px;
-            background-color: #2c2c38;
-            color: #fff;
-            text-align: left;
-            border-radius: 6px;
-            padding: 10px;
-            position: absolute;
-            z-index: 10;
-            bottom: 150%;
-            left: 50%;
-            margin-left: -120px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .tooltip .tooltiptext::after {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #2c2c38 transparent transparent transparent;
-        }
-        .tooltip:hover .tooltiptext {
-            visibility: visible;
-            opacity: 1;
-        }
-        /* Ajuste para o tooltip dentro do form-check */
-        .form-check-title .tooltip {
-            margin-left: 5px;
-        }
-    </style>
 {% endblock %}
 
 
@@ -363,7 +310,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const originalFontSize = parseInt(inputs.textoTamanho.value, 10) || 70; // Fallback para 70
         const scaledFontSize = originalFontSize * scaleFactor;
 
-        textOverlay.style.color = inputs.corDaFonte.value;
         textOverlay.style.fontFamily = `'${inputs.textoFonte.options[inputs.textoFonte.selectedIndex].text}', sans-serif`;
         textOverlay.style.fontSize = `${scaledFontSize}px`;
         textOverlay.style.fontWeight = inputs.textoNegrito.checked ? 'bold' : 'normal';
@@ -739,6 +685,84 @@ document.addEventListener('DOMContentLoaded', function() {
     goToStep(0);
     updatePreview();
     updateNarrationInfo(); // Garante que a caixa de info inicie com os valores corretos
+
+    // --- LÓGICA DO PREVIEW DE VOZ ---
+    const playVoicePreviewBtn = form.querySelector('.play-voice-preview-btn');
+    if (playVoicePreviewBtn) {
+        const narradorVozSelect = form.querySelector('select[name="narrador_voz"]');
+        let audio = null;
+        const originalButtonHTML = playVoicePreviewBtn.innerHTML;
+        const originalButtonText = playVoicePreviewBtn.textContent.trim();
+
+        playVoicePreviewBtn.addEventListener('click', async () => {
+            const selectedVoice = narradorVozSelect.value;
+            const notificationDiv = document.getElementById('form-notifications');
+
+            if (!selectedVoice) {
+                notificationDiv.innerHTML = `<div class="alert alert-warning" role="alert">Por favor, selecione uma voz primeiro.</div>`;
+                return;
+            }
+
+            // Se o áudio estiver tocando, pare-o
+            if (audio && !audio.paused) {
+                audio.pause();
+                audio.currentTime = 0;
+                playVoicePreviewBtn.innerHTML = originalButtonHTML;
+                audio = null;
+                return;
+            }
+
+            playVoicePreviewBtn.disabled = true;
+            playVoicePreviewBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Carregando...`;
+
+            try {
+                const response = await fetch(`/api/preview-voz/${selectedVoice}/`, {
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    }
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    audio = new Audio(data.url);
+
+                    audio.addEventListener('play', () => {
+                        playVoicePreviewBtn.innerHTML = `<i class="fas fa-pause"></i> Pausar`;
+                        playVoicePreviewBtn.disabled = false;
+                    });
+
+                    audio.addEventListener('ended', () => {
+                        playVoicePreviewBtn.innerHTML = originalButtonHTML;
+                        audio = null;
+                    });
+                    
+                    audio.addEventListener('pause', () => {
+                        if (audio && audio.currentTime < audio.duration) {
+                           playVoicePreviewBtn.innerHTML = originalButtonHTML;
+                        }
+                    });
+
+                    audio.play().catch(e => {
+                        console.error("Erro ao tentar tocar o áudio:", e);
+                        notificationDiv.innerHTML = `<div class="alert alert-danger" role="alert">Não foi possível reproduzir o áudio.</div>`;
+                        playVoicePreviewBtn.innerHTML = originalButtonHTML;
+                        playVoicePreviewBtn.disabled = false;
+                    });
+
+                } else {
+                    console.error('Erro ao buscar preview de voz:', data.error);
+                    notificationDiv.innerHTML = `<div class="alert alert-danger" role="alert">${data.error || 'Não foi possível carregar o preview da voz.'}</div>`;
+                    playVoicePreviewBtn.innerHTML = originalButtonHTML;
+                    playVoicePreviewBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Erro de rede ao buscar preview de voz:', error);
+                notificationDiv.innerHTML = `<div class="alert alert-danger" role="alert">Erro de rede ao carregar o preview.</div>`;
+                playVoicePreviewBtn.innerHTML = originalButtonHTML;
+                playVoicePreviewBtn.disabled = false;
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

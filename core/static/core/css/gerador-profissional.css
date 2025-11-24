@@ -5,20 +5,38 @@
 /* --------------------------------------------------------------------------
    VARIÁVEIS GLOBAIS (Importadas do style.css)
    -------------------------------------------------------------------------- */
-:root {
+   :root {
     --cor-primaria: #655BE2;
     --cor-primaria-dark: #4F46C3;
     --cor-sucesso: #10B981;
     --cor-erro: #EF4444;
-    --cor-fundo-principal: #0F172A; /* Dark Mode Background */
-    --cor-fundo-secundario: #0A101C; /* Dark Mode Alt Background */
-    --cor-fundo-terciario: #334155; /* Dark Mode Border Color */
-    --cor-borda: #334155;
-    --cor-texto-principal: #E2E8F0; /* Dark Mode Text */
-    --cor-texto-secundario: #94A3B8; /* Dark Mode Light Text */
+
+    /* Light Mode */
+    --cor-fundo-principal: #F9FAFB; /* Cinza bem claro */
+    --cor-fundo-secundario: #FFFFFF;
+    --cor-fundo-terciario: #F3F4F6; /* Cinza um pouco mais escuro */
+    --cor-borda: #E5E7EB;
+    --cor-texto-principal: #111827; /* Preto suave */
+    --cor-texto-secundario: #6B7280; /* Cinza médio */
+    --cor-fundo-overlay: rgba(255, 255, 255, 0.8);
+
+
     --fonte-principal: 'Inter', sans-serif;
     --raio-borda: 12px;
+    --sombra-padrao: 0 4px 15px rgba(0, 0, 0, 0.07);
+    --sombra-texto-preview: 1px 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme="dark"] {
+    --cor-fundo-principal: #0F172A;
+    --cor-fundo-secundario: #1E293B; /* Azul escuro mais claro */
+    --cor-fundo-terciario: #334155;
+    --cor-borda: #334155;
+    --cor-texto-principal: #E2E8F0;
+    --cor-texto-secundario: #94A3B8;
     --sombra-padrao: 0 4px 15px rgba(0, 0, 0, 0.2);
+    --cor-fundo-overlay: rgba(10, 16, 28, 0.8);
+    --sombra-texto-preview: 2px 2px 8px rgba(0, 0, 0, 0.7);
 }
 
 /* --------------------------------------------------------------------------
@@ -505,7 +523,7 @@
    -------------------------------------------------------------------------- */
 .panel-actions, .global-actions {
     padding: 24px;
-    background-color: rgba(0,0,0,0.2);
+    background-color: var(--cor-fundo-principal);
 }
 .panel-actions {
     display: flex;
@@ -575,7 +593,7 @@
     aspect-ratio: 9 / 19.5; /* Proporção de um celular moderno */
     background-color: #111;
     border-radius: 40px; /* Bordas arredondadas do celular */
-    border: 8px solid #0A101C;
+    border: 8px solid var(--cor-fundo-secundario);
     box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.5), inset 0 0 2px rgba(255,255,255,0.1);
     position: relative;
     overflow: hidden;
@@ -627,11 +645,11 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: white;
+    color: var(--cor-texto-principal);
     text-align: center;
     font-size: 50px; /* Default, será sobrescrito por JS */
     font-weight: bold;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+    text-shadow: var(--sombra-texto-preview);
     width: 90%;
 }
 .text-overlay.align-bottom {
@@ -651,7 +669,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(10, 16, 28, 0.8);
+    background-color: var(--cor-fundo-overlay);
     backdrop-filter: blur(5px);
     z-index: 9999;
     display: flex;
@@ -807,6 +825,119 @@
 }
 
 .step.disabled {
+
     pointer-events: none;
+
     opacity: 0.5;
+
+}
+
+
+
+/* --------------------------------------------------------------------------
+
+   TOOLTIPS
+
+   -------------------------------------------------------------------------- */
+
+.label-wrapper {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 8px; /* Espaço entre o label e o tooltip */
+
+    margin-bottom: 8px;
+
+}
+
+.tooltip {
+
+    position: relative;
+
+    display: inline-block;
+
+    cursor: pointer;
+
+}
+
+.tooltip .tooltip-icon {
+
+    color: var(--cor-texto-secundario);
+
+    font-size: 0.9rem;
+
+}
+
+.tooltip .tooltiptext {
+
+    visibility: hidden;
+
+    width: 240px;
+
+    background-color: var(--cor-texto-principal);
+
+    color: var(--cor-fundo-principal);
+
+    text-align: left;
+
+    border-radius: 6px;
+
+    padding: 10px;
+
+    position: absolute;
+
+    z-index: 10;
+
+    bottom: 150%;
+
+    left: 50%;
+
+    margin-left: -120px;
+
+    opacity: 0;
+
+    transition: opacity 0.3s;
+
+    box-shadow: var(--sombra-padrao);
+
+    border: 1px solid var(--cor-borda);
+
+}
+
+.tooltip .tooltiptext::after {
+
+    content: "";
+
+    position: absolute;
+
+    top: 100%;
+
+    left: 50%;
+
+    margin-left: -5px;
+
+    border-width: 5px;
+
+    border-style: solid;
+
+    border-color: var(--cor-texto-principal) transparent transparent transparent;
+
+}
+
+.tooltip:hover .tooltiptext {
+
+    visibility: visible;
+
+    opacity: 1;
+
+}
+
+/* Ajuste para o tooltip dentro do form-check */
+
+.form-check-title .tooltip {
+
+    margin-left: 5px;
+
 }
