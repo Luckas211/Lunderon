@@ -8,8 +8,8 @@ def task_processar_geracao_video(self, video_gerado_id, data, user_id, assinatur
     """
     Tarefa Celery para processar a geração de vídeo em segundo plano.
     """
-    # CORREÇÃO: Importamos a função aqui dentro, e não no topo do arquivo.
-    from .views import processar_geracao_video
+    # CORREÇÃO: Importamos a função de `services` e não mais de `views`.
+    from .services import processar_geracao_video
 
     try:
         logger.info(f"Iniciando task_processar_geracao_video para o ID: {video_gerado_id}")
@@ -26,8 +26,8 @@ def task_processar_corte_youtube(self, corte_gerado_id, musica_base_id, volume_m
     """
     Tarefa Celery para processar o corte de vídeos do YouTube em segundo plano.
     """
-    # CORREÇÃO: Importamos a função aqui dentro, e não no topo do arquivo.
-    from .views import processar_corte_youtube
+    # CORREÇÃO: Importamos a função de `services` e não mais de `views`.
+    from .services import processar_corte_youtube
 
     try:
         logger.info(f"Iniciando task_processar_corte_youtube para o ID: {corte_gerado_id}")

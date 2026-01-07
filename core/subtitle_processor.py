@@ -27,7 +27,7 @@ class SubtitleProcessor:
         # Carrega o modelo Whisper (pequeno para ser mais rápido)
         if whisper is not None:
             try:
-                self.model = whisper.load_model("base")
+                self.model = whisper.load_model("large-v3")
             except Exception as e:
                 print(f"Erro ao carregar modelo Whisper: {e}")
                 self.model = None

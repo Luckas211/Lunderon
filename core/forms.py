@@ -9,9 +9,22 @@ from .models import Usuario, CategoriaVideo, CategoriaMusica, Plano, Assinatura,
 # Definindo as vozes do Kokoro primeiro para evitar duplicação
 # Definindo as vozes do Kokoro para português brasileiro
 VOZES_KOKORO = [
-    ('pf_dora', 'Feminina - Dora'),
-    ('pm_alex', 'Masculina - Alex'),
-    ('pm_santa', 'Masculina - Santa'),
+    # Originais
+    ('pf_dora', 'Feminina - Padrão (Dora)'),
+    ('pm_alex', 'Masculina - Padrão (Alex)'),
+    ('pm_santa', 'Masculina - Grave (Santa)'),
+
+    # Novas Vozes Femininas (base pf_dora)
+    ('pf_dora_p3', 'Feminina - Jovem'),
+    ('pf_dora_p1_5', 'Feminina - Suave'),
+    ('pf_dora_m1', 'Feminina - Adulta'),
+    ('pf_dora_m2_5', 'Feminina - Madura'),
+
+    # Novas Vozes Masculinas
+    ('pm_alex_p2', 'Masculina - Jovem'),
+    ('pm_alex_m1_5', 'Masculina - Séria'),
+    ('pm_santa_p1', 'Masculina - Locutor'),
+    ('pm_santa_m1', 'Masculina - Profunda'),
 ]
 
 # Opções de velocidade para a narração

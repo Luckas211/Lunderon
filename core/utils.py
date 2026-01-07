@@ -284,3 +284,30 @@ def generate_thumbnail_from_video_r2(object_key):
             os.remove(caminho_video_local)
         if caminho_thumbnail_local and os.path.exists(caminho_thumbnail_local):
             os.remove(caminho_thumbnail_local)
+
+
+def get_valid_media_from_category(model, category):
+    """
+    Retorna uma mídia válida (com object_key) da categoria especificada
+    Verifica se o arquivo realmente existe no R2 antes de retornar
+    """
+    # Primeiro, verifica se há mídias válidas na categoria
+    valid_media = (
+        model.objects.filter(categoria=category)
+        .exclude(object_key__isnull=True)
+        .exclude(object_key__exact="")
+    )
+
+    if not valid_media.exists():
+        print(f"Erro: Não há {model.__name__} válidos para a categoria {category}")
+        return None
+
+    # Tenta encontrar uma mídia que realmente existe no R2
+    for media in valid_media.order_by("?"):
+        if verificar_arquivo_existe_no_r2(media.object_key):
+            return media
+
+    print(
+        f"Erro: Nenhum {model.__name__} encontrado para a categoria {category} que exista no R2"
+    )
+    return None

@@ -13,7 +13,7 @@ env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # --- Configurações de Segurança ---
-SECRET_KEY = env('SECRET_KEY', default='django-insecure-default-key-for-dev')
+SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool('DEBUG', default=False)
 ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['localhost', '127.0.0.1'])
 SERVICE_URL = env('CLOUD_RUN_URL', default=None)
@@ -22,6 +22,16 @@ if SERVICE_URL:
     hostname = urlparse(SERVICE_URL).hostname
     if hostname:
         ALLOWED_HOSTS.append(hostname)
+
+# --- Production Security Settings ---
+if not DEBUG:
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
 
 # --- Aplicações e Middlewares ---
 INSTALLED_APPS = [
@@ -108,7 +118,7 @@ AUTH_USER_MODEL = 'core.Usuario'
 STRIPE_SECRET_KEY = env('STRIPE_SECRET_KEY')
 STRIPE_PUBLISHABLE_KEY = env('STRIPE_PUBLISHABLE_KEY')
 STRIPE_PRICE_ID = env('STRIPE_PRICE_ID')
-STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='whsec_...')
+STRIPE_WEBHOOK_SECRET = env('STRIPE_WEBHOOK_SECRET', default='placeholder_secret_must_be_set_in_production')
 
 APPEND_SLASH = True
 

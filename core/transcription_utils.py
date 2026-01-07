@@ -5,7 +5,7 @@ from faster_whisper import WhisperModel
 from django.conf import settings
 
 # Define o modelo Whisper a ser usado. 'base' é um bom equilíbrio entre velocidade e precisão.
-WHISPER_MODEL_SIZE = "base"
+WHISPER_MODEL_SIZE = "large-v3"
 _model = None
 
 def get_whisper_model():

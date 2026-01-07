@@ -63,30 +63,6 @@ class Usuario(AbstractUser):
         return self.username
 
 
-# ================================================================
-# FUNÇÃO AUXILIAR PARA CRIAR PASTA NO R2
-# ================================================================
-def criar_pasta_no_r2(caminho_pasta):
-    """
-    Cria uma pasta (objeto vazio) no Cloudflare R2
-    """
-    try:
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.AWS_S3_ENDPOINT_URL,
-            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
-        s3_client.put_object(
-            Bucket=settings.AWS_STORAGE_BUCKET_NAME,
-            Key=f"{caminho_pasta}/",
-            Body=b"",
-        )
-        return True
-    except ClientError as e:
-        print(f"Erro ao criar pasta no R2: {e}")
-        return False
 
 
 # ================================================================
@@ -121,16 +97,10 @@ class BaseCategoria(models.Model):
 # CATEGORIAS (AGORA USANDO O MODELO ABSTRATO)
 # ================================================================
 class CategoriaVideo(BaseCategoria):
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs) # Chama o save da classe Base
-        caminho_pasta_videos = f"media/videos_base/{self.pasta}"
-        criar_pasta_no_r2(caminho_pasta_videos)
+    pass
 
 class CategoriaMusica(BaseCategoria):
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs) # Chama o save da classe Base
-        caminho_pasta_musicas = f"media/musicas_base/{self.pasta}"
-        criar_pasta_no_r2(caminho_pasta_musicas)
+    pass
 
 
 # ================================================================
@@ -232,9 +202,8 @@ class VideoGerado(models.Model):
 
     @property
     def thumbnail_url(self):
-        if self.thumbnail_key:
-            from .utils import generate_presigned_url
-            return generate_presigned_url(self.thumbnail_key)
+        if self.thumbnail_key and settings.CLOUDFLARE_R2_PUBLIC_URL:
+            return f"{settings.CLOUDFLARE_R2_PUBLIC_URL}/{self.thumbnail_key}"
         return None
 
 class CorteGerado(models.Model):

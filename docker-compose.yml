@@ -1,14 +1,17 @@
-# A linha 'version: 3.8' foi removida para evitar o aviso
 services:
+  # 1. Banco de Dados de Mensagens (Redis Local)
   redis:
     image: "redis:alpine"
     container_name: gerador_videos_redis
+    restart: always
     ports:
       - "6379:6379"
 
+  # 2. O Site (Backend Django)
   web:
     build: .
     container_name: gerador_videos_web
+    restart: always
     command: gunicorn gerador_videos.wsgi:application --bind "0.0.0.0:8000" --timeout 3600
     volumes:
       - .:/app
@@ -16,17 +19,39 @@ services:
       - "8000:8000"
     env_file:
       - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
     depends_on:
       - redis
 
-  celery:
+  # 3. O Trabalhador (Gera os vídeos)
+  celery_worker:
     build: .
-    container_name: gerador_videos_celery
-    command: celery -A gerador_videos worker -l info --pool=solo
+    container_name: lunderon_worker
+    restart: always
+    # Concurrency 4 para não travar o PC (Whisper é pesado)
+    command: celery -A gerador_videos worker -l info --concurrency=4
     volumes:
       - .:/app
     env_file:
       - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
     depends_on:
+      - redis
       - web
+
+  # 4. O Agendador (Limpeza automática)
+  celery_beat:
+    build: .
+    container_name: lunderon_beat
+    restart: always
+    command: celery -A gerador_videos beat -l info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
       - redis
