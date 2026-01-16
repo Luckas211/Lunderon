@@ -8,6 +8,7 @@ import subprocess
 import random
 import yt_dlp
 import numpy as np
+import torch
 import soundfile as sf
 from PIL import Image, ImageDraw, ImageFont
 from kokoro import KPipeline
@@ -36,181 +37,127 @@ from .transcription_utils import get_word_timestamps, extract_audio_from_video, 
 logger = logging.getLogger(__name__)
 
 # ==============================================================================
-# CONSTANTES E FUNÇÕES HELPER (LÓGICA DO GERADOR DE VÍDEO)
+# CONFIGURAÇÕES
 # ==============================================================================
-
-VOZES_KOKORO = {
-    "pt-BR-Wavenet-A": "pf_dora",
-    "pt-BR-Wavenet-C": "pf_dora",
-    "pt-BR-Wavenet-D": "pf_dora",
-    "pt-BR-Wavenet-B": "pm_alex",
-    "pt-BR-Neural2-B": "pm_santa",
-}
 
 FONT_PATHS = {
     "Windows": {
-        "cunia": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "Cunia.ttf"
-        ),
-        "arial": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "arial.ttf"
-        ),
-        "arialbd": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "arialbd.ttf"
-        ),
-        "times": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "times.ttf"
-        ),
-        "courier": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "cour.ttf"
-        ),
-        "impact": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "impact.ttf"
-        ),
-        "verdana": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "verdana.ttf"
-        ),
-        "georgia": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "georgia.ttf"
-        ),
-        "alfa_slab_one": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "AlfaSlabOne-Regular.ttf"
-        ),
+        "cunia": os.path.join(settings.BASE_DIR, "core", "static", "fonts", "Cunia.ttf"),
+        "arial": os.path.join(settings.BASE_DIR, "core", "static", "fonts", "arial.ttf"),
     },
     "Linux": {
-        "cunia": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "Cunia.ttf"
-        ),
-        "arial": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "arial.ttf"
-        ),
-        "arialbd": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "arialbd.ttf"
-        ),
-        "times": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "times.ttf"
-        ),
-        "courier": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "cour.ttf"
-        ),
-        "impact": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "impact.ttf"
-        ),
-        "verdana": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "verdana.ttf"
-        ),
-        "georgia": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "georgia.ttf"
-        ),
-        "alfa_slab_one": os.path.join(
-            settings.BASE_DIR, "core", "static", "fonts", "AlfaSlabOne-Regular.ttf"
-        ),
+        "cunia": os.path.join(settings.BASE_DIR, "core", "static", "fonts", "Cunia.ttf"),
+        "arial": "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
     },
 }
+
+# ==============================================================================
+# FUNÇÕES DE ÁUDIO E IA (KOKORO ATUALIZADO)
+# ==============================================================================
+
+def carregar_embedding_voz(pipeline, nome_voz):
+    """
+    Carrega o vetor da voz. Prioriza arquivos .npy personalizados.
+    Retorna o Tensor ou Numpy Array dos dados da voz.
+    """
+    # 1. Tenta carregar arquivo personalizado (.npy)
+    path_custom = os.path.join(settings.BASE_DIR, 'core', 'voices_custom', f"{nome_voz}.npy")
+    
+    if os.path.exists(path_custom):
+        try:
+            logger.info(f"🎤 Carregando voz personalizada do disco: {nome_voz}")
+            return np.load(path_custom)
+        except Exception as e:
+            logger.error(f"Erro ao ler arquivo .npy {nome_voz}: {e}")
+
+    # 2. Tenta carregar voz padrão do sistema Kokoro
+    try:
+        logger.info(f"🎤 Tentando carregar voz padrão: {nome_voz}")
+        # O load_voice do Kokoro retorna um Tensor se achar, ou baixa do HF
+        voice = pipeline.load_voice(nome_voz)
+        return voice
+    except Exception as e:
+        # 3. Fallback final
+        logger.warning(f"⚠️ Voz {nome_voz} não encontrada nem em disco nem no sistema. Usando 'pf_dora'. Erro: {e}")
+        return pipeline.load_voice('pf_dora')
 
 
 def gerar_audio_e_tempos(texto, voz, velocidade, obter_tempos=False):
     """
-    Gera áudio a partir do texto usando o modelo Kokoro, com suporte para vozes com pitch.
-    Aplica o pitch shift usando FFMPEG com o filtro 'rubberband'.
+    Gera áudio a partir do texto usando o modelo Kokoro.
+    CORREÇÃO APLICADA: Injeta o embedding no pipeline e passa o NOME (string).
     """
-    caminho_audio_base_temp = None
-    caminho_audio_pitched_temp = None
+    caminho_audio_final = None
     
     try:
-        base_voice = voz
-        pitch_value = 0.0
-
-        # --- LÓGICA DE PARSING CORRIGIDA ---
-        # Encontra o último '_' que é seguido por 'p' ou 'm' para separar a voz base do modificador de pitch
-        last_m_index = voz.rfind('_m')
-        last_p_index = voz.rfind('_p')
-        
-        split_index = -1
-        # Pega o índice mais à direita, que deve ser o início do modificador de pitch
-        if last_p_index != -1:
-            split_index = last_p_index
-        if last_m_index != -1 and last_m_index > last_p_index:
-            split_index = last_m_index
-            
-        if split_index != -1:
-            # Verifica se o que vem depois do _p ou _m é um número ou uma variação com _
-            # para evitar confundir nomes de voz como 'exemplo_novo'
-            potential_pitch_part = voz[split_index+2:]
-            if potential_pitch_part and (potential_pitch_part[0].isdigit() or potential_pitch_part[0] == '_'):
-                base_voice = voz[:split_index]
-                pitch_str = voz[split_index+1:] # ex: m2_5 ou p2
-                
-                # Converte a string do pitch para float, substituindo '_' por '.'
-                pitch_value_str = pitch_str[1:].replace('_', '.')
-                if pitch_str.startswith('p'):
-                    pitch_value = float(pitch_value_str)
-                elif pitch_str.startswith('m'):
-                    pitch_value = -float(pitch_value_str)
-        # --- FIM DA CORREÇÃO ---
-
-        # 1. Gera o áudio base com Kokoro
+        # 1. Inicializa Pipeline (Português)
         pipeline = KPipeline(lang_code="p", repo_id='hexgrad/Kokoro-82M')
-        speed_factor = float(velocidade) / 100.0
-        # Passa a `base_voice` extraída para o pipeline
-        generator = pipeline(texto, voice=base_voice, speed=speed_factor, split_pattern=r"\n+")
+        
+        # 2. Carrega os dados brutos da voz (Array ou Tensor)
+        dados_da_voz = carregar_embedding_voz(pipeline, voz)
+        
+        # --- CORREÇÃO CRÍTICA AQUI ---
+        # O Kokoro espera que passemos uma STRING como 'voice', não o array.
+        # Mas para vozes customizadas ('br_imperador'), o pipeline não conhece esse nome.
+        # Então injetamos manualmente os dados no dicionário interno do pipeline.
+        
+        # Garante que é um Tensor do PyTorch (Kokoro usa Torch internamente)
+        if isinstance(dados_da_voz, np.ndarray):
+            dados_da_voz = torch.from_numpy(dados_da_voz).float()
+            
+        # Injeta no dicionário de vozes do pipeline
+        pipeline.voices[voz] = dados_da_voz
+        
+        # 3. Configura velocidade
+        try:
+            speed_factor = float(velocidade) / 100.0
+        except:
+            speed_factor = 1.0
+
+        # 4. Gera o áudio passando o NOME DA VOZ (String), pois agora ela existe no pipeline
+        generator = pipeline(
+            texto, 
+            voice=voz,  # <--- Passamos a STRING 'br_imperador', não o array
+            speed=speed_factor, 
+            split_pattern=r"\n+"
+        )
 
         audio_segments = []
         for i, (gs, ps, audio) in enumerate(generator):
             audio_segments.append(audio)
+        
+        if not audio_segments:
+            raise Exception("Nenhum áudio foi gerado pelo pipeline.")
+
         full_audio = np.concatenate(audio_segments)
 
+        # 5. Salva o arquivo final
         with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_f:
-            caminho_audio_base_temp = temp_f.name
-        sf.write(caminho_audio_base_temp, full_audio, 24000)
+            caminho_audio_final = temp_f.name
+        
+        sf.write(caminho_audio_final, full_audio, 24000)
 
-        # 2. Se houver pitch, aplica o efeito com FFMPEG
-        if pitch_value != 0.0:
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_f_pitch:
-                caminho_audio_pitched_temp = temp_f_pitch.name
-
-            pitch_ratio = 2 ** (pitch_value / 12.0)
-
-            cmd = [
-                "ffmpeg", "-y",
-                "-i", caminho_audio_base_temp,
-                "-af", f"rubberband=pitch={pitch_ratio}",
-                caminho_audio_pitched_temp
-            ]
-            
-            try:
-                subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=60)
-                os.remove(caminho_audio_base_temp)
-                caminho_audio_final = caminho_audio_pitched_temp
-            except subprocess.CalledProcessError as e:
-                logger.error(f"FALHA no filtro FFMPEG 'rubberband' para a voz {voz}. Usando a voz base. Erro: {e.stderr}")
-                if caminho_audio_pitched_temp and os.path.exists(caminho_audio_pitched_temp):
-                    os.remove(caminho_audio_pitched_temp)
-                caminho_audio_final = caminho_audio_base_temp
-            except FileNotFoundError:
-                 logger.error(f"Comando FFMPEG não encontrado. Usando a voz base.")
-                 caminho_audio_final = caminho_audio_base_temp
-        else:
-            caminho_audio_final = caminho_audio_base_temp
-
-        # 3. Calcula a duração e retorna
+        # Calcula duração
         info = sf.info(caminho_audio_final)
         duracao = info.duration
         
         timepoints = None
-        if obter_tempos:
-            pass 
 
         return caminho_audio_final, timepoints, duracao
 
     except Exception as e:
-        logger.error(f"Erro CRÍTICO ao gerar áudio para voz {voz}: {e}", exc_info=True)
-        if caminho_audio_base_temp and os.path.exists(caminho_audio_base_temp):
-            os.remove(caminho_audio_base_temp)
-        if caminho_audio_pitched_temp and os.path.exists(caminho_audio_pitched_temp):
-            os.remove(caminho_audio_pitched_temp)
+        logger.error(f"Erro CRÍTICO ao gerar áudio (Kokoro) para voz {voz}: {e}", exc_info=True)
+        if caminho_audio_final and os.path.exists(caminho_audio_final):
+            try:
+                os.remove(caminho_audio_final)
+            except:
+                pass
         return None, None, 0
 
+
+# ==============================================================================
+# FUNÇÕES DE TEXTO E IMAGEM
+# ==============================================================================
 
 def wrap_text_by_width(text, font, max_width, draw):
     """Wraps text to fit within a specified width, using the draw object."""
@@ -219,7 +166,6 @@ def wrap_text_by_width(text, font, max_width, draw):
         return ""
 
     words = text.split(' ')
-    
     if not words:
         return ""
 
@@ -356,30 +302,29 @@ def gerar_legenda_karaoke_ass(
     word_timestamps, data, cor_da_fonte_hex, cor_destaque_hex, posicao="centro"
 ):
     """
-    Gera uma legenda .ASS com sincronização precisa por palavra (efeito karaokê)
-    a partir dos timestamps extraídos pelo Whisper.
+    Gera uma legenda .ASS com sincronização precisa por palavra.
     """
-    # Configurações de estilo (esta parte não muda)
+    # Configurações de estilo
     nome_fonte = data.get("texto_fonte", "Arial")
     tamanho = data.get("texto_tamanho", 70)
     negrito = -1 if data.get("texto_negrito", False) else 0
     sublinhado = -1 if data.get("texto_sublinhado", False) else 0
 
-    # Converte a cor principal (texto não dito) para o formato BGR do ASS
+    # Converte a cor principal
     try:
         hex_limpo = cor_da_fonte_hex.lstrip("#")
         r, g, b = tuple(int(hex_limpo[i : i + 2], 16) for i in (0, 2, 4))
         cor_primaria_ass = f"&H00{b:02X}{g:02X}{r:02X}"
     except (ValueError, IndexError):
-        cor_primaria_ass = "&H00FFFFFF"  # Branco opaco como padrão
+        cor_primaria_ass = "&H00FFFFFF"  # Branco opaco
 
-    # Converte a cor de destaque (texto dito) para o formato BGR do ASS
+    # Converte a cor de destaque
     try:
         hex_limpo_destaque = cor_destaque_hex.lstrip("#")
         r_s, g_s, b_s = tuple(int(hex_limpo_destaque[i : i + 2], 16) for i in (0, 2, 4))
         cor_secundaria_ass = f"&H00{b_s:02X}{g_s:02X}{r_s:02X}"
     except (ValueError, IndexError, TypeError):
-        cor_secundaria_ass = "&H0000FFFF"  # Amarelo opaco como padrão
+        cor_secundaria_ass = "&H0000FFFF"  # Amarelo opaco
 
     cor_outline = "&H00000000"
     cor_back = "&H80000000"
@@ -388,7 +333,7 @@ def gerar_legenda_karaoke_ass(
     margin_v = 150 if posicao == "inferior" else 50
 
     header = (
-        f"[Script Info]\nTitle: Legenda Sincronizada com Precisão\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\n\n"
+        f"[Script Info]\nTitle: Legenda Sincronizada\nScriptType: v4.00+\nPlayResX: 1080\nPlayResY: 1920\n\n"
         f"[V4+ Styles]\n"
         f"Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
         f"Style: Default,{nome_fonte},{tamanho},{cor_primaria_ass},{cor_secundaria_ass},{cor_outline},{cor_back},{negrito},0,{sublinhado},0,100,100,0,0,1,2,2,{alignment_code},30,30,{margin_v},1\n\n"
@@ -413,7 +358,7 @@ def gerar_legenda_karaoke_ass(
         texto_karaoke = ""
         for palavra in linha:
             duracao_cs = int((palavra["end"] - palavra["start"]) * 100)
-            # CORREÇÃO: Formata a tag de karaoke para o padrão ASS {\k<duração>}
+            # Formata a tag de karaoke para o padrão ASS {\k<duração>}
             texto_karaoke += f"{{\k{duracao_cs}}}{palavra['word'].strip()} "
 
         dialogos.append(
@@ -436,28 +381,25 @@ def estimar_tempo_narracao(texto, velocidade=100):
     Estima o tempo de narração com base no texto e velocidade
     Baseado em: 150 palavras por minuto para velocidade normal (100%)
     """
-    # Contar palavras
     palavras = texto.split()
     num_palavras = len(palavras)
-
-    # Palavras por minuto base (velocidade normal)
     ppm_base = 150
 
-    # Garantir que velocidade seja tratada como número (caso venha como string)
     try:
         velocidade_float = float(velocidade)
     except (ValueError, TypeError):
-        velocidade_float = 100.0  # Valor padrão se a conversão falhar
+        velocidade_float = 100.0
 
-    # Ajustar pela velocidade
     ppm_ajustado = ppm_base * (velocidade_float / 100.0)
-
-    # Calcular duração em segundos
     duracao_minutos = num_palavras / ppm_ajustado
     duracao_segundos = duracao_minutos * 60
 
     return duracao_segundos, num_palavras
 
+
+# ==============================================================================
+# PROCESSAMENTO DE VÍDEOS
+# ==============================================================================
 
 def processar_geracao_video(
     video_gerado_id, data, user_id, assinatura_id, limite_testes_config=0
@@ -480,12 +422,15 @@ def processar_geracao_video(
         caminho_narrador_input = None
         if (tipo_conteudo == "narrador" or tipo_conteudo == "vendedor") and data.get("narrador_texto"):
             logger.info(f"[{video_gerado_id}] Gerando áudio de narração...")
-            texto_narrador_limpo = re.sub(r'{{{\\d+}}}', '', data["narrador_texto"])
+            texto_narrador_limpo = re.sub(r'{{{\d+}}}', '', data["narrador_texto"])
+            
+            # Geração de áudio
             caminho_narrador_input, _, duracao_audio = gerar_audio_e_tempos(
                 texto_narrador_limpo,
                 data["narrador_voz"],
                 data["narrador_velocidade"],
             )
+            
             if caminho_narrador_input:
                 logger.info(f"[{video_gerado_id}] Áudio de narração gerado em: {caminho_narrador_input}, Duração: {duracao_audio}s")
                 caminhos_para_limpar.append(caminho_narrador_input)
@@ -716,7 +661,6 @@ def processar_corte_youtube(
     temp_dir = os.path.join(settings.MEDIA_ROOT, "youtube_cuts_temp")
     os.makedirs(temp_dir, exist_ok=True)
 
-    # Inicializa os caminhos para garantir a limpeza no bloco 'finally'
     caminho_video_segmento = None
     caminho_audio_extraido = None
     caminho_legenda_srt = None
@@ -725,7 +669,7 @@ def processar_corte_youtube(
     caminhos_para_limpar = []
 
     try:
-        # --- ETAPA 1: Baixar o segmento com yt-dlp (esta parte já estava correta) ---
+        # --- ETAPA 1: Baixar o segmento com yt-dlp ---
         video.status = "PROCESSANDO (1/4 - Baixando segmento)"
         video.save()
 
@@ -787,7 +731,6 @@ def processar_corte_youtube(
         if caminho_musica_input:
             cmd.extend(["-i", caminho_musica_input])
 
-        # --- INÍCIO DA CORREÇÃO NO FFMPEG ---
         video_filters = "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1"
         if caminho_legenda_srt:
             escaped_srt_path = caminho_legenda_srt.replace("\\", "/").replace(
@@ -798,19 +741,15 @@ def processar_corte_youtube(
                 f",subtitles='{escaped_srt_path}':force_style='{style_options}'"
             )
 
-        # CORREÇÃO 1: O filtro de vídeo precisa do input [0:v]
         filter_complex_parts = [f"[0:v]{video_filters}[v]"]
 
         if caminho_musica_input:
-            # CORREÇÃO 2: O volume precisa ser um valor decimal (ex: 0.7), não um inteiro (ex: 70)
             volume_musica_decimal = float(volume_musica) / 100.0
-
-            # CORREÇÃO 3: A sintaxe do filtro de áudio estava incorreta
             audio_filters = (
-                f"[0:a]loudnorm[audio_original_norm]" # Normaliza o áudio original
-                f";[1:a]loudnorm[audio_musica_norm]" # Normaliza o áudio da música
-                f";[audio_musica_norm]volume={volume_musica_decimal}[audio_musica_final]" # Aplica o volume à música
-                f";[audio_original_norm][audio_musica_final]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]" # Mixa os áudios
+                f"[0:a]loudnorm[audio_original_norm]" 
+                f";[1:a]loudnorm[audio_musica_norm]" 
+                f";[audio_musica_norm]volume={volume_musica_decimal}[audio_musica_final]" 
+                f";[audio_original_norm][audio_musica_final]amix=inputs=2:duration=longest:dropout_transition=2[audio_mix]" 
             )
             filter_complex_parts.append(audio_filters)
 
@@ -825,7 +764,7 @@ def processar_corte_youtube(
                     "[audio_mix]",
                 ]
             )
-        else:  # Sem música, usa o filtro de vídeo simples
+        else:  # Sem música
             cmd.extend(["-vf", video_filters, "-map", "0:v", "-map", "0:a?"])
 
         cmd.extend(
@@ -851,7 +790,6 @@ def processar_corte_youtube(
 
         logger.info(f"Comando FFMPEG a ser executado: {' '.join(cmd)}")
         subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=300, stdin=subprocess.DEVNULL)
-        # --- FIM DA CORREÇÃO ---
 
         # --- ETAPA 4: Upload para o R2 ---
         video.status = "PROCESSANDO (4/4 - Enviando para nuvem)"
@@ -870,22 +808,18 @@ def processar_corte_youtube(
         video.save()
 
     except Exception as e:
-        # --- CORREÇÃO NO TRATAMENTO DE ERRO ---
         video.status = "ERRO"
-        # Salva a mensagem de erro detalhada no banco de dados para facilitar a depuração
         video.mensagem_erro = str(e)
         video.save()
 
         logger.error(f"!!!!!!!!!! ERRO AO PROCESSAR CORTE (ID: {corte_gerado_id}) !!!!!!!!!!")
         if isinstance(e, subprocess.CalledProcessError):
-            # Imprime os detalhes do erro do ffmpeg no console
             logger.error(f"--- ERRO FFMPEG (STDOUT) ---\n{e.stdout}")
             logger.error(f"--- ERRO FFMPEG (STDERR) ---\n{e.stderr}")
         else:
             logger.error(f"Exceção: {e}")
 
     finally:
-        # A lógica de limpeza de arquivos já está correta, usando a lista
         for path in caminhos_para_limpar:
             if path and os.path.exists(path):
                 try:

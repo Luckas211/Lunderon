@@ -6,7 +6,7 @@ import random
 import re
 import uuid
 from datetime import timedelta
-
+import shutil
 import requests
 import stripe
 import yt_dlp
@@ -21,7 +21,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 
 from .forms import (
     AdminUsuarioForm,
@@ -87,43 +87,56 @@ def _get_user_video_usage(user):
 
 
 @login_required
+@require_http_methods(["GET", "POST"]) # <--- CORREÇÃO: Aceita GET para players de áudio
 def preview_voz(request, nome_da_voz):
     """
     Gera um preview de áudio para uma voz específica e retorna a URL.
+    Aceita GET para permitir que tags <audio src="..."> funcionem diretamente.
     """
+    caminho_audio_temp = None
+    
     try:
-        texto_teste = "Esta é uma prévia da voz selecionada."
-
-        # Usa a função `gerar_audio_e_tempos` que agora está em services.py
-        caminho_audio_temp, _, duracao = gerar_audio_e_tempos(
+        # Texto padrão para o teste
+        texto_teste = "Olá! Esta é uma demonstração da voz que você escolheu para o seu vídeo."
+        
+        # Gera o áudio usando o Service (que suporta as novas vozes misturadas)
+        caminho_audio_temp, _, _ = gerar_audio_e_tempos(
             texto=texto_teste,
             voz=nome_da_voz,
             velocidade=100
         )
 
-        if not caminho_audio_temp:
-            raise Exception("A função `gerar_audio_e_tempos` não retornou um caminho de áudio.")
+        if not caminho_audio_temp or not os.path.exists(caminho_audio_temp):
+            raise Exception("Falha ao gerar o arquivo de áudio temporário.")
 
-        # Define o diretório e o nome do arquivo final dentro da pasta de mídia
-        audio_preview_dir = os.path.join(settings.MEDIA_ROOT, 'audio_previews')
-        os.makedirs(audio_preview_dir, exist_ok=True)
+        # Define pasta pública para previews
+        preview_dir_relativo = 'audio_previews'
+        preview_dir_absoluto = os.path.join(settings.MEDIA_ROOT, preview_dir_relativo)
+        os.makedirs(preview_dir_absoluto, exist_ok=True)
         
-        nome_arquivo = f"preview_{nome_da_voz}_{random.randint(1000, 9999)}.wav"
-        caminho_audio_final = os.path.join(audio_preview_dir, nome_arquivo)
+        # Nome único para evitar cache do navegador
+        nome_arquivo = f"preview_{nome_da_voz}_{request.user.id}_{random.randint(1000, 9999)}.wav"
+        caminho_audio_final = os.path.join(preview_dir_absoluto, nome_arquivo)
 
-        # Move o arquivo temporário para o local público
-        os.rename(caminho_audio_temp, caminho_audio_final)
+        # Move o arquivo (shutil.move é mais seguro que os.rename entre partições Docker)
+        shutil.move(caminho_audio_temp, caminho_audio_final)
 
-        # Gera a URL pública para o arquivo
-        url_audio = os.path.join(settings.MEDIA_URL, 'audio_previews', nome_arquivo).replace('\\', '/')
+        # Gera a URL
+        url_audio = os.path.join(settings.MEDIA_URL, preview_dir_relativo, nome_arquivo).replace('\\', '/')
 
-        # Retorna a URL em uma resposta JSON
         return JsonResponse({'url': url_audio})
 
     except Exception as e:
-        logger.error(f"Erro ao gerar preview de voz para '{nome_da_voz}': {e}", exc_info=True)
-        return JsonResponse({"error": "Ocorreu um erro interno ao gerar o áudio."}, status=500)
-
+        logger.error(f"Erro ao gerar preview de voz '{nome_da_voz}': {e}", exc_info=True)
+        
+        # Tenta limpar lixo se sobrou
+        if caminho_audio_temp and os.path.exists(caminho_audio_temp):
+            try:
+                os.remove(caminho_audio_temp)
+            except:
+                pass
+                
+        return JsonResponse({"error": "Erro ao gerar áudio de demonstração."}, status=500)
 
 @login_required
 def meus_videos(request):
@@ -1262,7 +1275,7 @@ def pagina_gerador(request):
                 texto_negrito=data.get("texto_negrito", False),
                 texto_sublinhado=data.get("texto_sublinhado", False),
                 legenda_sincronizada=data.get("legenda_sincronizada", False),
-                narrador_voz=data.get("narrador_voz", "pt-BR-Wavenet-B"),
+                narrador_voz=data.get("narrador_voz", "pf_dora"),
                 narrador_velocidade=data.get("narrador_velocidade", 100),
                 narrador_tom=data.get("narrador_tom", 0.0),
             )

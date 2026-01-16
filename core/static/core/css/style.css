@@ -16,6 +16,9 @@
     --color-text-dark: #111827;
     --color-text-light: #4B5563;
     --color-border: #E5E7EB;
+    --color-success: #10B981;
+    --color-error: #EF4444;
+    --color-background-overlay: rgba(255, 255, 255, 0.8);
 
     /* Shadows */
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -39,6 +42,7 @@
     --color-text-dark: #E2E8F0;
     --color-text-light: #94A3B8;
     --color-border: #334155;
+    --color-background-overlay: rgba(10, 16, 28, 0.8);
 }
 
 *, *::before, *::after {

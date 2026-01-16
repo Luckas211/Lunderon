@@ -7,24 +7,19 @@ from .models import Usuario, CategoriaVideo, CategoriaMusica, Plano, Assinatura,
 # FORMULÁRIOS DE USUÁRIO E ADMIN
 # ================================================================
 # Definindo as vozes do Kokoro primeiro para evitar duplicação
-# Definindo as vozes do Kokoro para português brasileiro
+# As vozes 'Dora', 'Alex', e 'Santa' são os modelos base, mais realistas.
+# As variações são criadas aplicando um leve ajuste de tom e podem soar diferentes.
 VOZES_KOKORO = [
-    # Originais
-    ('pf_dora', 'Feminina - Padrão (Dora)'),
-    ('pm_alex', 'Masculina - Padrão (Alex)'),
-    ('pm_santa', 'Masculina - Grave (Santa)'),
+    # --- Vozes Exclusivas (Misturadas) ---
+    ('br_imperador',  '👑 Imperador (Grave/Épico - Dark)'),
+    ('br_jornalista', '📰 Jornalista (Sério - News)'),
+    ('br_influencer', '🤳 Influencer (Animada - TikTok)'),
+    ('br_podcast',    '🎙️ Podcast (Suave - Relaxante)'),
 
-    # Novas Vozes Femininas (base pf_dora)
-    ('pf_dora_p3', 'Feminina - Jovem'),
-    ('pf_dora_p1_5', 'Feminina - Suave'),
-    ('pf_dora_m1', 'Feminina - Adulta'),
-    ('pf_dora_m2_5', 'Feminina - Madura'),
-
-    # Novas Vozes Masculinas
-    ('pm_alex_p2', 'Masculina - Jovem'),
-    ('pm_alex_m1_5', 'Masculina - Séria'),
-    ('pm_santa_p1', 'Masculina - Locutor'),
-    ('pm_santa_m1', 'Masculina - Profunda'),
+    # --- Vozes Padrão (Originais) ---
+    ('pf_dora',       '👩 Dora (Padrão Feminino)'),
+    ('pm_alex',       '👨 Alex (Padrão Masculino)'),
+    ('pm_santa',      '🎅 Santa (Extra Grave)'),
 ]
 
 # Opções de velocidade para a narração
