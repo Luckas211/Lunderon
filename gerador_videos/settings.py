@@ -152,7 +152,7 @@ DEFAULT_FILE_STORAGE = 'core.storage.MediaStorage'
 # ================================================================
 # URL do Broker (Redis). Use uma variável de ambiente em produção.
 # Exemplo para Cloud Memorystore: redis://:password@hostname:port/0
-CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
+CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis:172.16.2.122:6379/0')
 # Backend para armazenar os resultados das tarefas no banco de dados Django
 CELERY_RESULT_BACKEND = 'django-db'
 CELERY_ACCEPT_CONTENT = ['json']
