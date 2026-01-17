@@ -7,7 +7,7 @@
 <style>
     .how-it-works-section {
         padding: 80px 0;
-        background-color: #0a0a0f; /* Um pouco mais claro que o fundo para destacar */
+        background-color: var(--color-background-alt); /* Matches theme */
     }
 
     .how-it-works-grid {
@@ -18,8 +18,8 @@
     }
 
     .step-card {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: var(--color-background);
+        border: 1px solid var(--color-border);
         border-radius: 15px;
         padding: 30px;
         text-align: center;
@@ -43,11 +43,11 @@
     .step-card h3 {
         font-size: 1.5rem;
         margin-bottom: 10px;
-        color: #fff;
+        color: var(--color-text-dark);
     }
 
     .step-card p {
-        color: #a9a9b3;
+        color: var(--color-text-light);
         font-size: 1rem;
     }
 
@@ -95,7 +95,7 @@
             </div>
             <div class="hero-mockup-wrapper">
                 <div class="hero-mockup">
-                    <video class="mockup-video" controls autoplay muted loop>
+                    <video class="mockup-video" autoplay muted loop playsinline controlslist="nodownload nofullscreen noremoteplayback" disablepictureinpicture oncontextmenu="return false;">
                         <source src="{% static 'core/img/intro.mp4' %}" type="video/mp4">
                         Seu navegador não suporta o elemento de vídeo.
                     </video>

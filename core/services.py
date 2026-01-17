@@ -36,6 +36,19 @@ from .transcription_utils import get_word_timestamps, extract_audio_from_video, 
 
 logger = logging.getLogger(__name__)
 
+class YTDLPLogger:
+    def __init__(self, prefix):
+        self.prefix = prefix
+
+    def debug(self, msg):
+        logger.info(f"[yt-dlp:{self.prefix}] {msg}")
+
+    def warning(self, msg):
+        logger.warning(f"[yt-dlp:{self.prefix}] {msg}")
+
+    def error(self, msg):
+        logger.error(f"[yt-dlp:{self.prefix}] {msg}")
+
 # ==============================================================================
 # CONFIGURAÇÕES
 # ==============================================================================
@@ -673,26 +686,109 @@ def processar_corte_youtube(
         video.status = "PROCESSANDO (1/4 - Baixando segmento)"
         video.save()
 
-        segment_filename_template = os.path.join(
-            temp_dir, f"segment_{video.usuario.id}_{random.randint(1000, 9999)}.%(ext)s"
+        full_filename_template = os.path.join(
+            temp_dir, f"full_{video.usuario.id}_{random.randint(1000, 9999)}.%(ext)s"
         )
 
         ydl_opts = {
-            "format": "best[ext=mp4][height<=1080]/best[ext=mp4]/best",
-            "outtmpl": segment_filename_template,
+            "format": "best[ext=mp4][protocol^=https][height<=1080][acodec!=none][vcodec!=none]/best[protocol^=https][height<=1080][acodec!=none][vcodec!=none]",
+            "outtmpl": full_filename_template,
             "quiet": True,
-            "download_ranges": yt_dlp.utils.download_range_func(
-                None, [(segment["start"], segment["end"])])
-            ,
-            "force_keyframes_at_cuts": True,
+            "noplaylist": True,
+            "retries": 3,
+            "fragment_retries": 3,
+            "extractor_args": {"youtube": {"player_client": ["android"]}},
+            "logger": YTDLPLogger(corte_gerado_id),
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=True)
-            caminho_video_segmento = ydl.prepare_filename(info)
+            caminho_video_full = ydl.prepare_filename(info)
+
+        if not caminho_video_full or not os.path.exists(caminho_video_full):
+            raise Exception("yt-dlp nao conseguiu baixar o arquivo completo.")
+
+        caminhos_para_limpar.append(caminho_video_full)
+
+        segment_ext = os.path.splitext(caminho_video_full)[1] or ".mp4"
+        caminho_video_segmento = os.path.join(
+            temp_dir,
+            f"segment_{video.usuario.id}_{random.randint(1000, 9999)}{segment_ext}",
+        )
+
+        cmd_cut_copy = [
+            "ffmpeg",
+            "-y",
+            "-ss",
+            str(segment["start"]),
+            "-to",
+            str(segment["end"]),
+            "-i",
+            caminho_video_full,
+            "-c",
+            "copy",
+            caminho_video_segmento,
+        ]
+        logger.info(f"Comando FFMPEG de corte (copy) a ser executado: {' '.join(cmd_cut_copy)}")
+        try:
+            result = subprocess.run(
+                cmd_cut_copy,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                stdin=subprocess.DEVNULL,
+            )
+            if result.stdout:
+                logger.info(f"FFMPEG corte (copy) stdout: {result.stdout}")
+            if result.stderr:
+                logger.warning(f"FFMPEG corte (copy) stderr: {result.stderr}")
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                "FFMPEG corte (copy) falhou (returncode=%s). stdout: %s stderr: %s",
+                e.returncode,
+                e.stdout,
+                e.stderr,
+            )
+            cmd_cut_encode = [
+                "ffmpeg",
+                "-y",
+                "-ss",
+                str(segment["start"]),
+                "-to",
+                str(segment["end"]),
+                "-i",
+                caminho_video_full,
+                "-c:v",
+                "libx264",
+                "-preset",
+                "fast",
+                "-crf",
+                "23",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+                caminho_video_segmento,
+            ]
+            logger.info(
+                f"Comando FFMPEG de corte (reencode) a ser executado: {' '.join(cmd_cut_encode)}"
+            )
+            result = subprocess.run(
+                cmd_cut_encode,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                stdin=subprocess.DEVNULL,
+            )
+            if result.stdout:
+                logger.info(f"FFMPEG corte (reencode) stdout: {result.stdout}")
+            if result.stderr:
+                logger.warning(f"FFMPEG corte (reencode) stderr: {result.stderr}")
 
         if not caminho_video_segmento or not os.path.exists(caminho_video_segmento):
-            raise Exception("yt-dlp não conseguiu baixar o arquivo do segmento.")
+            raise Exception("ffmpeg nao conseguiu gerar o segmento do video.")
 
         caminhos_para_limpar.append(caminho_video_segmento)
 
@@ -789,7 +885,24 @@ def processar_corte_youtube(
         )
 
         logger.info(f"Comando FFMPEG a ser executado: {' '.join(cmd)}")
-        subprocess.run(cmd, check=True, capture_output=True, text=True, timeout=300, stdin=subprocess.DEVNULL)
+        try:
+            result = subprocess.run(
+                cmd,
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                stdin=subprocess.DEVNULL,
+            )
+            if result.stdout:
+                logger.info(f"FFMPEG stdout: {result.stdout}")
+            if result.stderr:
+                logger.warning(f"FFMPEG stderr: {result.stderr}")
+        except subprocess.CalledProcessError as e:
+            logger.error(
+                f"FFMPEG falhou (returncode={e.returncode}). stdout: {e.stdout} stderr: {e.stderr}"
+            )
+            raise
 
         # --- ETAPA 4: Upload para o R2 ---
         video.status = "PROCESSANDO (4/4 - Enviando para nuvem)"
