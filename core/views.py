@@ -17,6 +17,7 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Q, Sum
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
+from django.core.mail import send_mail
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.safestring import mark_safe
@@ -339,6 +340,33 @@ def como_funciona(request):
     return render(request, "core/como_funciona.html")
 
 def suporte(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+
+        if name and email and subject and message:
+            full_subject = f"Contato (Suporte): {subject}"
+            full_message = f"Nome: {name}\nEmail: {email}\n\nMensagem:\n{message}"
+            
+            try:
+                send_mail(
+                    subject=full_subject,
+                    message=full_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[settings.DEFAULT_FROM_EMAIL],
+                    reply_to=[email],
+                    fail_silently=False,
+                )
+                messages.success(request, 'Sua mensagem foi enviada com sucesso! Responderemos em breve.')
+                return redirect('suporte')
+            except Exception as e:
+                logger.error(f"Erro ao enviar e-mail de suporte: {e}", exc_info=True)
+                messages.error(request, 'Ocorreu um erro ao enviar sua mensagem. Por favor, tente novamente mais tarde.')
+        else:
+            messages.error(request, 'Por favor, preencha todos os campos do formulário.')
+
     return render(request, "core/suporte.html")
 
 def termos_de_servico(request):

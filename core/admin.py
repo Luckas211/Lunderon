@@ -176,7 +176,7 @@ class VideoGeradoAdmin(admin.ModelAdmin):
 
 @admin.register(Plano)
 class PlanoAdmin(admin.ModelAdmin):
-    list_display = ('nome', 'preco',)
+    list_display = ('nome', 'preco', 'limite_videos_mensal', 'descricao')
     search_fields = ('nome',)
 
 @admin.register(Assinatura)
