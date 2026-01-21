@@ -30,7 +30,7 @@ services:
     container_name: lunderon_worker
     restart: always
     # Concurrency 4 para não travar o PC (Whisper é pesado)
-    command: celery -A gerador_videos worker -l info --concurrency=4
+    command: sh -c "mkdir -p /app/logs && celery -A gerador_videos worker -l info --concurrency=4 --logfile=/app/logs/celery_worker.log"
     volumes:
       - .:/app
     env_file:
@@ -46,7 +46,7 @@ services:
     build: .
     container_name: lunderon_beat
     restart: always
-    command: celery -A gerador_videos beat -l info
+    command: sh -c "mkdir -p /app/logs && celery -A gerador_videos beat -l info --logfile=/app/logs/celery_beat.log"
     volumes:
       - .:/app
     env_file:
