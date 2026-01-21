@@ -1,5 +1,7 @@
+version: '3.8'
+
 services:
-  # 1. Banco de Dados de Mensagens (Redis Local)
+  # 1. Banco de Dados de Mensagens (Redis Local para fila de tarefas)
   redis:
     image: "redis:alpine"
     container_name: gerador_videos_redis
@@ -12,7 +14,8 @@ services:
     build: .
     container_name: gerador_videos_web
     restart: always
-    command: gunicorn gerador_videos.wsgi:application --bind "0.0.0.0:8000" --timeout 3600
+    # Adicionamos workers e threads ao Gunicorn para melhor performance web
+    command: gunicorn gerador_videos.wsgi:application --bind "0.0.0.0:8000" --workers 3 --timeout 3600
     volumes:
       - .:/app
     ports:
@@ -20,23 +23,30 @@ services:
     env_file:
       - .env
     environment:
+      # Garante que o Django saiba onde está o Redis
       - CELERY_BROKER_URL=redis://redis:6379/0
+      # NeonDB é externo, então passamos a URL via .env (DATABASE_URL), não precisamos de link aqui
     depends_on:
       - redis
 
-  # 3. O Trabalhador (Gera os vídeos)
+  # 3. O Trabalhador (Gera os vídeos - IA Pesada)
   celery_worker:
     build: .
     container_name: lunderon_worker
     restart: always
-    # Concurrency 4 para não travar o PC (Whisper é pesado)
-    command: celery -A gerador_videos worker -l info --concurrency=4
+    # CORREÇÃO CRÍTICA AQUI:
+    # --concurrency=2: Processa no máx 2 vídeos ao mesmo tempo (ajuste conforme sua CPU/RAM).
+    # --max-tasks-per-child=1: Mata o processo após cada tarefa para limpar a RAM da IA.
+    command: celery -A gerador_videos worker -l info --concurrency=2 --max-tasks-per-child=1
     volumes:
       - .:/app
+      # Montar cache do HuggingFace para não baixar modelos toda vez (opcional mas recomendado)
+      # - ./cache_huggingface:/root/.cache/huggingface
     env_file:
       - .env
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
+      # O worker precisa acessar o NeonDB para ler/salvar o status dos projetos
     depends_on:
       - redis
       - web
