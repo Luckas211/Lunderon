@@ -34,10 +34,15 @@ services:
     build: .
     container_name: lunderon_worker
     restart: always
+<<<<<<< HEAD
     # CORREÇÃO CRÍTICA AQUI:
     # --concurrency=2: Processa no máx 2 vídeos ao mesmo tempo (ajuste conforme sua CPU/RAM).
     # --max-tasks-per-child=1: Mata o processo após cada tarefa para limpar a RAM da IA.
     command: celery -A gerador_videos worker -l info --concurrency=2 --max-tasks-per-child=1
+=======
+    # Concurrency 4 para não travar o PC (Whisper é pesado)
+    command: sh -c "mkdir -p /app/logs && celery -A gerador_videos worker -l info --concurrency=4 --logfile=/app/logs/celery_worker.log"
+>>>>>>> 397dcff40560af7ec4277accb011594b9c0bf6d9
     volumes:
       - .:/app
       # Montar cache do HuggingFace para não baixar modelos toda vez (opcional mas recomendado)
@@ -56,7 +61,7 @@ services:
     build: .
     container_name: lunderon_beat
     restart: always
-    command: celery -A gerador_videos beat -l info
+    command: sh -c "mkdir -p /app/logs && celery -A gerador_videos beat -l info --logfile=/app/logs/celery_beat.log"
     volumes:
       - .:/app
     env_file:
