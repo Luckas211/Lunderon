@@ -1,13 +1,19 @@
 version: '3.8'
 
 services:
-  # 1. O Site (Backend Django)
-  # Este serviço permite que você acesse o painel pelo IP 192.168.0.2:8000
+  # 1. Banco de Dados de Mensagens (Redis Local)
+  redis:
+    image: "redis:alpine"
+    container_name: gerador_videos_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+  # 2. O Site (Backend Django)
   web:
     build: .
     container_name: gerador_videos_web
     restart: always
-    # Bind 0.0.0.0 permite acesso externo (pelo IP da rede)
     command: gunicorn gerador_videos.wsgi:application --bind "0.0.0.0:8000" --timeout 3600
     volumes:
       - .:/app
@@ -16,24 +22,25 @@ services:
     env_file:
       - .env
     environment:
-      # Conexão direta com o Redis na Nuvem (Upstash)
-      - CELERY_BROKER_URL=rediss://default:Aeo7AAIncDE2NThhZWNjMDEwOTM0YTY3OTg0MjdmYjhmMDBlMWI4Y3AxNTk5NjM@sweet-gull-59963.upstash.io:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    depends_on:
+      - redis
 
-  # 2. O Trabalhador (Gera os vídeos)
-  # Este é o serviço que usa a força do PC para criar o vídeo
+  # 3. O Trabalhador (Gera os vídeos)
   celery_worker:
     build: .
     container_name: lunderon_worker
     restart: always
-    # Alterado para --pool=solo para garantir estabilidade no processamento de IA
-    command: celery -A gerador_videos worker -l info --pool=solo
+    # Concurrency 4 para não travar o PC (Whisper é pesado)
+    command: celery -A gerador_videos worker -l info --concurrency=4
     volumes:
       - .:/app
+      # Montar cache do HuggingFace para não baixar modelos toda vez (opcional mas recomendado)
+      # - ./cache_huggingface:/root/.cache/huggingface
     env_file:
       - .env
     environment:
-      # Conexão direta com o Redis na Nuvem (Upstash)
-      - CELERY_BROKER_URL=rediss://default:Aeo7AAIncDE2NThhZWNjMDEwOTM0YTY3OTg0MjdmYjhmMDBlMWI4Y3AxNTk5NjM@sweet-gull-59963.upstash.io:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
     depends_on:
       - web
 
@@ -43,7 +50,7 @@ services:
     build: .
     container_name: lunderon_beat
     restart: always
-    command: celery -A gerador_videos beat -l info
+    command: sh -c "mkdir -p /app/logs && celery -A gerador_videos beat -l info --logfile=/app/logs/celery_beat.log"
     volumes:
       - .:/app
     env_file:
@@ -52,4 +59,4 @@ services:
       # Conexão direta com o Redis na Nuvem (Upstash)
       - CELERY_BROKER_URL=rediss://default:Aeo7AAIncDE2NThhZWNjMDEwOTM0YTY3OTg0MjdmYjhmMDBlMWI4Y3AxNTk5NjM@sweet-gull-59963.upstash.io:6379
     depends_on:
-      - web
+      - redis

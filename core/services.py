@@ -372,7 +372,7 @@ def gerar_legenda_karaoke_ass(
         for palavra in linha:
             duracao_cs = int((palavra["end"] - palavra["start"]) * 100)
             # Formata a tag de karaoke para o padrão ASS {\k<duração>}
-            texto_karaoke += f"{{\k{duracao_cs}}}{palavra['word'].strip()} "
+            texto_karaoke += f"{{\\k{duracao_cs}}}{palavra['word'].strip()} "
 
         dialogos.append(
             f"Dialogue: 0,{formatar_tempo_ass(start_time_linha)},{formatar_tempo_ass(end_time_linha)},Default,,0,0,0,,{texto_karaoke.strip()}"
