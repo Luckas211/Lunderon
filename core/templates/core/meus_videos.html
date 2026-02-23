@@ -19,6 +19,17 @@
     .card-footer form button {
         width: 100%;
     }
+    
+    /* --- NOVO: Estilo para a Fila --- */
+    .queue-info {
+        font-size: 0.85rem;
+        color: #ffca2c; /* Amarelo Lunderon */
+        margin-top: 8px;
+        background: rgba(255, 202, 44, 0.1); 
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid rgba(255, 202, 44, 0.2);
+    }
 </style>
 {% endblock %}
 
@@ -102,15 +113,29 @@
                                 {% if video.status == 'CONCLUIDO' and video.arquivo_final %}
                                     <div class="status-icon success"><i class="fas fa-check-circle"></i></div>
                                     <span>Pronto para Download</span>
+
                                 {% elif video.status == 'CONCLUIDO' and not video.arquivo_final %}
                                     <div class="status-icon muted"><i class="fas fa-history"></i></div>
                                     <span>Expirado</span>
+
                                 {% elif video.status == 'ERRO' %}
                                     <div class="status-icon error"><i class="fas fa-exclamation-triangle"></i></div>
                                     <span>Erro na Geração</span>
+
                                 {% else %}
-                                    <div class="status-icon pending"><i class="fas fa-hourglass-half"></i></div>
-                                    <span>Processando...</span>
+                                    <div class="processing-container" data-video-id="{{ video.id }}" style="text-align: center; width: 100%;">
+                                        <div class="status-icon pending"><i class="fas fa-circle-notch fa-spin"></i></div>
+                                        <span class="status-text font-weight-bold" style="display: block; margin-bottom: 5px;">Processando...</span>
+                                        
+                                        <div class="queue-info">
+                                            <div id="fila-posicao-{{ video.id }}">
+                                                <i class="fas fa-calculator"></i> Calculando...
+                                            </div>
+                                            <div id="fila-tempo-{{ video.id }}" style="font-size: 0.75rem; opacity: 0.8;">
+                                                Aguarde...
+                                            </div>
+                                        </div>
+                                    </div>
                                 {% endif %}
                             </div>
                             {% endif %}
@@ -174,6 +199,8 @@
 {{ block.super }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // 1. Script dos Detalhes do Erro (Mantido original)
     const errorButtons = document.querySelectorAll('.toggle-error-btn');
     errorButtons.forEach(button => {
         button.addEventListener('click', function() {
@@ -190,6 +217,42 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    // 2. NOVO: Script de Atualização da Fila
+    const processandoVideos = document.querySelectorAll('.processing-container');
+
+    if (processandoVideos.length > 0) {
+        
+        function atualizarFilaLista() {
+            processandoVideos.forEach(div => {
+                const videoId = div.getAttribute('data-video-id');
+                const elPosicao = document.getElementById(`fila-posicao-${videoId}`);
+                const elTempo = document.getElementById(`fila-tempo-${videoId}`);
+
+                // Chama a API para saber a posição
+                fetch(`/api/status-fila/${videoId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'pronto') {
+                            div.innerHTML = '<div class="text-success" style="font-weight:bold;"><i class="fas fa-check"></i> Pronto! Recarregando...</div>';
+                            setTimeout(() => window.location.reload(), 1500);
+                        } 
+                        else if (data.status === 'processando') {
+                            elPosicao.innerHTML = '<strong style="color: #28a745;">🔥 Renderizando Agora!</strong>';
+                            elTempo.innerText = "Falta pouco, não feche o navegador.";
+                        } 
+                        else if (data.status === 'fila') {
+                            elPosicao.innerHTML = `<strong>Posição na Fila: #${data.posicao}</strong>`;
+                            elTempo.innerText = `Estimativa: ${data.tempo_estimado} minutos.`;
+                        }
+                    })
+                    .catch(err => console.error("Erro fila:", err));
+            });
+        }
+
+        setInterval(atualizarFilaLista, 5000);
+        atualizarFilaLista(); // Roda a primeira vez na hora
+    }
 });
 </script>
 {% endblock %}

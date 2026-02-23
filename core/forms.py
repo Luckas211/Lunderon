@@ -2,16 +2,15 @@ from django import forms
 from django.forms import formset_factory
 from django.contrib.auth.forms import UserCreationForm
 from .models import Usuario, CategoriaVideo, CategoriaMusica, Plano, Assinatura, Configuracao
+import os
 
 # ================================================================
 # FORMULÁRIOS DE USUÁRIO E ADMIN
 # ================================================================
-# Definindo as vozes do Kokoro primeiro para evitar duplicação
-# As vozes 'Dora', 'Alex', e 'Santa' são os modelos base, mais realistas.
-# As variações são criadas aplicando um leve ajuste de tom e podem soar diferentes.
+
 VOZES_KOKORO = [
     # --- Vozes Exclusivas (Misturadas) ---
-    ('br_imperador',  '👑 Imperador (Grave/Épico - Dark)'),
+    ('br_imperador',   '👑 Imperador (Grave/Épico - Dark)'),
     ('br_jornalista', '📰 Jornalista (Sério - News)'),
     ('br_influencer', '🤳 Influencer (Animada - TikTok)'),
     ('br_podcast',    '🎙️ Podcast (Suave - Relaxante)'),
@@ -22,25 +21,18 @@ VOZES_KOKORO = [
     ('pm_santa',      '🎅 Santa (Extra Grave)'),
 ]
 
-# Opções de velocidade para a narração
 VELOCIDADE_NARRACAO = [
     ('85', 'Lenta'),
     ('100', 'Normal'),
     ('115', 'Rápida'),
 ]
 
-# --- CORREÇÃO APLICADA AQUI ---
-# A opção 'LIMITE_VIDEOS_MES' foi removida pois o limite agora é definido por plano.
 CONFIG_CHOICES = [
     ('DURACAO_ASSINATURA_DIAS', 'Duração da Assinatura (em dias)'),
     ('LIMITE_TESTES_GRATIS', 'Limite de Testes Grátis para Novos Usuários'),
 ]
 
 class ConfiguracaoForm(forms.ModelForm):
-    """
-    Formulário para ADICIONAR uma nova configuração.
-    O campo 'nome' é um dropdown para evitar erros de digitação.
-    """
     nome = forms.ChoiceField(
         choices=CONFIG_CHOICES,
         label="Nome da Chave de Configuração",
@@ -50,18 +42,12 @@ class ConfiguracaoForm(forms.ModelForm):
     class Meta:
         model = Configuracao
         fields = ['nome', 'valor']
-        labels = {
-            'valor': 'Valor',
-        }
+        labels = {'valor': 'Valor'}
         widgets = {
             'valor': forms.TextInput(attrs={'class': 'form-input', 'placeholder': 'Ex: 100'}),
         }
 
 class EditarConfiguracaoForm(forms.ModelForm):
-    """
-    Formulário para EDITAR uma configuração existente.
-    O campo 'nome' é somente leitura para impedir a alteração da chave.
-    """
     class Meta:
         model = Configuracao
         fields = ['nome', 'valor']
@@ -70,10 +56,10 @@ class EditarConfiguracaoForm(forms.ModelForm):
             'valor': 'Valor da Configuração',
         }
         widgets = {
-            # Torna o campo 'nome' não editável
             'nome': forms.TextInput(attrs={'class': 'form-input', 'readonly': True}),
             'valor': forms.TextInput(attrs={'class': 'form-input'}),
         }
+        
 class CadastroUsuarioForm(UserCreationForm):
     email = forms.EmailField(required=True)
     class Meta(UserCreationForm.Meta):
@@ -81,10 +67,6 @@ class CadastroUsuarioForm(UserCreationForm):
         fields = ("username", "email")
 
 class AdminUsuarioForm(forms.Form):
-    """
-    Um formulário customizado para o admin editar dados do usuário e sua assinatura.
-    """
-    # Campos do modelo Usuario
     username = forms.CharField(
         label="Nome de Usuário",
         max_length=150,
@@ -95,12 +77,10 @@ class AdminUsuarioForm(forms.Form):
         widget=forms.EmailInput(attrs={'class': 'form-control'})
     )
     is_staff = forms.BooleanField(
-        label="É um administrador? (Pode acessar o painel)",
+        label="É um administrador?",
         required=False,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
-
-    # Campos do modelo Assinatura
     plano = forms.ModelChoiceField(
         queryset=Plano.objects.all(),
         label="Plano da Assinatura",
@@ -116,9 +96,6 @@ class AdminUsuarioForm(forms.Form):
     )
 
 class EditarPerfilForm(forms.ModelForm):
-    """
-    Formulário para o usuário editar suas próprias informações.
-    """
     class Meta:
         model = Usuario
         fields = ['first_name', 'last_name', 'email', 'data_nascimento']
@@ -149,10 +126,9 @@ class EditarAssinaturaForm(forms.ModelForm):
         }
 
 # ================================================================
-# FORMULÁRIO DO GERADOR DE VÍDEO
+# FORMULÁRIO DO GERADOR DE VÍDEO (ATUALIZADO)
 # ================================================================
 
-# --- Listas de Opções (Choices) ---
 COR_FONTE_CHOICES = [
     ('#FFFFFF', 'Branco'),
     ('#FFFF00', 'Amarelo'),
@@ -162,9 +138,6 @@ COR_FONTE_CHOICES = [
     ('#00FFFF', 'Ciano (Azul Claro)'),
     ('#FF69B4', 'Rosa Choque'),
 ]
-
-TONS_VOZ = [(2.0, 'Agudo'), (0.0, 'Normal'), (-2.0, 'Grave')]
-PLANO_DE_FUNDO_CHOICES = [('normal', 'Normal / Escuro'), ('claro', 'Claro')]
 
 FONTES_TEXTO = [
     ('arial', 'Arial'),
@@ -187,17 +160,22 @@ POSICAO_TEXTO_CHOICES = [
     ('inferior', 'Parte Inferior (Estilo Legenda)'),
 ]
 
-# --- Classe do Formulário do Gerador ---
+# --- NOVAS OPÇÕES DE VISUAL DUAL ---
+TIPO_VISUAL_IA_CHOICES = [
+    ('imagem', 'Imagens Animadas (IA Flux + Movimento)'),
+    ('video', 'Vídeos Reais (Cinematográficos - Pexels)')
+]
+
 class GeradorForm(forms.Form):
     # 1. TIPO DE CONTEÚDO
     tipo_conteudo = forms.ChoiceField(
         choices=TIPO_CONTEUDO_CHOICES,
-        label="Tipo de Conteúdo de Texto",
+        label="Tipo de Conteúdo",
         widget=forms.RadioSelect,
         initial='narrador'
     )
 
-    # 2. CONTEÚDO E ESTILO DO TEXTO
+    # 2. CONTEÚDO E ESTILO
     texto_overlay = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 4, 'maxlength': '250'}),
         required=False,
@@ -208,7 +186,6 @@ class GeradorForm(forms.Form):
         required=False,
         label="Texto para Narração"
     )
-
     posicao_texto = forms.ChoiceField(
         choices=POSICAO_TEXTO_CHOICES,
         label="Posição do Texto",
@@ -224,10 +201,9 @@ class GeradorForm(forms.Form):
     )
     cor_destaque_legenda = forms.ChoiceField(
         choices=COR_FONTE_CHOICES,
-        label="Cor de Destaque da Legenda (Karaokê)",
+        label="Cor de Destaque (Karaokê)",
         initial='#FFFF00',
-        required=False,
-        help_text="A cor que a palavra assume quando é falada."
+        required=False
     )
     texto_fonte = forms.ChoiceField(
         choices=FONTES_TEXTO,
@@ -244,18 +220,12 @@ class GeradorForm(forms.Form):
     texto_negrito = forms.BooleanField(required=False, label="Negrito")
     texto_sublinhado = forms.BooleanField(required=False, label="Sublinhado")
 
-    # 3. OPÇÕES DE NARRAÇÃO
+    # 3. NARRAÇÃO
     legenda_sincronizada = forms.BooleanField(
         label='Ativar Legenda Sincronizada',
         required=False,
-        help_text=(
-            "Aumente o engajamento exibindo o que está sendo narrado. "
-            "Ativada: O vídeo terá a narração e também legendas dinâmicas na tela. "
-            "Desativada: O vídeo terá apenas a narração, sem texto. "
-            "Atenção: A sincronia da legenda com a voz é uma estimativa."
-        )
+        initial=True
     )
-
     narrador_voz = forms.ChoiceField(
         choices=VOZES_KOKORO,
         required=False,
@@ -266,24 +236,39 @@ class GeradorForm(forms.Form):
         coerce=int,
         initial=100,
         required=False,
-        label="Velocidade da Narração",
-        widget=forms.Select(attrs={'class': 'form-select'})
+        label="Velocidade da Narração"
     )
 
-    # 4. MÍDIA DE FUNDO E DURAÇÃO
+    # 4. FUNDO DINÂMICO (IA / PEXELS)
+    gerar_fundo_ia = forms.BooleanField(
+        required=False,
+        label="Gerar Fundo Dinâmico com IA"
+    )
+    
+    # --- NOVO CAMPO DE FORMATO IA ---
+    tipo_visual_ia = forms.ChoiceField(
+        choices=TIPO_VISUAL_IA_CHOICES,
+        initial='imagem',
+        widget=forms.RadioSelect,
+        label="Formato do Fundo Dinâmico",
+        required=False,
+        help_text="Imagens usam IA para criar a cena. Vídeos buscam filmagens reais."
+    )
+    # --------------------------------
+
     categoria_video = forms.ModelChoiceField(
         queryset=CategoriaVideo.objects.all(),
-        label="Categoria do Vídeo",
+        label="Categoria do Vídeo (Manual)",
         required=False
     )
     video_base_id = forms.IntegerField(required=False, widget=forms.HiddenInput())
     categoria_musica = forms.ModelChoiceField(
         queryset=CategoriaMusica.objects.all(),
+        required=False
     )
     video_upload = forms.FileField(
-        label="Upload do Vídeo do Produto",
-        required=False,
-        help_text="Selecione um vídeo local do seu produto (MP4, AVI, MOV, etc.)"
+        label="Upload do Vídeo (Produto)",
+        required=False
     )
     volume_musica = forms.TypedChoiceField(
         choices=[(0, 'Sem Som'), (25, 'Baixo'), (50, 'Médio'), (75, 'Alto'), (100, 'Máximo')],
@@ -293,86 +278,64 @@ class GeradorForm(forms.Form):
     )
     loop_video = forms.BooleanField(
         required=False,
-        label="Repetir o vídeo (loop)?",
-        initial=True,
-        help_text="O vídeo de fundo ficará em loop durante toda a narração"
+        label="Repetir vídeo (loop)?",
+        initial=True
     )
     duracao_segundos = forms.IntegerField(
         min_value=10,
-        max_value=60,
+        max_value=120, # Aumentado para suportar vídeos mais longos
         initial=30,
         label="Duração (segundos)",
-        required=False,
-        help_text="Apenas para Texto Estático."
+        required=False
     )
-
-    # --- CAMPO DE TELA FINAL ATUALIZADO PARA TEXTO ---
     texto_tela_final = forms.CharField(
         widget=forms.Textarea(attrs={'rows': 3}),
         required=False,
-        label="Texto da Tela de Encerramento (Opcional)",
-        help_text="Ex: Siga e compartilhe!"
+        label="Texto da Tela Final"
     )
 
     def clean(self):
         cleaned_data = super().clean()
         tipo_conteudo = cleaned_data.get('tipo_conteudo')
+        gerar_fundo_ia = cleaned_data.get('gerar_fundo_ia')
         categoria_video = cleaned_data.get('categoria_video')
         video_upload = cleaned_data.get('video_upload')
-        texto_overlay = cleaned_data.get('texto_overlay')
         narrador_texto = cleaned_data.get('narrador_texto')
-        volume_musica = cleaned_data.get('volume_musica')
-        categoria_musica = cleaned_data.get('categoria_musica')
+        texto_overlay = cleaned_data.get('texto_overlay')
 
-        # Se o volume da música for maior que 0, a categoria da música é obrigatória
-        if volume_musica and volume_musica > 0 and not categoria_musica:
-            self.add_error('categoria_musica', "Para adicionar música, você deve selecionar uma categoria de música.")
+        # Validação de Fundo: Se não for IA, precisa de categoria ou upload
+        if tipo_conteudo == 'narrador' and not gerar_fundo_ia and not categoria_video:
+            self.add_error('categoria_video', "Selecione uma categoria de vídeo ou ative o Fundo Dinâmico com IA.")
 
-        if tipo_conteudo == 'vendedor':
-            if not video_upload:
-                self.add_error('video_upload', "Para o tipo 'Vendedor', você deve fazer upload de um vídeo.")
-            if not narrador_texto:
-                self.add_error('narrador_texto', "Para o tipo 'Vendedor', o texto para narração é obrigatório.")
-        elif tipo_conteudo == 'narrador':
-            if not categoria_video:
-                self.add_error('categoria_video', "Para o tipo 'Narração', você deve selecionar uma categoria de vídeo.")
-            if not narrador_texto:
-                self.add_error('narrador_texto', "Para o tipo 'Narração', o texto para narração é obrigatório.")
-        elif tipo_conteudo == 'texto':
-            if not categoria_video:
-                self.add_error('categoria_video', "Para o tipo 'Texto Estático', você deve selecionar uma categoria de vídeo.")
-            if not texto_overlay:
-                self.add_error('texto_overlay', "Para o tipo 'Texto Estático', o texto é obrigatório.")
+        if tipo_conteudo == 'vendedor' and not video_upload:
+            self.add_error('video_upload', "Para o modo Vendedor, o upload do vídeo é obrigatório.")
+
+        if (tipo_conteudo == 'narrador' or tipo_conteudo == 'vendedor') and not narrador_texto:
+            self.add_error('narrador_texto', "O texto para narração é obrigatório neste modo.")
+
+        if tipo_conteudo == 'texto' and not texto_overlay:
+            self.add_error('texto_overlay', "O texto estático é obrigatório neste modo.")
 
         return cleaned_data
-
-# Cria o FormSet a partir do formulário
-#GeradorFormSet = formset_factory(GeradorForm, extra=1, max_num=3)
 
 # ================================================================
 # FORMULÁRIO DE CORTES DO YOUTUBE
 # ================================================================
 class CortesYouTubeForm(forms.Form):
     youtube_url = forms.URLField(
-        label="URL do Vídeo do YouTube",
-        widget=forms.URLInput(attrs={'class': 'form-input', 'placeholder': 'https://www.youtube.com/watch?v=...'}),
+        label="URL do YouTube",
+        widget=forms.URLInput(attrs={'class': 'form-input', 'placeholder': 'https://www.youtube.com/...'}),
         required=True
     )
     categoria_musica = forms.ModelChoiceField(
         queryset=CategoriaMusica.objects.all(),
-        label="Categoria da Música de Fundo",
+        label="Música de Fundo",
         required=True
     )
     volume_musica = forms.IntegerField(
-        min_value=0,
-        max_value=100,
-        initial=20,
-        label="Volume da Música de Fundo",
-        help_text="Ajuste o volume da música para não sobrepor o áudio original do vídeo."
+        min_value=0, max_value=100, initial=20, label="Volume da Música"
     )
     gerar_legendas = forms.BooleanField(
-        label="Gerar Legendas (transcrição automática)",
-        required=False,
-        help_text="Ativa a transcrição automática do áudio do vídeo para legendas."
+        label="Gerar Legendas", required=False, initial=True
     )
     segments = forms.CharField(widget=forms.HiddenInput(), required=True)

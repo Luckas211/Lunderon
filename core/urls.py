@@ -72,4 +72,5 @@ urlpatterns = [
     path('painel-admin/relatorios/', views.admin_relatorios, name='admin_relatorios'),
     path('painel-admin/assinatura/<int:assinatura_id>/deixar-pendente/', views.deixar_assinatura_pendente, name='deixar_assinatura_pendente'),
     path('painel-admin/assinatura/<int:assinatura_id>/cancelar-admin/', views.cancelar_assinatura_admin, name='cancelar_assinatura_admin'),
+    path('api/status-fila/<int:video_id>/', views.verificar_status_fila, name='status_fila'),
 ]

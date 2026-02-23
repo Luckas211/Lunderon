@@ -36,3 +36,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+cookies.txt
+audio_previews/
+audio_temp/
+youtube_cuts_temp/

@@ -153,3 +153,4 @@ whitenoise==6.11.0
 win32_setctime==1.2.0
 wrapt==1.17.3
 yt-dlp==2025.11.12
+dj-database-url>=2.1.0

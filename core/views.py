@@ -23,6 +23,8 @@ from django.utils import timezone
 from django.utils.safestring import mark_safe
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_POST
+from django.http import JsonResponse
+from .models import VideoGerado
 
 from .forms import (
     AdminUsuarioForm,
@@ -1123,95 +1125,86 @@ def get_youtube_most_replayed_segments(request):
     try:
         data = json.loads(request.body)
         youtube_url = data.get("url")
-        if not youtube_url or "youtube.com" not in youtube_url:
+        if not youtube_url or ("youtube.com" not in youtube_url and "youtu.be" not in youtube_url):
             return JsonResponse({"error": "URL do YouTube inválida."}, status=400)
 
-        headers = {"User-Agent": "Mozilla/5.0", "Accept-Language": "pt-BR,pt;q=0.9"}
-        response = requests.get(youtube_url, headers=headers)
-        response.raise_for_status()
+        # --- PROTEÇÃO ANTI-BOT ATUALIZADA ---
+        cookie_path = os.path.join(settings.BASE_DIR, 'cookies.txt')
+        
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'no_warnings': True,
+            # Correção principal: a sintaxe nova do yt-dlp exige 'client' e não 'player_client'
+            'extractor_args': {'youtube': {'client': ['android', 'ios']}},
+        }
+        
+        # Só ativa o cookie se o arquivo REALMENTE existir, e avisa no log
+        if os.path.exists(cookie_path):
+            ydl_opts['cookiefile'] = cookie_path
+            logger.info(f"✅ [SUCESSO] Lendo cookies de: {cookie_path}")
+        else:
+            logger.warning(f"❌ [ALERTA] Arquivo de cookies NÃO FOI ENCONTRADO em: {cookie_path}")
 
-        match = re.search(r'window["|"]ytInitialData["|"] = ({.*?});', response.text)
-        if not match:
-            match = re.search(r"var ytInitialData = ({.*?});", response.text)
-
-        if not match:
-            return JsonResponse(
-                {
-                    "error": "Não foi possível encontrar os dados do vídeo na página. O vídeo pode ter restrição de idade, ser privado ou a estrutura do YouTube mudou."
-                },
-                status=404,
-            )
-
-        initial_data = json.loads(match.group(1))
-
-        decorations = []
-        mutations = (
-            initial_data.get("frameworkUpdates", {})
-            .get("entityBatchUpdate", {})
-            .get("mutations", [])
-        )
-        for mutation in mutations:
-            if (
-                "payload" in mutation
-                and "macroMarkersListEntity" in mutation["payload"]
-            ):
-                markers_list = mutation["payload"]["macroMarkersListEntity"].get(
-                    "markersList", {}
-                )
-                decorations = markers_list.get("markersDecoration", {}).get(
-                    "timedMarkerDecorations", []
-                )
-                if decorations:
-                    break
-
-        if not decorations:
-            return JsonResponse(
-                {
-                    "segments": [],
-                    "message": 'Nenhum segmento "mais repetido" foi encontrado para este vídeo.',
-                }
-            )
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            
+        duration = info.get('duration', 0)
+        if not duration:
+            return JsonResponse({"error": "Não foi possível obter a duração do vídeo."}, status=400)
 
         segments = []
-        processed_ranges = set()
+        
+        heatmap = info.get('heatmap')
+        if heatmap:
+            top_heat = sorted(heatmap, key=lambda x: x.get('value', 0), reverse=True)[:4]
+            top_heat = sorted(top_heat, key=lambda x: x.get('start_time', 0))
+            for h in top_heat:
+                pico_tempo = h['start_time']
+                start = max(0, pico_tempo - 5)
+                end = min(duration, start + 30)
+                segments.append({"start": start, "end": end, "duration": end - start})
+                
+        elif info.get('chapters'):
+            for ch in info['chapters'][:5]:
+                start = ch['start_time']
+                end = ch['end_time']
+                if (end - start) > 60:
+                    end = start + 60
+                segments.append({"start": start, "end": end, "duration": end - start})
+        
+        if not segments:
+            if duration <= 60:
+                chunk_size = 20
+                for start in range(0, int(duration), chunk_size):
+                    end = min(duration, start + chunk_size)
+                    if end - start > 5:
+                        segments.append({"start": start, "end": end, "duration": end - start})
+            else:
+                partes = [0, duration * 0.3, duration * 0.6]
+                for start in partes:
+                    start = int(start)
+                    end = min(duration, start + 30)
+                    segments.append({"start": start, "end": end, "duration": end - start})
 
-        for deco in decorations:
-            if (
-                deco.get("label", {}).get("runs", [{}])[0].get("text")
-                == "Mais repetidos"
-            ):
-                start_ms = int(deco.get("visibleTimeRangeStartMillis", 0))
-                end_ms = int(deco.get("visibleTimeRangeEndMillis", 0))
-                time_range_key = (start_ms, end_ms)
-                if time_range_key not in processed_ranges:
-                    segments.append(
-                        {
-                            "start": start_ms / 1000.0,
-                            "end": end_ms / 1000.0,
-                            "duration": (end_ms - start_ms) / 1000.0,
-                        }
-                    )
-                    processed_ranges.add(time_range_key)
+        unique_segments = []
+        seen_starts = set()
+        for seg in segments:
+            s = round(seg['start'])
+            if s not in seen_starts:
+                unique_segments.append(seg)
+                seen_starts.add(s)
 
-        with yt_dlp.YoutubeDL({'quiet': True}) as ydl:
-            info = ydl.extract_info(youtube_url, download=False)
-            duration = info.get('duration', 0)
+        return JsonResponse({"segments": unique_segments, "duration": duration})
 
-        return JsonResponse({"segments": sorted(segments, key=lambda x: x["start"]), "duration": duration})
-
-    except requests.RequestException as e:
-        return JsonResponse(
-            {"error": f"Erro ao buscar a URL do YouTube: {e}"},
-            status=500,
-        )
+    except yt_dlp.utils.DownloadError as e:
+        logger.error(f"Erro do yt-dlp ao acessar o vídeo: {e}")
+        return JsonResponse({"error": "O YouTube bloqueou a análise. Verifique os cookies."}, status=400)
     except Exception as e:
-        print(f"Erro em get_youtube_most_replayed_segments: {e}")
-        return JsonResponse(
-            {"error": "Ocorreu um erro inesperado ao analisar o vídeo."},
-            status=500,
-        )
-
-
+        logger.error(f"Erro crítico em get_youtube_most_replayed_segments: {e}", exc_info=True)
+        return JsonResponse({"error": "Ocorreu um erro inesperado ao analisar o vídeo."}, status=500)
+    
+    
 @login_required
 def pagina_gerador(request):
     videos_criados, limite_videos, assinatura = _get_user_video_usage(request.user)
@@ -1481,3 +1474,38 @@ def cortes_youtube_view(request):
         ),
     }
     return render(request, "core/cortes_youtube.html", context)
+
+
+def verificar_status_fila(request, video_id):
+    try:
+        # 1. Pega o vídeo atual do usuário
+        meu_video = VideoGerado.objects.get(id=video_id, usuario=request.user)
+
+        # Se já estiver pronto, avisa logo
+        if meu_video.status == 'CONCLUIDO': 
+            return JsonResponse({'status': 'pronto', 'posicao': 0, 'tempo_estimado': 0})
+
+        # Se já estiver fazendo, ele é o número 0 (está no forno)
+        if meu_video.status == 'PROCESSANDO':
+            return JsonResponse({'status': 'processando', 'posicao': 0, 'tempo_estimado': 4}) 
+
+        # 2. A MÁGICA: Conta quantos estão na frente
+        pessoas_na_frente = VideoGerado.objects.filter(
+            status__in=['PENDENTE', 'PROCESSANDO'],
+            criado_em__lt=meu_video.criado_em  # <---- TEM QUE ESTAR ASSIM! (criado_em)
+        ).count()
+
+        # Minha posição é (Pessoas na frente + 1)
+        minha_posicao = pessoas_na_frente + 1
+
+        # 3. Calcula o tempo (Baseado no seu Ryzen: 4 minutos por vídeo)
+        tempo_estimado_minutos = minha_posicao * 4
+
+        return JsonResponse({
+            'status': 'fila',
+            'posicao': minha_posicao,
+            'tempo_estimado': tempo_estimado_minutos
+        })
+
+    except VideoGerado.DoesNotExist:
+        return JsonResponse({'error': 'Video não encontrado'}, status=404)

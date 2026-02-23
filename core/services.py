@@ -2,6 +2,11 @@
 
 import os
 import re
+import urllib.parse
+import time
+import requests
+import shutil
+
 import logging
 import tempfile
 import subprocess
@@ -109,7 +114,6 @@ def gerar_audio_e_tempos(texto, voz, velocidade, obter_tempos=False):
         # 2. Carrega os dados brutos da voz (Array ou Tensor)
         dados_da_voz = carregar_embedding_voz(pipeline, voz)
         
-        # --- CORREÇÃO CRÍTICA AQUI ---
         # O Kokoro espera que passemos uma STRING como 'voice', não o array.
         # Mas para vozes customizadas ('br_imperador'), o pipeline não conhece esse nome.
         # Então injetamos manualmente os dados no dicionário interno do pipeline.
@@ -167,10 +171,226 @@ def gerar_audio_e_tempos(texto, voz, velocidade, obter_tempos=False):
                 pass
         return None, None, 0
 
-
 # ==============================================================================
 # FUNÇÕES DE TEXTO E IMAGEM
 # ==============================================================================
+# 
+def obter_video_pexels(texto, duracao_total, temp_dir):
+    """Busca múltiplos vídeos reais no Pexels para criar um fundo dinâmico que acompanha a história."""
+    logger.info("Iniciando busca de múltiplos vídeos reais (Pexels)...")
+    api_key = os.getenv("PEXELS_API_KEY")
+    
+    if not api_key:
+        logger.error("ERRO: PEXELS_API_KEY não encontrada no .env")
+        return None
+
+    # 1. Define quantos vídeos vamos baixar (Ex: 1 clipe a cada 5 segundos, máximo de 6 para não estourar a API)
+    num_clipes = max(3, min(int(duracao_total / 5), 6))
+    tempo_por_clipe = duracao_total / num_clipes
+
+    # 2. Pede para a IA criar as palavras-chave em inglês baseadas na progressão da história
+    prompt_ia = (
+        f"Based on this story, create exactly {num_clipes} short English search terms (1-2 words max) "
+        "for a stock video site. Represent the chronological flow of the story. "
+        "Return ONLY the terms separated by '|'. Example: dark forest|jumping fish|calm lake. "
+        f"Story: {texto[:1500]}"
+    )
+    
+    termos_busca = []
+    try:
+        url_termo = f"https://gen.pollinations.ai/text/{urllib.parse.quote(prompt_ia)}"
+        resp_text = requests.get(url_termo, timeout=15).text.strip()
+        # Limpa e separa os termos gerados
+        termos_brutos = resp_text.split('|')
+        for t in termos_brutos:
+            t_limpo = re.sub(r'[^a-zA-Z\s]', '', t).strip()
+            if t_limpo:
+                termos_busca.append(t_limpo)
+    except Exception as e:
+        logger.warning(f"Falha ao gerar termos múltiplos: {e}")
+
+    # Fallback: Se a IA falhar ou retornar menos termos, preenchemos com temas genéricos cinematográficos
+    termos_fallback = ["cinematic nature", "urban city", "people walking", "abstract light", "beautiful landscape", "ocean waves"]
+    if len(termos_busca) < num_clipes:
+        termos_busca.extend(termos_fallback[:num_clipes - len(termos_busca)])
+    
+    termos_busca = termos_busca[:num_clipes]
+    logger.info(f"Termos de busca gerados para o Pexels ({len(termos_busca)} cenas): {termos_busca}")
+
+    headers = {"Authorization": api_key}
+    video_clips = []
+
+    # 3. Baixa e corta cada vídeo para formar a sequência
+    for i, termo in enumerate(termos_busca):
+        url_api = f"https://api.pexels.com/videos/search?query={urllib.parse.quote(termo)}&orientation=portrait&size=large&per_page=5"
+        clip_path = os.path.join(temp_dir, f"pexels_clip_{i:03d}.mp4")
+        
+        try:
+            resp = requests.get(url_api, headers=headers, timeout=20)
+            if resp.status_code == 200:
+                dados = resp.json()
+                
+                # Se o Pexels não achar nada com o termo da IA, tenta um termo genérico para não deixar buracos
+                if not dados.get('videos'):
+                    termo_salva_vidas = random.choice(["cinematic video", "beautiful scenery", "dark background"])
+                    resp = requests.get(f"https://api.pexels.com/videos/search?query={urllib.parse.quote(termo_salva_vidas)}&orientation=portrait", headers=headers, timeout=20)
+                    dados = resp.json()
+
+                if dados.get('videos'):
+                    # Pega um vídeo aleatório entre os primeiros resultados
+                    video_escolhido = random.choice(dados['videos'])
+                    
+                    # Busca a qualidade HD
+                    hd_files = [f for f in video_escolhido['video_files'] if f['quality'] == 'hd' and f['width'] >= 720]
+                    video_url = hd_files[0]['link'] if hd_files else video_escolhido['video_files'][0]['link']
+                    
+                    # Baixa o vídeo cru
+                    logger.info(f"Baixando cena {i+1}/{num_clipes} (Termo: {termo})...")
+                    raw_vid = os.path.join(temp_dir, f"pexels_raw_{i:03d}.mp4")
+                    with open(raw_vid, 'wb') as f:
+                        f.write(requests.get(video_url, timeout=30).content)
+                    
+                    # Formata o vídeo (loop se for muito curto, corta no tempo exato, ajusta tamanho)
+                    raw_vid_clean = raw_vid.replace('\\', '/')
+                    clip_path_clean = clip_path.replace('\\', '/')
+                    
+                    cmd = [
+                        "ffmpeg", "-y", "-stream_loop", "-1", "-i", raw_vid_clean,
+                        "-t", f"{tempo_por_clipe:.2f}", 
+                        "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,format=yuv420p",
+                        "-c:v", "libx264", "-preset", "ultrafast", "-r", "30", clip_path_clean
+                    ]
+                    subprocess.run(cmd, check=True, capture_output=True)
+                    video_clips.append(clip_path)
+        except Exception as e:
+            logger.error(f"Erro na cena {i} (Pexels): {e}")
+
+    # 4. Junta todas as cenas em um único vídeo final
+    if not video_clips:
+        logger.error("Falha total: Nenhum vídeo pôde ser processado do Pexels.")
+        return None
+
+    logger.info("Unindo cenas do Pexels...")
+    concat_file = os.path.join(temp_dir, "lista_pexels.txt")
+    with open(concat_file, "w", encoding="utf-8") as f:
+        for clip in video_clips:
+            caminho_limpo = clip.replace('\\', '/')
+            f.write(f"file '{caminho_limpo}'\n")
+
+    video_final_path = os.path.join(temp_dir, "fundo_pexels_sequencia.mp4")
+    
+    # Comando de concatenação ultra-rápido do FFmpeg
+    cmd_concat = ["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", video_final_path]
+    subprocess.run(cmd_concat, check=True)
+    
+    logger.info("✓ Sequência dinâmica de vídeos Pexels gerada com sucesso!")
+    return video_final_path
+
+def gerar_fundo_hibrido(texto, duracao_total, temp_dir, modo='imagem'):
+    """
+    Função Maestro: Decide se vai chamar a API do Pexels (Vídeo Real) 
+    ou a API do Pollinations (Imagens IA c/ Ken Burns).
+    """
+    if modo == 'video':
+        caminho_pexels = obter_video_pexels(texto, duracao_total, temp_dir)
+        if caminho_pexels:
+            return caminho_pexels
+        logger.warning("Pexels falhou ou não encontrou vídeo. Usando Pollinations Imagem como fallback.")
+    
+    # Se escolheu 'imagem' ou se o Pexels deu erro, cai na função de imagens que já criamos
+    return gerar_fundo_com_ia_pollinations(texto, duracao_total, temp_dir)
+
+
+
+
+
+def gerar_fundo_com_ia_pollinations(texto, duracao_total, temp_dir):
+    """
+    Versão Ultra Storytelling Cinematográfico: Gera até 10 cenas coordenadas por IA
+    com qualidade hiper-realista e efeito Ken Burns.
+    """
+    logger.info("Iniciando inteligência visual para 10 cenas cinematográficas...")
+    api_key = os.getenv("POLLINATIONS_API_KEY")
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+
+    # --- PASSO 1: IA CRIA UM ROTEIRO DE 10 CENAS VISUAIS ---
+    # Aprimoramos o prompt para forçar descrições mais focadas em ambiente e atmosfera
+    prompt_roteirista = (
+        "Based on this story, create exactly 10 highly visual scene descriptions in ENGLISH. "
+        "Focus on environments, characters, and atmosphere. "
+        "Return ONLY the descriptions separated by '|'. "
+        f"Story: {texto[:1500]}"
+    )
+    
+    frases_visuais = []
+    try:
+        url_text = f"https://gen.pollinations.ai/text/{urllib.parse.quote(prompt_roteirista)}"
+        resp_text = requests.get(url_text, headers=headers, timeout=40)
+        if resp_text.status_code == 200:
+            frases_visuais = [f.strip() for f in resp_text.text.split('|') if len(f) > 5]
+            frases_visuais = frases_visuais[:10]
+            logger.info(f"Roteiro de {len(frases_visuais)} cenas identificadas com sucesso.")
+    except Exception as e:
+        logger.error(f"Falha ao gerar roteiro visual: {e}")
+
+    if not frases_visuais:
+        frases_visuais = ["mystical dark forest", "ancient ruined castle", "glowing magic lake"]
+
+    tempo_por_imagem = duracao_total / len(frases_visuais)
+    video_clips = []
+
+    # --- PASSO 2: RENDERIZAÇÃO HIPER-REALISTA COM FLUX ---
+    for i, prompt_en in enumerate(frases_visuais):
+        img_path = os.path.join(temp_dir, f"ia_raw_{i:03d}.jpg")
+        clip_path = os.path.join(temp_dir, f"ia_move_{i:03d}.mp4")
+        
+        # 🌟 O GRANDE SEGREDO: Injetamos modificadores de alta qualidade em cada cena!
+        prompt_premium = f"{prompt_en}, cinematic masterpiece, photorealistic, 8k resolution, highly detailed, dramatic lighting, epic movie scene, unreal engine 5 render, depth of field"
+        
+        # Continuamos usando o Flux gratuito do Pollinations
+        url_img = f"https://gen.pollinations.ai/image/{urllib.parse.quote(prompt_premium)}?model=flux&width=1080&height=1920&nologo=true&seed={random.randint(1,99999)}"
+        if api_key: url_img += f"&key={api_key}"
+
+        try:
+            logger.info(f"Renderizando cena {i+1}/{len(frases_visuais)} (Ultra Qualidade)...")
+            resp = requests.get(url_img, timeout=45)
+            if resp.status_code == 200:
+                with open(img_path, 'wb') as f:
+                    f.write(resp.content)
+                
+                total_frames = int(tempo_por_imagem * 30)
+                
+                # Ken Burns suave para manter a qualidade 8k sem pixelar
+                kb_filter = (
+                    f"scale=2160:3840,zoompan=z='min(zoom+0.001,1.15)':"
+                    f"d={total_frames}:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1080x1920,format=yuv420p"
+                )
+                
+                cmd_clip = [
+                    "ffmpeg", "-y", "-loop", "1", "-i", img_path,
+                    "-t", f"{tempo_por_imagem:.2f}",
+                    "-vf", kb_filter,
+                    "-c:v", "libx264", "-preset", "ultrafast", "-r", "30", clip_path
+                ]
+                subprocess.run(cmd_clip, check=True, capture_output=True)
+                video_clips.append(clip_path)
+        except Exception as e:
+            logger.error(f"Erro na cena {i}: {e}")
+
+    # --- PASSO 3: CONCATENAÇÃO FINAL ---
+    if not video_clips:
+        raise Exception("Nenhuma imagem pôde ser processada.")
+
+    concat_file = os.path.join(temp_dir, "lista_videos.txt")
+    with open(concat_file, "w", encoding="utf-8") as f:
+        for clip in video_clips:
+            caminho_limpo = clip.replace('\\', '/')
+            f.write(f"file '{caminho_limpo}'\n")
+
+    video_final = os.path.join(temp_dir, "fundo_ia_10_cenas.mp4")
+    subprocess.run(["ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_file, "-c", "copy", video_final], check=True)
+    
+    return video_final
 
 def wrap_text_by_width(text, font, max_width, draw):
     """Wraps text to fit within a specified width, using the draw object."""
@@ -191,6 +411,7 @@ def wrap_text_by_width(text, font, max_width, draw):
             current_line = word
     lines.append(current_line)
     return "\n".join(lines)
+
 
 def create_text_image(texto, cor_da_fonte_hex, data, posicao="centro"):
     import platform
@@ -471,33 +692,53 @@ def processar_geracao_video(
 
         caminho_video_input = None
         logger.info(f"[{video_gerado_id}] Obtendo vídeo de fundo...")
+        
         if tipo_conteudo in ["narrador", "texto"]:
-            video_base_id = data.get("video_base_id")
-            video_base = None
-            if video_base_id:
-                try:
-                    video_base = VideoBase.objects.get(id=video_base_id)
-                    if not verificar_arquivo_existe_no_r2(video_base.object_key):
-                        logger.warning(f"[{video_gerado_id}] Vídeo escolhido (ID: {video_base_id}) não encontrado no R2. Selecionando um aleatório.")
-                        video_base = None
-                except VideoBase.DoesNotExist:
-                    logger.warning(f"[{video_gerado_id}] VideoBase com ID {video_base_id} não existe. Selecionando um aleatório.")
-                    video_base = None
+            # Verifica se o usuário escolheu gerar fundo com IA
+            gerar_fundo_ia = str(data.get("gerar_fundo_ia", "")).lower() in ["true", "1", "yes"]
             
-            if not video_base:
-                categoria_video_id = data.get("categoria_video")
-                if categoria_video_id:
+            if tipo_conteudo == "narrador" and gerar_fundo_ia:
+                # 1. Pega qual foi o motor visual escolhido no formulário (imagem ou video)
+                modo_visual = data.get("tipo_visual_ia", "imagem")
+                
+                logger.info(f"[{video_gerado_id}] Gerando vídeo de fundo dinâmico com IA (Motor: {modo_visual})...")
+                video.status = f"PROCESSANDO (Gerando fundo - {modo_visual})"
+                video.save()
+                
+                texto_base = data.get("narrador_texto", "Cinematic aesthetic video background")
+                temp_dir_ia = tempfile.mkdtemp(prefix="ia_fundo_")
+                caminhos_para_limpar.append(temp_dir_ia) # Adicionado para limpeza futura
+                
+                # 2. CHAMA A FUNÇÃO HÍBRIDA (Maestro) em vez de forçar o Pollinations
+                caminho_video_input = gerar_fundo_hibrido(texto_base, duracao_video, temp_dir_ia, modo=modo_visual)
+            else:
+                # Lógica existente: Baixa do Cloudflare R2
+                video_base_id = data.get("video_base_id")
+                video_base = None
+                if video_base_id:
                     try:
-                        categoria_video = CategoriaVideo.objects.get(id=categoria_video_id)
-                        video_base = get_valid_media_from_category(VideoBase, categoria_video)
-                    except CategoriaVideo.DoesNotExist:
-                        raise Exception(f"Categoria de vídeo com ID {categoria_video_id} não encontrada.")
-            
-            if not video_base:
-                raise Exception("Não foi possível encontrar um vídeo de fundo válido para a categoria.")
-            
-            logger.info(f"[{video_gerado_id}] Baixando vídeo de fundo: {video_base.object_key}")
-            caminho_video_input = download_from_cloudflare(video_base.object_key, ".mp4")
+                        video_base = VideoBase.objects.get(id=video_base_id)
+                        if not verificar_arquivo_existe_no_r2(video_base.object_key):
+                            logger.warning(f"[{video_gerado_id}] Vídeo escolhido (ID: {video_base_id}) não encontrado no R2. Selecionando um aleatório.")
+                            video_base = None
+                    except VideoBase.DoesNotExist:
+                        logger.warning(f"[{video_gerado_id}] VideoBase com ID {video_base_id} não existe. Selecionando um aleatório.")
+                        video_base = None
+                
+                if not video_base:
+                    categoria_video_id = data.get("categoria_video")
+                    if categoria_video_id:
+                        try:
+                            categoria_video = CategoriaVideo.objects.get(id=categoria_video_id)
+                            video_base = get_valid_media_from_category(VideoBase, categoria_video)
+                        except CategoriaVideo.DoesNotExist:
+                            raise Exception(f"Categoria de vídeo com ID {categoria_video_id} não encontrada.")
+                
+                if not video_base:
+                    raise Exception("Não foi possível encontrar um vídeo de fundo válido para a categoria.")
+                
+                logger.info(f"[{video_gerado_id}] Baixando vídeo de fundo: {video_base.object_key}")
+                caminho_video_input = download_from_cloudflare(video_base.object_key, ".mp4")
 
         elif tipo_conteudo == "vendedor":
             video_upload_key = data.get("video_upload_key")
@@ -509,6 +750,7 @@ def processar_geracao_video(
         
         if caminho_video_input:
             logger.info(f"[{video_gerado_id}] Vídeo de fundo obtido em: {caminho_video_input}")
+            # Se for do Pollinations, já está na pasta temp que será limpa, mas não faz mal adicionar
             caminhos_para_limpar.append(caminho_video_input)
         else:
             raise Exception("Falha ao obter o vídeo de fundo.")
@@ -657,10 +899,14 @@ def processar_geracao_video(
         for caminho in caminhos_para_limpar:
             if caminho and os.path.exists(caminho):
                 try:
-                    os.remove(caminho)
-                    logger.info(f"[{video_gerado_id}] Arquivo temporário removido: {caminho}")
+                    if os.path.isdir(caminho):
+                        shutil.rmtree(caminho)  # Remove a pasta temporária criada pela IA
+                        logger.info(f"[{video_gerado_id}] Pasta temporária removida: {caminho}")
+                    else:
+                        os.remove(caminho)
+                        logger.info(f"[{video_gerado_id}] Arquivo temporário removido: {caminho}")
                 except OSError as err:
-                    logger.error(f"[{video_gerado_id}] Erro ao remover arquivo temporário {caminho}: {err}")
+                    logger.error(f"[{video_gerado_id}] Erro ao remover arquivo/pasta temporária {caminho}: {err}")
         logger.info(f"[{video_gerado_id}] Limpeza de arquivos temporários finalizada.")
 
 
@@ -697,7 +943,9 @@ def processar_corte_youtube(
             "noplaylist": True,
             "retries": 3,
             "fragment_retries": 3,
-            "extractor_args": {"youtube": {"player_client": ["android"]}},
+            "extractor_args": {"youtube": {"player_client": ["ios", "android"]}},
+            # HABILITADO O USO DE COOKIES:
+            "cookiefile": os.path.join(settings.BASE_DIR, "cookies.txt"),
             "logger": YTDLPLogger(corte_gerado_id),
         }
 

@@ -5,13 +5,60 @@
 
 {% block extra_css %}
     <link rel="stylesheet" href="{% static 'core/css/gerador-profissional.css' %}">
+    <style>
+        /* Estilos do Box do Tipo de IA (Protegidos) */
+        .ia-choice-container {
+            margin-top: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: rgba(101, 91, 226, 0.03);
+            border-radius: 8px;
+            border: 1px dashed var(--color-primary);
+        }
+        .ia-choice-container label.main-label {
+            display: block;
+            margin-bottom: 15px;
+            font-weight: 600;
+            color: var(--color-primary);
+        }
+        .radio-group-vertical {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .ia-card-option {
+            display: flex !important;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .ia-card-option:hover {
+            border-color: var(--color-primary);
+            background: rgba(101, 91, 226, 0.05);
+        }
+        /* Esconde o rádio padrão, permitindo que a div customizada brilhe */
+        .ia-card-option input[type="radio"] {
+            display: none; 
+        }
+        /* Quando marcado, o CSS reflete a mudança visualmente */
+        .ia-card-option input[type="radio"]:checked ~ .custom-radio .inner-circle {
+            background-color: var(--color-primary);
+            transform: scale(1);
+        }
+        .ia-card-option input[type="radio"]:checked ~ .option-label {
+            font-weight: bold;
+        }
+    </style>
 {% endblock %}
-
 
 {% block content %}
 <div id="loading-overlay" class="loading-overlay">
     <div class="loading-spinner"></div>
-    <p class="loading-text">Gerando seu vídeo...</p>
+    <p class="loading-text">Gerando seu vídeo com IA...</p>
     <small>Este processo pode levar alguns instantes. Por favor, não feche esta página.</small>
 </div>
 
@@ -62,7 +109,7 @@
                             <label class="option-card">
                                 {{ radio.tag }}
                                 <div class="card-content">
-                                    {% if forloop.counter == 1 %}<div class="card-icon"><i class="fas fa-microphone-alt"></i></div><div class="card-info"><h4>Vídeo com Narração</h4><p>Gere uma voz a partir de um texto e adicione um vídeo de fundo.</p></div>{% endif %}
+                                    {% if forloop.counter == 1 %}<div class="card-icon"><i class="fas fa-microphone-alt"></i></div><div class="card-info"><h4>Vídeo com Narração</h4><p>Gere uma voz a partir de um texto e adicione um vídeo de fundo (ou IA).</p></div>{% endif %}
                                     {% if forloop.counter == 2 %}<div class="card-icon"><i class="fas fa-font"></i></div><div class="card-info"><h4>Vídeo com Texto</h4><p>Crie um vídeo com um texto estático e um fundo.</p></div>{% endif %}
                                     {% if forloop.counter == 3 %}<div class="card-icon"><i class="fas fa-upload"></i></div><div class="card-info"><h4>Vídeo de Vendas</h4><p>Envie seu próprio vídeo e adicione uma narração para criar um anúncio.</p></div>{% endif %}
                                     <div class="card-check"><i class="fas fa-check-circle"></i></div>
@@ -75,7 +122,8 @@
                     <div class="form-step" data-step-content="1">
                          <div class="secao-conteudo" data-content-type="texto">
                             <div class="step-header"><h3><i class="fas fa-paragraph"></i> Conteúdo do Texto Estático</h3></div>
-                                                        <div class="form-field" id="field-texto-overlay">{{ form.texto_overlay.label_tag }} {{ form.texto_overlay }}
+                            <div class="form-field" id="field-texto-overlay">
+                                {{ form.texto_overlay.label_tag }} {{ form.texto_overlay }}
                                 <div id="texto-overlay-info-box" class="info-box" style="margin-top: 10px;">
                                     <div class="info-box-line">
                                         <i class="fas fa-keyboard"></i>
@@ -130,40 +178,28 @@
                             <div class="form-field">
                                 <div class="label-wrapper">
                                     {{ form.cor_da_fonte.label_tag }}
-                                    <div class="tooltip">
-                                        <i class="fas fa-question-circle tooltip-icon"></i>
-                                        <span class="tooltiptext">Define a cor principal do texto ou da legenda que aparecerá no vídeo.</span>
-                                    </div>
+                                    <div class="tooltip"><i class="fas fa-question-circle tooltip-icon"></i><span class="tooltiptext">Define a cor principal do texto ou da legenda que aparecerá no vídeo.</span></div>
                                 </div>
                                 {{ form.cor_da_fonte }}
                             </div>
                             <div class="form-field">
                                 <div class="label-wrapper">
                                     {{ form.cor_destaque_legenda.label_tag }}
-                                    <div class="tooltip">
-                                        <i class="fas fa-question-circle tooltip-icon"></i>
-                                        <span class="tooltiptext">Apenas no modo "Legenda Sincronizada". Define a cor da palavra que está sendo falada (efeito karaokê).</span>
-                                    </div>
+                                    <div class="tooltip"><i class="fas fa-question-circle tooltip-icon"></i><span class="tooltiptext">Apenas no modo "Legenda Sincronizada". Define a cor da palavra que está sendo falada (efeito karaokê).</span></div>
                                 </div>
                                 {{ form.cor_destaque_legenda }}
                             </div>
                             <div class="form-field">
                                 <div class="label-wrapper">
                                     {{ form.texto_fonte.label_tag }}
-                                    <div class="tooltip">
-                                        <i class="fas fa-question-circle tooltip-icon"></i>
-                                        <span class="tooltiptext">Escolha a família da fonte para o texto. Fontes diferentes causam grande impacto visual.</span>
-                                    </div>
+                                    <div class="tooltip"><i class="fas fa-question-circle tooltip-icon"></i><span class="tooltiptext">Escolha a família da fonte para o texto. Fontes diferentes causam grande impacto visual.</span></div>
                                 </div>
                                 {{ form.texto_fonte }}
                             </div>
                             <div class="form-field">
                                 <div class="label-wrapper">
                                     {{ form.texto_tamanho.label_tag }}
-                                    <div class="tooltip">
-                                        <i class="fas fa-question-circle tooltip-icon"></i>
-                                        <span class="tooltiptext">Tamanho inicial da fonte. O sistema pode reduzir o tamanho automaticamente para que textos longos caibam na tela.</span>
-                                    </div>
+                                    <div class="tooltip"><i class="fas fa-question-circle tooltip-icon"></i><span class="tooltiptext">Tamanho inicial da fonte. O sistema pode reduzir o tamanho automaticamente para que textos longos caibam na tela.</span></div>
                                 </div>
                                 {{ form.texto_tamanho }}
                             </div>
@@ -185,13 +221,7 @@
                         <div class="form-field">
                             <label class="form-check-wrapper large">{{ form.legenda_sincronizada }}
                                 <div class="form-check-info">
-                                    <span class="form-check-title">
-                                        Legenda Sincronizada
-                                        <span class="tooltip">
-                                            <i class="fas fa-question-circle tooltip-icon"></i>
-                                            <span class="tooltiptext">Gera legendas no estilo karaokê, que destacam cada palavra conforme ela é falada na narração. Requer o "Modo Narrador" ou "Vendedor".</span>
-                                        </span>
-                                    </span>
+                                    <span class="form-check-title">Legenda Sincronizada</span>
                                     <span class="form-check-desc">{{ form.legenda_sincronizada.help_text }}</span>
                                 </div>
                                 <div class="toggle-switch"></div>
@@ -201,13 +231,46 @@
 
                     <div class="form-step" data-step-content="4">
                         <div class="step-header"><h3><i class="fas fa-photo-video"></i> Mídia de Fundo e Encerramento</h3></div>
-                        <div class="form-field" id="field-categoria-video">{{ form.categoria_video.label_tag }} {{ form.categoria_video }}</div>
-                        <div class="form-field" id="video-gallery-container" style="display: none;">
-                            <label>Escolha um Vídeo:</label>
-                            <div id="video-gallery" class="video-gallery">
-                                <!-- Videos will be populated here by JavaScript -->
+                        
+                        <div class="form-field" id="field-gerar-fundo-ia" style="display: none; margin-bottom: 20px;">
+                            <label class="form-check-wrapper large" style="border: 2px solid var(--color-primary); padding: 15px; border-radius: 10px; cursor: pointer; background: rgba(101, 91, 226, 0.05);">
+                                {{ form.gerar_fundo_ia }}
+                                <div class="form-check-info">
+                                    <span class="form-check-title" style="font-weight: bold; font-size: 1.1em; color: var(--color-primary);">
+                                        <i class="fas fa-robot"></i> Gerar Fundo Dinâmico
+                                    </span>
+                                    <span class="form-check-desc">Use Inteligência Artificial para escolher ou criar um fundo exclusivo.</span>
+                                </div>
+                                <div class="toggle-switch"></div>
+                            </label>
+                        </div>
+
+                        <div id="field-tipo-visual-ia" class="ia-choice-container" style="display: none;">
+                            <label class="main-label">Selecione o Motor Criativo:</label>
+                            <div class="radio-group-vertical">
+                                {% for radio in form.tipo_visual_ia %}
+                                <label class="radio-option ia-card-option">
+                                    {{ radio.tag }}
+                                    <span class="custom-radio" style="margin-right: 15px;"><span class="inner-circle"></span></span>
+                                    <span class="option-label" style="font-size: 1.1em;">
+                                        {% if forloop.counter == 1 %}
+                                            <i class="fas fa-image" style="color:var(--color-primary); margin-right: 8px;"></i>
+                                        {% else %}
+                                            <i class="fas fa-video" style="color:#FFD700; margin-right: 8px;"></i>
+                                        {% endif %}
+                                        {{ radio.choice_label }}
+                                    </span>
+                                </label>
+                                {% endfor %}
                             </div>
                         </div>
+
+                        <div class="form-field" id="field-categoria-video">{{ form.categoria_video.label_tag }} {{ form.categoria_video }}</div>
+                        <div class="form-field" id="video-gallery-container" style="display: none;">
+                            <label>Escolha um Vídeo (Se IA estiver desmarcada):</label>
+                            <div id="video-gallery" class="video-gallery"></div>
+                        </div>
+
                         <div class="form-field" id="field-video-upload" style="display: none;">
                             <label for="{{ form.video_upload.id_for_label }}" class="custom-file-upload">
                                 {{ form.video_upload }}
@@ -216,6 +279,7 @@
                                 <div class="upload-hint">MP4, MOV, AVI, etc.</div>
                             </label>
                         </div>
+
                         <div class="form-field">{{ form.categoria_musica.label_tag }} {{ form.categoria_musica }}</div>
                         <div class="form-field">{{ form.volume_musica.label_tag }} {{ form.volume_musica }}</div>
                         <div class="form-field">
@@ -264,7 +328,6 @@
 {{ block.super }}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- ELEMENTOS DO DOM ---
     const form = document.querySelector('.video-form');
     const loadingOverlay = document.getElementById('loading-overlay');
     
@@ -274,7 +337,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const textOverlay = document.getElementById('preview-text-overlay');
     const previewWrapper = document.querySelector('.preview-wrapper');
 
-    // Campos do formulário que afetam o preview
+    // Input Pointers Robustos
     const inputs = {
         tipoConteudo: form.querySelectorAll('input[name="tipo_conteudo"]'),
         textoOverlay: form.querySelector('[name="texto_overlay"]'),
@@ -288,181 +351,223 @@ document.addEventListener('DOMContentLoaded', function() {
         categoriaVideo: form.querySelector('select[name="categoria_video"]'),
         videoBaseId: form.querySelector('[name="video_base_id"]'),
         videoUpload: form.querySelector('input[name="video_upload"]'),
+        gerarFundoIa: form.querySelector('input[name="gerar_fundo_ia"]'),
+        tipoVisualIa: form.querySelectorAll('input[name="tipo_visual_ia"]')
     };
-    
-    // --- LÓGICA DO PREVIEW EM TEMPO REAL ---
 
-    function updatePreview() {
-        // 1. Atualiza o texto
-        const tipo = form.querySelector('input[name="tipo_conteudo"]:checked')?.value;
-        let texto = '';
+    const fieldGroups = {
+        texto: form.querySelector('[data-content-type="texto"]'),
+        narrador: form.querySelector('[data-content-type="narrador,vendedor"]'),
+        upload: document.getElementById('field-video-upload'),
+        categoria: document.getElementById('field-categoria-video'),
+        galeria: document.getElementById('video-gallery-container'),
+        fundoIa: document.getElementById('field-gerar-fundo-ia'),
+        tipoVisualIa: document.getElementById('field-tipo-visual-ia')
+    };
+
+    // =========================================================
+    // NÚCLEO ÚNICO DE VISIBILIDADE (Evita conflitos)
+    // =========================================================
+    async function updateVisibility() {
+        const tipo = form.querySelector('input[name="tipo_conteudo"]:checked')?.value || 'narrador';
+        const checkboxIa = inputs.gerarFundoIa;
+        const usarIA = checkboxIa && checkboxIa.checked;
+        const modoVisualIa = form.querySelector('input[name="tipo_visual_ia"]:checked')?.value || 'imagem';
+
+        // 1. Reseta TUDO
+        Object.values(fieldGroups).forEach(group => {
+            if (group) group.style.display = 'none';
+        });
+
+        // 2. Aplica as regras de exibição
         if (tipo === 'texto') {
-            texto = inputs.textoOverlay.value;
-        }
-        // O texto do narrador não é exibido na pré-visualização para evitar quebra de layout.
-        textOverlay.innerText = texto;
+            if (fieldGroups.texto) fieldGroups.texto.style.display = 'block';
+            if (fieldGroups.categoria) fieldGroups.categoria.style.display = 'block';
+            if (checkboxIa) checkboxIa.checked = false; 
 
-        // 2. Atualiza estilos do texto com escala
-        const finalVideoWidth = 1080; // Largura do vídeo final em pixels
-        const previewWidth = previewWrapper.getBoundingClientRect().width;
-        const scaleFactor = previewWidth / finalVideoWidth;
-        
-        const originalFontSize = parseInt(inputs.textoTamanho.value, 10) || 70; // Fallback para 70
-        const scaledFontSize = originalFontSize * scaleFactor;
+        } else if (tipo === 'vendedor') {
+            if (fieldGroups.narrador) fieldGroups.narrador.style.display = 'block';
+            if (fieldGroups.upload) fieldGroups.upload.style.display = 'block';
+            if (checkboxIa) checkboxIa.checked = false;
 
-        textOverlay.style.fontFamily = `'${inputs.textoFonte.options[inputs.textoFonte.selectedIndex].text}', sans-serif`;
-        textOverlay.style.fontSize = `${scaledFontSize}px`;
-        textOverlay.style.fontWeight = inputs.textoNegrito.checked ? 'bold' : 'normal';
-        textOverlay.style.textDecoration = inputs.textoSublinhado.checked ? 'underline' : 'none';
-        
-        // 3. Atualiza posição do texto
-        const posicao = form.querySelector('input[name="posicao_texto"]:checked')?.value;
-        textOverlay.classList.toggle('align-center', posicao === 'centro');
-        textOverlay.classList.toggle('align-bottom', posicao === 'inferior');
-    }
-
-    const videoGalleryContainer = document.getElementById('video-gallery-container');
-    const videoGallery = document.getElementById('video-gallery');
-
-    async function updatePreviewVideo() {
-        const tipo = form.querySelector('input[name="tipo_conteudo"]:checked')?.value;
-        let videoUrl = null;
-
-        if (tipo === 'vendedor') {
-            videoGalleryContainer.style.display = 'none';
-            const file = inputs.videoUpload.files[0];
-            if (file) {
-                videoUrl = URL.createObjectURL(file);
-            }
-        } else {
-            const categoriaId = inputs.categoriaVideo.value;
-            videoGallery.innerHTML = ''; // Limpa a galeria
-            inputs.videoBaseId.value = ''; // Limpa o video selecionado
-
-            if (!categoriaId) {
-                videoGalleryContainer.style.display = 'none';
-                videoElement.src = '';
-                videoElement.classList.remove('visible');
-                previewPlaceholder.classList.remove('hidden');
-                return;
-            }
-
-            videoGalleryContainer.style.display = 'block';
-            videoGallery.innerHTML = '<p>Carregando vídeos...</p>';
+        } else if (tipo === 'narrador') {
+            if (fieldGroups.narrador) fieldGroups.narrador.style.display = 'block';
+            if (fieldGroups.fundoIa) fieldGroups.fundoIa.style.display = 'block';
             
-            try {
-                const response = await fetch(`/api/videos-por-categoria/${categoriaId}/`);
-                if (!response.ok) throw new Error('Falha ao buscar vídeos da categoria');
-                const data = await response.json();
-                console.log('Videos data:', data); // DEBUG: Mostra os dados recebidos
-                
-                videoGallery.innerHTML = ''; // Limpa a mensagem de carregando
-
-                if (data.videos && data.videos.length > 0) {
-                    // Popula a galeria
-                    data.videos.forEach(video => {
-                        const item = document.createElement('div');
-                        item.classList.add('video-gallery-item');
-                        item.dataset.videoId = video.id;
-                        item.dataset.videoUrl = video.url; // Store URL in dataset
-
-                        const videoThumb = document.createElement('video');
-                        videoThumb.src = video.url;
-                        videoThumb.preload = 'metadata';
-                        videoThumb.muted = true;
-                        videoThumb.playsInline = true;
-
-                        const title = document.createElement('div');
-                        title.classList.add('video-title');
-                        title.textContent = video.titulo;
-
-                        item.appendChild(videoThumb);
-                        item.appendChild(title);
-                        videoGallery.appendChild(item);
-
-                        item.addEventListener('click', () => {
-                            document.querySelectorAll('.video-gallery-item.selected').forEach(el => el.classList.remove('selected'));
-                            item.classList.add('selected');
-                            inputs.videoBaseId.value = item.dataset.videoId;
-                            
-                            const videoUrl = item.dataset.videoUrl; // Retrieve URL from dataset
-                            if (videoUrl) {
-                                previewPlaceholder.classList.add('hidden');
-                                videoElement.src = videoUrl;
-                                videoElement.load();
-                                videoElement.play().catch(e => console.log("Autoplay bloqueado."));
-                                videoElement.classList.add('visible');
-                            }
-                        });
-                    });
-
-                    // Seleciona o primeiro video por padrão
-                    const firstVideoItem = videoGallery.querySelector('.video-gallery-item');
-                    if (firstVideoItem) {
-                        firstVideoItem.click();
-                    }
-
-                } else {
-                    videoGallery.innerHTML = '<p>Nenhum vídeo encontrado para esta categoria.</p>';
-                }
-
-            } catch (error) {
-                console.error("Erro ao buscar galeria de vídeos:", error);
-                videoGallery.innerHTML = '<p>Erro ao carregar vídeos.</p>';
+            if (usarIA) {
+                if (fieldGroups.tipoVisualIa) fieldGroups.tipoVisualIa.style.display = 'block';
+            } else {
+                if (fieldGroups.categoria) fieldGroups.categoria.style.display = 'block';
             }
         }
-        
-        if (tipo === 'vendedor' && videoUrl) {
+
+        updateAvailableSteps();
+
+        // 3. Gerenciamento do Box de Preview
+        let videoUrl = null;
+        if (tipo === 'vendedor') {
+            const file = inputs.videoUpload && inputs.videoUpload.files[0];
+            if (file) videoUrl = URL.createObjectURL(file);
+        }
+
+        if (tipo === 'narrador' && usarIA) {
+            inputs.videoBaseId.value = '';
+            if (inputs.categoriaVideo) inputs.categoriaVideo.value = '';
+            videoElement.src = '';
+            videoElement.classList.remove('visible');
+            
+            if (modoVisualIa === 'video') {
+                previewPlaceholder.innerHTML = '<i class="fas fa-video" style="color: #FFD700; font-size: 4rem; margin-bottom: 10px;"></i><h2>Vídeos Reais (Pexels)</h2><p style="padding: 0 20px;">Buscaremos automaticamente vídeos reais na internet para ilustrar sua história.</p>';
+            } else {
+                previewPlaceholder.innerHTML = '<i class="fas fa-robot" style="color: var(--color-primary); font-size: 4rem; margin-bottom: 10px;"></i><h2>Imagens IA (Flux)</h2><p style="padding: 0 20px;">Nossa IA criará ilustrações dinâmicas com efeito de zoom para acompanhar sua narração.</p>';
+            }
+            previewPlaceholder.classList.remove('hidden');
+
+        } else if (tipo === 'vendedor' && videoUrl) {
             previewPlaceholder.classList.add('hidden');
             videoElement.src = videoUrl;
             videoElement.load();
             videoElement.play().catch(e => console.log("Autoplay bloqueado."));
             videoElement.classList.add('visible');
+
+        } else if (tipo === 'texto' || (tipo === 'narrador' && !usarIA)) {
+            const categoriaId = inputs.categoriaVideo ? inputs.categoriaVideo.value : null;
+            if (categoriaId) {
+                if (fieldGroups.galeria) fieldGroups.galeria.style.display = 'block';
+                await fetchGallery(categoriaId);
+            } else {
+                if (fieldGroups.galeria) fieldGroups.galeria.style.display = 'none';
+                videoElement.src = '';
+                videoElement.classList.remove('visible');
+                previewPlaceholder.innerHTML = '<i class="fas fa-film"></i><h2>Preview do Vídeo</h2><p>Suas escolhas aparecerão aqui em tempo real.</p>';
+                previewPlaceholder.classList.remove('hidden');
+            }
         }
     }
 
-    // Adiciona event listeners para todos os campos relevantes
-    Object.values(inputs).forEach(inputOrNodeList => {
-        const elements = NodeList.prototype.isPrototypeOf(inputOrNodeList) ? Array.from(inputOrNodeList) : [inputOrNodeList];
-        elements.forEach(el => {
-            if (el) { // Verifica se o elemento existe
-                const eventType = (el.type === 'select-one' || el.type === 'radio' || el.type === 'checkbox') ? 'change' : 'input';
-                el.addEventListener(eventType, updatePreview);
+    // =========================================================
+    // GALERIA, TEXTO E NAVEGAÇÃO
+    // =========================================================
+    async function fetchGallery(categoriaId) {
+        const videoGallery = document.getElementById('video-gallery');
+        videoGallery.innerHTML = '<p>Carregando vídeos...</p>';
+        try {
+            const response = await fetch(`/api/videos-por-categoria/${categoriaId}/`);
+            if (!response.ok) throw new Error('Falha');
+            const data = await response.json();
+            videoGallery.innerHTML = ''; 
+
+            if (data.videos && data.videos.length > 0) {
+                data.videos.forEach(video => {
+                    const item = document.createElement('div');
+                    item.classList.add('video-gallery-item');
+                    item.dataset.videoId = video.id;
+                    item.dataset.videoUrl = video.url;
+
+                    const videoThumb = document.createElement('video');
+                    videoThumb.src = video.url;
+                    videoThumb.preload = 'metadata';
+                    videoThumb.muted = true;
+                    videoThumb.playsInline = true;
+
+                    const title = document.createElement('div');
+                    title.classList.add('video-title');
+                    title.textContent = video.titulo;
+
+                    item.appendChild(videoThumb);
+                    item.appendChild(title);
+                    videoGallery.appendChild(item);
+
+                    item.addEventListener('click', () => {
+                        document.querySelectorAll('.video-gallery-item.selected').forEach(el => el.classList.remove('selected'));
+                        item.classList.add('selected');
+                        inputs.videoBaseId.value = item.dataset.videoId;
+                        const vUrl = item.dataset.videoUrl;
+                        if (vUrl) {
+                            previewPlaceholder.classList.add('hidden');
+                            videoElement.src = vUrl;
+                            videoElement.load();
+                            videoElement.play().catch(e => console.log("Autoplay bloqueado."));
+                            videoElement.classList.add('visible');
+                        }
+                    });
+                });
+                const firstVideoItem = videoGallery.querySelector('.video-gallery-item');
+                if (firstVideoItem) firstVideoItem.click();
+            } else {
+                videoGallery.innerHTML = '<p>Nenhum vídeo encontrado.</p>';
             }
+        } catch (error) {
+            videoGallery.innerHTML = '<p>Erro ao carregar vídeos.</p>';
+        }
+    }
+
+    function updatePreviewText() {
+        const tipo = form.querySelector('input[name="tipo_conteudo"]:checked')?.value;
+        let texto = '';
+        if (tipo === 'texto') texto = inputs.textoOverlay.value;
+        
+        textOverlay.innerText = texto;
+        const finalVideoWidth = 1080;
+        const previewWidth = previewWrapper.getBoundingClientRect().width;
+        const scaleFactor = previewWidth / finalVideoWidth;
+        
+        const originalFontSize = parseInt(inputs.textoTamanho.value, 10) || 70;
+        textOverlay.style.fontFamily = `'${inputs.textoFonte.options[inputs.textoFonte.selectedIndex].text}', sans-serif`;
+        textOverlay.style.fontSize = `${originalFontSize * scaleFactor}px`;
+        textOverlay.style.fontWeight = inputs.textoNegrito.checked ? 'bold' : 'normal';
+        textOverlay.style.textDecoration = inputs.textoSublinhado.checked ? 'underline' : 'none';
+        
+        const posicao = form.querySelector('input[name="posicao_texto"]:checked')?.value;
+        textOverlay.classList.toggle('align-center', posicao === 'centro');
+        textOverlay.classList.toggle('align-bottom', posicao === 'inferior');
+    }
+
+    ['texto_overlay', 'posicao_texto', 'cor_da_fonte', 'texto_fonte', 'texto_tamanho', 'texto_negrito', 'texto_sublinhado'].forEach(key => {
+        const el = inputs[key];
+        if(!el) return;
+        const elements = NodeList.prototype.isPrototypeOf(el) ? Array.from(el) : [el];
+        elements.forEach(node => {
+            const eventType = (node.type === 'select-one' || node.type === 'radio' || node.type === 'checkbox') ? 'change' : 'input';
+            node.addEventListener(eventType, updatePreviewText);
         });
     });
 
-    const textoOverlayInput = inputs.textoOverlay;
-    const currentCharSpanOverlay = document.getElementById('current-chars-overlay');
-
-    if (textoOverlayInput && currentCharSpanOverlay) {
-        textoOverlayInput.addEventListener('input', () => {
-            const currentLength = textoOverlayInput.value.length;
-            currentCharSpanOverlay.textContent = currentLength;
-            if (currentLength > 250) {
-                document.getElementById('texto-overlay-info-box').classList.add('limit-exceeded');
-            } else {
-                document.getElementById('texto-overlay-info-box').classList.remove('limit-exceeded');
-            }
+    if (inputs.textoOverlay && document.getElementById('current-chars-overlay')) {
+        inputs.textoOverlay.addEventListener('input', () => {
+            const len = inputs.textoOverlay.value.length;
+            document.getElementById('current-chars-overlay').textContent = len;
+            document.getElementById('texto-overlay-info-box').classList.toggle('limit-exceeded', len > 250);
         });
     }
 
-    inputs.categoriaVideo.addEventListener('change', updatePreviewVideo);
-    inputs.videoUpload.addEventListener('change', updatePreviewVideo);
-    inputs.tipoConteudo.forEach(radio => radio.addEventListener('change', updatePreviewVideo));
+    // LISTERNERS PRINCIPAIS DE MUDANÇA
+    inputs.tipoConteudo.forEach(r => r.addEventListener('change', () => {
+        updateVisibility();
+        goToStep(state.availableSteps.includes(state.currentStep) ? state.currentStep : state.availableSteps[0]);
+    }));
+    
+    if (inputs.gerarFundoIa) inputs.gerarFundoIa.addEventListener('change', updateVisibility);
+    if (inputs.tipoVisualIa) inputs.tipoVisualIa.forEach(r => r.addEventListener('change', updateVisibility));
+    if (inputs.categoriaVideo) inputs.categoriaVideo.addEventListener('change', updateVisibility);
+    if (inputs.videoUpload) {
+        inputs.videoUpload.addEventListener('change', function() {
+            const label = document.getElementById('upload-text-label');
+            if (label) label.textContent = this.files.length > 0 ? this.files[0].name : 'Clique para escolher um vídeo';
+            updateVisibility();
+        });
+    }
 
-
-    // --- LÓGICA DE NAVEGAÇÃO E VISIBILIDADE (Reaproveitada e adaptada) ---
+    // NAVEGAÇÃO ENTRE PASSOS
     const steps = form.querySelectorAll('.nav-steps .step');
     const stepContents = form.querySelectorAll('.form-step');
     const prevBtn = form.querySelector('.prev-step-btn');
     const nextBtn = form.querySelector('.next-step-btn');
     const progressBar = form.querySelector('.progress-fill');
-    
     let state = { currentStep: 0, availableSteps: [] };
 
     const updateAvailableSteps = () => {
-        const selectedType = form.querySelector('input[name="tipo_conteudo"]:checked')?.value;
+        const selectedType = form.querySelector('input[name="tipo_conteudo"]:checked')?.value || 'narrador';
         state.availableSteps = [];
         steps.forEach(step => {
             const stepIndex = parseInt(step.dataset.step);
@@ -477,24 +582,18 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     
     const goToStep = (stepIndex) => {
-        // Validation before proceeding
         if (stepIndex > state.currentStep) {
             const currentStepContent = stepContents[state.currentStep];
-            const inputsToValidate = currentStepContent.querySelectorAll('input[required], select[required], textarea[required]');
+            const inputsToValidate = Array.from(currentStepContent.querySelectorAll('input[required], select[required], textarea[required]'))
+                                          .filter(el => el.offsetParent !== null);
             let isValid = true;
             inputsToValidate.forEach(input => {
-                if (!input.value) {
-                    isValid = false;
-                    // Add error indication
-                    input.classList.add('is-invalid');
-                }
+                if (!input.value) { isValid = false; input.classList.add('is-invalid'); }
             });
 
             if (!isValid) {
-                // Show a general error message
-                const notificationDiv = document.getElementById('form-notifications');
-                notificationDiv.innerHTML = `<div class="alert alert-danger">Por favor, preencha todos os campos obrigatórios.</div>`;
-                return; // Stop navigation
+                document.getElementById('form-notifications').innerHTML = `<div class="alert alert-danger">Por favor, preencha todos os campos obrigatórios.</div>`;
+                return; 
             }
         }
 
@@ -514,66 +613,6 @@ document.addEventListener('DOMContentLoaded', function() {
         nextBtn.style.display = currentPos < state.availableSteps.length - 1 ? 'flex' : 'none';
     };
     
-    function toggleFieldsByContentType(selectedType) {
-        const fieldGroups = {
-            texto: form.querySelector('[data-content-type="texto"]'),
-            narrador: form.querySelector('[data-content-type="narrador,vendedor"]'),
-            upload: form.querySelector('#field-video-upload'),
-            categoria: form.querySelector('#field-categoria-video')
-        };
-
-        const inputs = {
-            textoOverlay: form.querySelector('[name="texto_overlay"]'),
-            narradorTexto: form.querySelector('[name="narrador_texto"]'),
-            videoUpload: form.querySelector('[name="video_upload"]'),
-            categoriaVideo: form.querySelector('select[name="categoria_video"]'),
-            duracaoSegundos: form.querySelector('[name="duracao_segundos"]')
-        };
-
-        // Reset all: hide field groups and disable inputs
-        for (const key in fieldGroups) {
-            if (fieldGroups[key]) fieldGroups[key].style.display = 'none';
-        }
-        for (const key in inputs) {
-            if (inputs[key]) inputs[key].disabled = true;
-        }
-
-        // Enable based on selection
-        if (selectedType === 'texto') {
-            fieldGroups.texto.style.display = 'block';
-            fieldGroups.categoria.style.display = 'block';
-            inputs.textoOverlay.disabled = false;
-            inputs.duracaoSegundos.disabled = false;
-            inputs.categoriaVideo.disabled = false;
-            if(inputs.narradorTexto) inputs.narradorTexto.value = ''; // Clear other text fields
-
-        } else if (selectedType === 'narrador') {
-            fieldGroups.narrador.style.display = 'block';
-            fieldGroups.categoria.style.display = 'block';
-            inputs.narradorTexto.disabled = false;
-            inputs.categoriaVideo.disabled = false;
-            if(inputs.textoOverlay) inputs.textoOverlay.value = '';
-
-        } else if (selectedType === 'vendedor') {
-            fieldGroups.narrador.style.display = 'block';
-            fieldGroups.upload.style.display = 'block';
-            inputs.narradorTexto.disabled = false;
-            inputs.videoUpload.disabled = false;
-            if(inputs.textoOverlay) inputs.textoOverlay.value = '';
-            if(inputs.categoriaVideo) inputs.categoriaVideo.value = '';
-        }
-    }
-
-    inputs.tipoConteudo.forEach(radio => radio.addEventListener('change', (e) => {
-        toggleFieldsByContentType(e.target.value);
-        updateAvailableSteps();
-        if (!state.availableSteps.includes(state.currentStep)) {
-             goToStep(state.availableSteps[0]);
-        } else {
-             goToStep(state.currentStep);
-        }
-    }));
-    
     prevBtn.addEventListener('click', () => {
         const currentPos = state.availableSteps.indexOf(state.currentStep);
         if (currentPos > 0) goToStep(state.availableSteps[currentPos - 1]);
@@ -587,64 +626,42 @@ document.addEventListener('DOMContentLoaded', function() {
         if (state.availableSteps.includes(stepIndex)) goToStep(stepIndex);
     }));
 
-    // --- OUTRAS FUNCIONALIDADES (Reaproveitadas) ---
     form.addEventListener('submit', function() {
         loadingOverlay.classList.add('visible');
         form.querySelector('button[type="submit"]').disabled = true;
     });
 
-    // --- INÍCIO DA LÓGICA DE INFORMAÇÃO DA NARRAÇÃO (Refatorado) ---
     const textoNarracao = inputs.narradorTexto;
     const selectVelocidade = form.querySelector('[name="narrador_velocidade"]');
     const submitButton = form.querySelector('button[type="submit"]');
 
-    // Elementos da nova caixa de informação
-    const narrationInfoBox = document.getElementById('narration-info-box');
-    const currentCharSpan = document.getElementById('current-chars');
-    const charLimitSpan = document.getElementById('char-limit');
-    const speedInfoSpan = document.getElementById('speed-info');
-    const timeEstimationSpan = document.getElementById('time-estimation');
-
     const updateNarrationInfo = async () => {
-        // 1. Obter valores atuais
         const texto = textoNarracao.value;
         const velocidade = parseInt(selectVelocidade.value, 10) || 100;
+        let limite_chars, nome_velocidade;
 
-        // 2. Determinar limites e nomes com base na velocidade
-        let limite_chars;
-        let nome_velocidade;
-        if (velocidade <= 85) { // Lenta
-            limite_chars = 2000;
-            nome_velocidade = "Lenta";
-        } else if (velocidade <= 100) { // Normal
-            limite_chars = 2600;
-            nome_velocidade = "Normal";
-        } else { // Rápida
-            limite_chars = 3200;
-            nome_velocidade = "Rápida";
-        }
+        if (velocidade <= 85) { limite_chars = 2000; nome_velocidade = "Lenta"; } 
+        else if (velocidade <= 100) { limite_chars = 2600; nome_velocidade = "Normal"; } 
+        else { limite_chars = 3200; nome_velocidade = "Rápida"; }
 
-        // 3. Atualizar a UI com os novos limites e nomes
-        currentCharSpan.textContent = texto.length;
-        charLimitSpan.textContent = limite_chars;
-        speedInfoSpan.innerHTML = `Velocidade: <strong>${nome_velocidade}</strong>`;
+        document.getElementById('current-chars').textContent = texto.length;
+        document.getElementById('char-limit').textContent = limite_chars;
+        document.getElementById('speed-info').innerHTML = `Velocidade: <strong>${nome_velocidade}</strong>`;
 
-        // 4. Validar limite e atualizar estilo/botão
         const notificationDiv = document.getElementById('form-notifications');
-        let notificationHTML = '';
-
+        const box = document.getElementById('narration-info-box');
+        
         if (texto.length > limite_chars) {
-            narrationInfoBox.classList.add('limit-exceeded');
+            box.classList.add('limit-exceeded');
             submitButton.disabled = true;
-            notificationHTML = `<div class="alert alert-danger">Você excedeu o limite de ${limite_chars} caracteres para a velocidade ${nome_velocidade}!</div>`;
+            notificationDiv.innerHTML = `<div class="alert alert-danger">Você excedeu o limite de ${limite_chars} caracteres!</div>`;
         } else {
-            narrationInfoBox.classList.remove('limit-exceeded');
+            box.classList.remove('limit-exceeded');
             submitButton.disabled = false;
-            notificationHTML = `<div class="alert alert-info">O limite de caracteres para a velocidade ${nome_velocidade} é ${limite_chars}.</div>`;
+            notificationDiv.innerHTML = ``;
         }
-        notificationDiv.innerHTML = notificationHTML;
 
-        // 5. Calcular e exibir a estimativa de tempo (se houver texto)
+        const timeEstimationSpan = document.getElementById('time-estimation');
         if (!texto.trim()) {
             timeEstimationSpan.textContent = 'Digite para ver a estimativa';
             return;
@@ -657,53 +674,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ texto, velocidade })
             });
             const data = await response.json();
-            if (response.ok) {
-                timeEstimationSpan.textContent = `Estimativa: ${data.duracao_segundos.toFixed(1)}s`;
-            } else {
-                timeEstimationSpan.textContent = 'Erro na estimativa';
-            }
+            timeEstimationSpan.textContent = response.ok ? `Estimativa: ${data.duracao_segundos.toFixed(1)}s` : 'Erro na estimativa';
         } catch (error) {
-            console.error('Erro na estimativa:', error);
             timeEstimationSpan.textContent = 'Erro na estimativa';
         }
     };
 
-    // Adicionar os listeners
-    textoNarracao.addEventListener('input', updateNarrationInfo);
-    selectVelocidade.addEventListener('change', updateNarrationInfo);
-
-    inputs.videoUpload.addEventListener('change', function() {
-        uploadTextLabel.textContent = this.files.length > 0 ? this.files[0].name : 'Clique para escolher um vídeo';
-    });
-
-    const checkedRadio = form.querySelector('input[name="tipo_conteudo"]:checked') || inputs.tipoConteudo[0];
-    if (checkedRadio) {
-        checkedRadio.checked = true;
-        toggleFieldsByContentType(checkedRadio.value);
+    if (textoNarracao && selectVelocidade) {
+        textoNarracao.addEventListener('input', updateNarrationInfo);
+        selectVelocidade.addEventListener('change', updateNarrationInfo);
     }
-    updateAvailableSteps();
-    goToStep(0);
-    updatePreview();
-    updateNarrationInfo(); // Garante que a caixa de info inicie com os valores corretos
 
-    // --- LÓGICA DO PREVIEW DE VOZ ---
     const playVoicePreviewBtn = form.querySelector('.play-voice-preview-btn');
     if (playVoicePreviewBtn) {
         const narradorVozSelect = form.querySelector('select[name="narrador_voz"]');
         let audio = null;
         const originalButtonHTML = playVoicePreviewBtn.innerHTML;
-        const originalButtonText = playVoicePreviewBtn.textContent.trim();
 
         playVoicePreviewBtn.addEventListener('click', async () => {
             const selectedVoice = narradorVozSelect.value;
             const notificationDiv = document.getElementById('form-notifications');
 
             if (!selectedVoice) {
-                notificationDiv.innerHTML = `<div class="alert alert-warning" role="alert">Por favor, selecione uma voz primeiro.</div>`;
+                notificationDiv.innerHTML = `<div class="alert alert-warning">Selecione uma voz primeiro.</div>`;
                 return;
             }
 
-            // Se o áudio estiver tocando, pare-o
             if (audio && !audio.paused) {
                 audio.pause();
                 audio.currentTime = 0;
@@ -713,56 +709,49 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             playVoicePreviewBtn.disabled = true;
-            playVoicePreviewBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Carregando...`;
+            playVoicePreviewBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i>`;
 
             try {
                 const response = await fetch(`/api/preview-voz/${selectedVoice}/`, {
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    }
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 const data = await response.json();
 
                 if (response.ok) {
                     audio = new Audio(data.url);
-
                     audio.addEventListener('play', () => {
-                        playVoicePreviewBtn.innerHTML = `<i class="fas fa-pause"></i> Pausar`;
+                        playVoicePreviewBtn.innerHTML = `<i class="fas fa-pause"></i>`;
                         playVoicePreviewBtn.disabled = false;
                     });
-
                     audio.addEventListener('ended', () => {
                         playVoicePreviewBtn.innerHTML = originalButtonHTML;
                         audio = null;
                     });
-                    
-                    audio.addEventListener('pause', () => {
-                        if (audio && audio.currentTime < audio.duration) {
-                           playVoicePreviewBtn.innerHTML = originalButtonHTML;
-                        }
-                    });
-
                     audio.play().catch(e => {
-                        console.error("Erro ao tentar tocar o áudio:", e);
-                        notificationDiv.innerHTML = `<div class="alert alert-danger" role="alert">Não foi possível reproduzir o áudio.</div>`;
+                        notificationDiv.innerHTML = `<div class="alert alert-danger">Erro de reprodução.</div>`;
                         playVoicePreviewBtn.innerHTML = originalButtonHTML;
                         playVoicePreviewBtn.disabled = false;
                     });
-
                 } else {
-                    console.error('Erro ao buscar preview de voz:', data.error);
-                    notificationDiv.innerHTML = `<div class="alert alert-danger" role="alert">${data.error || 'Não foi possível carregar o preview da voz.'}</div>`;
+                    notificationDiv.innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
                     playVoicePreviewBtn.innerHTML = originalButtonHTML;
                     playVoicePreviewBtn.disabled = false;
                 }
             } catch (error) {
-                console.error('Erro de rede ao buscar preview de voz:', error);
-                notificationDiv.innerHTML = `<div class="alert alert-danger" role="alert">Erro de rede ao carregar o preview.</div>`;
+                notificationDiv.innerHTML = `<div class="alert alert-danger">Erro de rede.</div>`;
                 playVoicePreviewBtn.innerHTML = originalButtonHTML;
                 playVoicePreviewBtn.disabled = false;
             }
         });
     }
+
+    // INICIALIZAÇÃO
+    const checkedRadio = form.querySelector('input[name="tipo_conteudo"]:checked') || inputs.tipoConteudo[0];
+    if (checkedRadio) checkedRadio.checked = true;
+    
+    updateVisibility();
+    updatePreviewText();
+    updateNarrationInfo();
 });
 </script>
 {% endblock %}

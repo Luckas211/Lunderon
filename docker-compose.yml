@@ -1,21 +1,13 @@
 version: '3.8'
 
 services:
-  # 1. Banco de Dados de Mensagens (Redis Local para fila de tarefas)
-  redis:
-    image: "redis:alpine"
-    container_name: gerador_videos_redis
-    restart: always
-    ports:
-      - "6379:6379"
-
-  # 2. O Site (Backend Django)
+  # O SITE (Recebe a conexão do Túnel)
   web:
     build: .
     container_name: gerador_videos_web
     restart: always
-    # Adicionamos workers e threads ao Gunicorn para melhor performance web
-    command: gunicorn gerador_videos.wsgi:application --bind "0.0.0.0:8000" --workers 3 --timeout 3600
+    # Escuta em 0.0.0.0 para aceitar conexões da rede
+    command: gunicorn gerador_videos.wsgi:application --bind "0.0.0.0:8000" --timeout 3600
     volumes:
       - .:/app
     ports:
@@ -23,40 +15,36 @@ services:
     env_file:
       - .env
     environment:
-      # Garante que o Django saiba onde está o Redis
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      # NeonDB é externo, então passamos a URL via .env (DATABASE_URL), não precisamos de link aqui
-    depends_on:
-      - redis
+      # URL SEM ASPAS!
+      - CELERY_BROKER_URL=rediss://default:Ab2pAAIncDI1ZTExNDkyMmQzNTM0OTZmYmZkYWI5ZmJiODI5Njk0YnAyNDg1NTM@grown-macaque-48553.upstash.io:6379/?ssl_cert_reqs=CERT_NONE
+    # FORÇA O DNS PARA TER INTERNET
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
-  # 3. O Trabalhador (Gera os vídeos - IA Pesada)
+  # O TRABALHADOR (Processa o vídeo usando a CPU deste PC)
   celery_worker:
     build: .
     container_name: lunderon_worker
     restart: always
-<<<<<<< HEAD
-    # CORREÇÃO CRÍTICA AQUI:
-    # --concurrency=2: Processa no máx 2 vídeos ao mesmo tempo (ajuste conforme sua CPU/RAM).
-    # --max-tasks-per-child=1: Mata o processo após cada tarefa para limpar a RAM da IA.
-    command: celery -A gerador_videos worker -l info --concurrency=2 --max-tasks-per-child=1
-=======
-    # Concurrency 4 para não travar o PC (Whisper é pesado)
-    command: sh -c "mkdir -p /app/logs && celery -A gerador_videos worker -l info --concurrency=4 --logfile=/app/logs/celery_worker.log"
->>>>>>> 397dcff40560af7ec4277accb011594b9c0bf6d9
+    # IMPORTANTE: --pool=solo evita que o Windows trave com a IA
+    # --concurrency=1 garante que ele faça um vídeo por vez (mais seguro para memória)
+    command: celery -A gerador_videos worker -l info --pool=solo --concurrency=1
     volumes:
       - .:/app
-      # Montar cache do HuggingFace para não baixar modelos toda vez (opcional mas recomendado)
-      # - ./cache_huggingface:/root/.cache/huggingface
     env_file:
       - .env
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      # O worker precisa acessar o NeonDB para ler/salvar o status dos projetos
+      # URL SEM ASPAS!
+      - CELERY_BROKER_URL=rediss://default:Ab2pAAIncDI1ZTExNDkyMmQzNTM0OTZmYmZkYWI5ZmJiODI5Njk0YnAyNDg1NTM@grown-macaque-48553.upstash.io:6379/?ssl_cert_reqs=CERT_NONE
     depends_on:
-      - redis
       - web
+    # FORÇA O DNS PARA TER INTERNET E BAIXAR IMAGENS DA IA
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
 
-  # 4. O Agendador (Limpeza automática)
+  # O AGENDADOR (Limpa arquivos velhos)
   celery_beat:
     build: .
     container_name: lunderon_beat
@@ -67,6 +55,11 @@ services:
     env_file:
       - .env
     environment:
-      - CELERY_BROKER_URL=redis://redis:6379/0
+      # URL SEM ASPAS!
+      - CELERY_BROKER_URL=rediss://default:Ab2pAAIncDI1ZTExNDkyMmQzNTM0OTZmYmZkYWI5ZmJiODI5Njk0YnAyNDg1NTM@grown-macaque-48553.upstash.io:6379/?ssl_cert_reqs=CERT_NONE
     depends_on:
-      - redis
+      - web
+    # FORÇA O DNS PARA TER INTERNET
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
