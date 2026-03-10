@@ -1125,85 +1125,61 @@ def get_youtube_most_replayed_segments(request):
     try:
         data = json.loads(request.body)
         youtube_url = data.get("url")
-        if not youtube_url or ("youtube.com" not in youtube_url and "youtu.be" not in youtube_url):
+        if not youtube_url or "youtube.com" not in youtube_url:
             return JsonResponse({"error": "URL do YouTube inválida."}, status=400)
 
-        # --- PROTEÇÃO ANTI-BOT ATUALIZADA ---
-        cookie_path = os.path.join(settings.BASE_DIR, 'cookies.txt')
-        
+        # Configuração extrema anti-bot
         ydl_opts = {
             'quiet': True,
-            'skip_download': True,
             'no_warnings': True,
-            # Correção principal: a sintaxe nova do yt-dlp exige 'client' e não 'player_client'
-            'extractor_args': {'youtube': {'client': ['android', 'ios']}},
+            # Força clientes que passam melhor pelo bot-check do YouTube atualmente
+            'extractor_args': {'youtube': {'player_client': ['android', 'mweb', 'web_creator']}},
+            # Mantenha o arquivo de cookies se você tiver gerado um novo!
+            'cookiefile': os.path.join(settings.BASE_DIR, 'cookies.txt'),
         }
-        
-        # Só ativa o cookie se o arquivo REALMENTE existir, e avisa no log
-        if os.path.exists(cookie_path):
-            ydl_opts['cookiefile'] = cookie_path
-            logger.info(f"✅ [SUCESSO] Lendo cookies de: {cookie_path}")
-        else:
-            logger.warning(f"❌ [ALERTA] Arquivo de cookies NÃO FOI ENCONTRADO em: {cookie_path}")
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # O yt-dlp extrai toda a metadata, incluindo a barra de "mais repetidos" (heatmap)
             info = ydl.extract_info(youtube_url, download=False)
-            
+        
         duration = info.get('duration', 0)
-        if not duration:
-            return JsonResponse({"error": "Não foi possível obter a duração do vídeo."}, status=400)
+        heatmap = info.get('heatmap', [])
 
         segments = []
-        
-        heatmap = info.get('heatmap')
         if heatmap:
-            top_heat = sorted(heatmap, key=lambda x: x.get('value', 0), reverse=True)[:4]
-            top_heat = sorted(top_heat, key=lambda x: x.get('start_time', 0))
-            for h in top_heat:
-                pico_tempo = h['start_time']
-                start = max(0, pico_tempo - 5)
-                end = min(duration, start + 30)
-                segments.append({"start": start, "end": end, "duration": end - start})
-                
-        elif info.get('chapters'):
-            for ch in info['chapters'][:5]:
-                start = ch['start_time']
-                end = ch['end_time']
-                if (end - start) > 60:
-                    end = start + 60
-                segments.append({"start": start, "end": end, "duration": end - start})
-        
+            # O heatmap retorna uma lista: [{'start_time': 0, 'end_time': 5, 'value': 0.8}, ...]
+            # Vamos ordenar para pegar os picos (maiores valores)
+            sorted_heat = sorted(heatmap, key=lambda x: x.get('value', 0), reverse=True)
+            
+            # Pega os 5 segmentos mais repetidos para não sobrecarregar
+            top_segments = sorted_heat[:5] 
+            
+            for seg in top_segments:
+                start_ms = seg.get('start_time', 0)
+                end_ms = seg.get('end_time', 0)
+                segments.append({
+                    "start": start_ms,
+                    "end": end_ms,
+                    "duration": end_ms - start_ms
+                })
+            
+            # Ordena cronologicamente para enviar ao frontend
+            segments = sorted(segments, key=lambda x: x['start'])
+
         if not segments:
-            if duration <= 60:
-                chunk_size = 20
-                for start in range(0, int(duration), chunk_size):
-                    end = min(duration, start + chunk_size)
-                    if end - start > 5:
-                        segments.append({"start": start, "end": end, "duration": end - start})
-            else:
-                partes = [0, duration * 0.3, duration * 0.6]
-                for start in partes:
-                    start = int(start)
-                    end = min(duration, start + 30)
-                    segments.append({"start": start, "end": end, "duration": end - start})
+            return JsonResponse({
+                "segments": [],
+                "message": 'Nenhum segmento "mais repetido" foi encontrado para este vídeo.'
+            })
 
-        unique_segments = []
-        seen_starts = set()
-        for seg in segments:
-            s = round(seg['start'])
-            if s not in seen_starts:
-                unique_segments.append(seg)
-                seen_starts.add(s)
-
-        return JsonResponse({"segments": unique_segments, "duration": duration})
+        return JsonResponse({"segments": segments, "duration": duration})
 
     except yt_dlp.utils.DownloadError as e:
-        logger.error(f"Erro do yt-dlp ao acessar o vídeo: {e}")
-        return JsonResponse({"error": "O YouTube bloqueou a análise. Verifique os cookies."}, status=400)
+        logger.error(f"Erro no yt-dlp (Bot Check): {e}")
+        return JsonResponse({"error": "O YouTube bloqueou a requisição temporariamente. Tente novamente mais tarde ou use outro vídeo."}, status=500)
     except Exception as e:
-        logger.error(f"Erro crítico em get_youtube_most_replayed_segments: {e}", exc_info=True)
+        logger.error(f"Erro inesperado em get_youtube_most_replayed_segments: {e}", exc_info=True)
         return JsonResponse({"error": "Ocorreu um erro inesperado ao analisar o vídeo."}, status=500)
-    
     
 @login_required
 def pagina_gerador(request):
@@ -1474,8 +1450,6 @@ def cortes_youtube_view(request):
         ),
     }
     return render(request, "core/cortes_youtube.html", context)
-
-
 def verificar_status_fila(request, video_id):
     try:
         # 1. Pega o vídeo atual do usuário

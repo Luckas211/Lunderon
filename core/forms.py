@@ -323,19 +323,25 @@ class GeradorForm(forms.Form):
 # ================================================================
 class CortesYouTubeForm(forms.Form):
     youtube_url = forms.URLField(
-        label="URL do YouTube",
-        widget=forms.URLInput(attrs={'class': 'form-input', 'placeholder': 'https://www.youtube.com/...'}),
+        label="URL do Vídeo do YouTube",
+        widget=forms.URLInput(attrs={'class': 'form-input', 'placeholder': 'https://www.youtube.com/watch?v=...'}),
         required=True
     )
     categoria_musica = forms.ModelChoiceField(
         queryset=CategoriaMusica.objects.all(),
-        label="Música de Fundo",
+        label="Categoria da Música de Fundo",
         required=True
     )
     volume_musica = forms.IntegerField(
-        min_value=0, max_value=100, initial=20, label="Volume da Música"
+        min_value=0,
+        max_value=100,
+        initial=20,
+        label="Volume da Música de Fundo",
+        help_text="Ajuste o volume da música para não sobrepor o áudio original do vídeo."
     )
     gerar_legendas = forms.BooleanField(
-        label="Gerar Legendas", required=False, initial=True
+        label="Gerar Legendas (transcrição automática)",
+        required=False,
+        help_text="Ativa a transcrição automática do áudio do vídeo para legendas."
     )
     segments = forms.CharField(widget=forms.HiddenInput(), required=True)

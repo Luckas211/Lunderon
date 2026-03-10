@@ -943,7 +943,8 @@ def processar_corte_youtube(
             "noplaylist": True,
             "retries": 3,
             "fragment_retries": 3,
-            "extractor_args": {"youtube": {"player_client": ["ios", "android"]}},
+            # CORREÇÃO: Usar 'default' para silenciar o aviso e usar a melhor rota
+            "extractor_args": {"youtube": {"player_client": ["default", "web", "ios", "android"]}},
             # HABILITADO O USO DE COOKIES:
             "cookiefile": os.path.join(settings.BASE_DIR, "cookies.txt"),
             "logger": YTDLPLogger(corte_gerado_id),
